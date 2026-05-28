@@ -123,7 +123,28 @@ export default function DashboardPage() {
             </div>
           </Card>
         )}
-
+{/* Anulaciones del día - solo admin */}
+{usuario?.rol === 'admin' && ingresos.filter(i => i.anulada).length > 0 && (
+  <Card>
+    <CardHeader
+      title="Anulaciones del día"
+      subtitle={`${ingresos.filter(i => i.anulada).length} registros`}
+    />
+    <div className="p-4 flex flex-col gap-2">
+      {ingresos.filter(i => i.anulada).map(i => {
+        const m = MEDIOS_PAGO.find(mp => mp.key === i.medio_pago);
+        return (
+          <div key={i.id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft border border-red/10">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-t2 line-through">{m?.label} · {fmt(i.monto_bruto)}</div>
+              <div className="text-xs text-t3 mt-0.5">{i.fecha?.slice(11,16)} · {i.motivo_anulacion}</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </Card>
+)}
         {/* Lista movimientos */}
         <Card>
           <CardHeader title="Movimientos"
