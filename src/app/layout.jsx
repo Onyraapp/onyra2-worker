@@ -1,0 +1,22 @@
+import './globals.css';
+export const metadata = {
+  title: 'CajaBar',
+  description: 'Control de caja para bares',
+  manifest: '/manifest.json',
+  themeColor: '#F5F5F7',
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'CajaBar' },
+  viewport: { width: 'device-width', initialScale: 1, maximumScale: 1, userScalable: false },
+};
+export default function RootLayout({ children }) {
+  return (
+    <html lang="es">
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
+      <body className="bg-bg text-t1 antialiased">{children}</body>
+    </html>
+  );
+}
