@@ -292,7 +292,8 @@ export function Toast({ msg, visible }) {
 }
 
 export function useToast() {
-  const { useState } = require('react');
+  const [toast,   setToast]   = React.useState('');
+  const [visible, setVisible] = React.useState(false);
   const [toast,   setToast]   = useState('');
   const [visible, setVisible] = useState(false);
   function show(msg) {
