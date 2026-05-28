@@ -239,10 +239,9 @@ export async function getEgresosDia(barId, fechaStr) {
 // ── RESUMEN DIA ───────────────────────────────────────────
 
 export function calcularResumenDia(ingresos, egresos) {
-  const activos  = ingresos.filter(i => !i.anulada);
   const porMedio = {};
 
-  for (const ing of activos) {
+  for (const ing of ingresos) {
     if (!porMedio[ing.medio_pago]) {
       porMedio[ing.medio_pago] = { bruto: 0, retencion: 0, neto: 0, count: 0 };
     }
@@ -252,11 +251,11 @@ export function calcularResumenDia(ingresos, egresos) {
     porMedio[ing.medio_pago].count++;
   }
 
-  const totalBruto     = activos.reduce((s, i) => s + i.monto_bruto, 0);
-  const totalRetencion = activos.reduce((s, i) => s + i.retencion_monto, 0);
-  const totalNeto      = activos.reduce((s, i) => s + i.monto_neto, 0);
+  const totalBruto     = ingresos.reduce((s, i) => s + i.monto_bruto, 0);
+  const totalRetencion = ingresos.reduce((s, i) => s + i.retencion_monto, 0);
+  const totalNeto      = ingresos.reduce((s, i) => s + i.monto_neto, 0);
   const totalEgresos   = egresos.reduce((s, e) => s + e.monto, 0);
-  const resultado      = totalBruto - totalEgresos;
+  const resultado      = totalNeto - totalEgresos;
 
   return { porMedio, totalBruto, totalRetencion, totalNeto, totalEgresos, resultado };
 }
