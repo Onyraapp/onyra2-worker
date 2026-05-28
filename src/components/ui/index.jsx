@@ -1,7 +1,8 @@
 // src/components/ui/index.jsx — Apple light theme
 'use client';
+import React, { useState } from 'react';
 import { fmt } from '../../lib/data';
-export { useState } from 'react';
+export { useState };
 
 // ── LAYOUT ───────────────────────────────────────────────
 export function Screen({ children, className = '' }) {
