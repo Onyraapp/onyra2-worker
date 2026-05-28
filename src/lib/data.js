@@ -251,9 +251,9 @@ export function calcularResumenDia(ingresos, egresos) {
     porMedio[ing.medio_pago].count++;
   }
 
-  const totalBruto     = ingresos.reduce((s, i) => s + i.monto_bruto, 0);
-  const totalRetencion = ingresos.reduce((s, i) => s + i.retencion_monto, 0);
-  const totalNeto      = ingresos.reduce((s, i) => s + i.monto_neto, 0);
+  const totalBruto     = activos.reduce((s, i) => s + i.monto_bruto, 0);
+const totalRetencion = activos.reduce((s, i) => s + i.retencion_monto, 0);
+const totalNeto      = activos.reduce((s, i) => s + i.monto_neto, 0);
   const totalEgresos   = egresos.reduce((s, e) => s + e.monto, 0);
   const resultado      = totalNeto - totalEgresos;
 
