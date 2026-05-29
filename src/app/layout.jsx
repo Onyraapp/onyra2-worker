@@ -1,3 +1,4 @@
+'use client';
 import './globals.css';
 import { I18nProvider } from '../context/I18nContext';
 
