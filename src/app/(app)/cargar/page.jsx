@@ -206,14 +206,9 @@ export default function CargarPage() {
 
       <Card>
         <div className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <FieldLabel>Turno</FieldLabel>
-            <button onClick={cierreDiario} disabled={cerrandoDia || diaCerrado}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm disabled:opacity-40
-                ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-green text-white'}`}>
-              {cerrandoDia ? '...' : diaCerrado ? '✓ Día cerrado' : '📲 Cierre diario'}
-            </button>
-          </div>
+         <div className="mb-2">
+  <FieldLabel>Turno</FieldLabel>
+</div>
           <ChipGroup options={TURNOS.map(t => ({ value: t.key, label: `${t.icon} ${t.label}` }))} value={turno} onChange={setTurno} />
         </div>
       </Card>
