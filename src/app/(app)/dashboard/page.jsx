@@ -8,7 +8,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import {
   getIngresosDia, getEgresosDia, calcularResumenDia,
   getConfiguracion, getCierreDiario, crearCierreDiario,
-  fmt, todayStr
+  getCajaInicialDia, fmt, todayStr
 } from '../../../lib/data';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
 import {
@@ -21,24 +21,27 @@ export default function DashboardPage() {
   const { usuario } = useAuth();
   const router = useRouter();
   const { toast, visible, show } = useToast();
-  const [fecha,      setFecha]      = useState(todayStr());
-  const [ingresos,   setIngresos]   = useState([]);
-  const [egresos,    setEgresos]    = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [diaCerrado, setDiaCerrado] = useState(false);
+  const [fecha,       setFecha]       = useState(todayStr());
+  const [ingresos,    setIngresos]    = useState([]);
+  const [egresos,     setEgresos]     = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [diaCerrado,  setDiaCerrado]  = useState(false);
   const [cerrandoDia, setCerrandoDia] = useState(false);
+  const [cajaInicial, setCajaInicial] = useState(0);
 
   const cargar = useCallback(async () => {
     if (!usuario) return;
     setLoading(true);
     try {
-      const [ing, egr, cierre] = await Promise.all([
+      const [ing, egr, cierre, caja] = await Promise.all([
         getIngresosDia(usuario.bar_id, fecha),
         getEgresosDia(usuario.bar_id, fecha),
         getCierreDiario(usuario.bar_id, fecha),
+        getCajaInicialDia(usuario.bar_id, fecha),
       ]);
       setIngresos(ing); setEgresos(egr);
       setDiaCerrado(!!cierre);
+      setCajaInicial(caja);
     } finally { setLoading(false); }
   }, [usuario, fecha]);
 
@@ -78,7 +81,8 @@ export default function DashboardPage() {
       const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
       const pos = r.resultado >= 0;
       const msg = [
-        `*CajaBar - Cierre del ${fechaLabel}*`, ``,
+        `*CajaSmart - Cierre del ${fechaLabel}*`, ``,
+        `Caja inicial:   ${fmt(cajaInicial)}`,
         `Ventas brutas:  ${fmt(r.totalBruto)}`,
         `Retenciones:    -${fmt(r.totalRetencion)}`,
         `Ventas netas:   ${fmt(r.totalNeto)}`,
@@ -123,8 +127,7 @@ export default function DashboardPage() {
 
         <div className="flex gap-3">
           <KpiCard label="Ventas brutas" value={res.totalBruto} color="green" />
-          <KpiCard label="Retenciones"   value={res.totalRetencion} color="red"
-            sub={res.totalBruto > 0 ? ((res.totalRetencion/res.totalBruto)*100).toFixed(1)+'%' : '0%'} />
+          <KpiCard label="Caja inicial"  value={cajaInicial} />
         </div>
         <div className="flex gap-3">
           <KpiCard label="Ventas netas" value={res.totalNeto} />
@@ -187,7 +190,7 @@ export default function DashboardPage() {
                     return (
                       <div key={i.id} className="flex items-start gap-3 p-3 rounded-xl bg-offset border border-divider">
                         <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0"
-                          style={{ backgroundColor: m?.color || '#34C759' }} />
+                          style={{ backgroundColor: m?.color || '#2D6B8C' }} />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-t1">{m?.label}</div>
                           <div className="text-xs text-t3 mt-0.5">
@@ -236,7 +239,7 @@ export default function DashboardPage() {
             onClick={cierreDiario}
             disabled={cerrandoDia || diaCerrado || !esHoy}
             className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40
-              ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-green text-white'}`}>
+              ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-primary text-white'}`}>
             {cerrandoDia ? '...' : diaCerrado ? '✓ Cerrado' : '📲 Cierre diario'}
           </button>
         </div>
