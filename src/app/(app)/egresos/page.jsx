@@ -39,7 +39,7 @@ export default function EgresosPage() {
         if (m >= montoMinimo) {
           const tipoLabel = TIPOS_EGRESO.find(t => t.key === tipo)?.label || tipo;
           const msg = [
-            `*CajaBar - Alerta de gasto*`, ``,
+            `*Troco - Alerta de gasto*`, ``,
             `Se registró un gasto de *${fmt(m)}*`,
             `Tipo: ${tipoLabel}`,
             detalle ? `Detalle: ${detalle}` : '',
