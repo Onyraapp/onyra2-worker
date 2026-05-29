@@ -6,7 +6,7 @@ export const translations = {
   es: {
     // App general
     appName: 'Troco',
-    appTagline: 'Gestión de caja simple y rápida',
+    appTagline: 'el control diario de tu negocio',
 
     // Auth
     auth: {
