@@ -135,14 +135,13 @@ export default function DashboardPage() {
       {loading ? <Spinner /> : (<>
 
         <div className="flex gap-3">
-          <KpiCard label="Ventas brutas" value={res.totalBruto} color="green" />
-          <KpiCard label="Caja inicial"  value={cajaInicial} />
-        </div>
-        <div className="flex gap-3">
-          <KpiCard label="Ventas netas" value={res.totalNeto} />
-          <KpiCard label="Gastos"       value={res.totalEgresos} color="amber" />
-        </div>
-
+  <KpiCard label="Caja inicial"  value={cajaInicial} />
+  <KpiCard label="Ventas brutas" value={res.totalBruto} color="green" />
+</div>
+<div className="flex gap-3">
+  <KpiCard label="Gastos"  value={res.totalEgresos} color="amber" />
+  <KpiCard label="Saldo"   value={res.resultado} color={res.resultado >= 0 ? 'green' : 'red'} />
+</div>
         <ResultadoCard valor={res.resultado} />
 
         {retRows.length > 0 && (
