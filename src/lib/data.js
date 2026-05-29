@@ -6,7 +6,7 @@ import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngreso, fmt, todayStr
 } from '../../../lib/data';
-import { getClient } from '../../../lib/supabase';
+import { getClient } from './supabase';
 import { MEDIOS_PAGO, TURNOS } from './constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
