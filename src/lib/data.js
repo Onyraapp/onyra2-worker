@@ -339,5 +339,26 @@ export async function crearCierreDiario(barId, usuarioId, fechaStr) {
     .select().single();
   if (error) throw error;
   return data;
+  export async function registrarCajero({ barId, nombre, email, password }) {
+  const sb = getClient();
+  const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+  if (authError) throw authError;
+  const { error: userError } = await sb
+    .from('usuarios')
+    .insert([{ id: authData.user.id, bar_id: barId, nombre, email, rol: 'cajero' }]);
+  if (userError) throw userError;
+  return authData.user;
+}
+
+export async function getCajeros(barId) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('usuarios')
+    .select('*')
+    .eq('bar_id', barId)
+    .order('nombre');
+  if (error) throw error;
+  return data || [];
+}
 }
 
