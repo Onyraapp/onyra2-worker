@@ -140,7 +140,7 @@ export async function exportarMesPDF(resumen, año, mes, mesLabel, nombreBar = '
       105, 290, { align: 'center' });
   }
 
-  doc.save(`CajaBar_${año}-${String(mes).padStart(2,'0')}.pdf`);
+  doc.save(`Troco_${año}-${String(mes).padStart(2,'0')}.pdf`);
 }
 
 export function compartirWhatsApp(resumen, mesLabel, nombreBar = '') {
