@@ -340,5 +340,4 @@ export async function crearCierreDiario(barId, usuarioId, fechaStr) {
   if (error) throw error;
   return data;
 }
-}
 
