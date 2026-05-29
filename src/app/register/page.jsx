@@ -20,7 +20,7 @@ export default function RegisterPage() {
     setError(''); setLoading(true);
     try {
       await registrarBar(form);
-      router.push('/dashboard');
+     router.push('/onboarding');
     } catch (err) {
       setError(err.message || 'Error al registrar. Intentá de nuevo.');
     } finally {
