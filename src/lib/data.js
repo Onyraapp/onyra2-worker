@@ -385,5 +385,5 @@ export async function getCajaInicialDia(barId, fechaStr) {
     .maybeSingle();
   return data?.caja_inicial || 0;
 }
-}
+
 
