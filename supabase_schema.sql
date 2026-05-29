@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════
--- CajaBar v2 — Schema multi-tenant con Row Level Security
+-- Troco v2 — Schema multi-tenant con Row Level Security
 -- Ejecutar en Supabase SQL Editor
 -- ═══════════════════════════════════════════════════════════
 
