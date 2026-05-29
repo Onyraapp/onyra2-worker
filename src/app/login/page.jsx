@@ -32,7 +32,7 @@ export default function LoginPage() {
           <span className="text-white text-2xl font-bold">C</span>
         </div>
         <span className="text-2xl font-bold text-t1 tracking-tight"> CajaSmart</span>
-        <span className="text-sm text-t3 mt-1">Control de caja para bares</span>
+        <span className="text-sm text-t3 mt-1">Control de caja inteligente</span>
       </div>
 
       <form onSubmit={handleLogin} className="w-full max-w-sm flex flex-col gap-3">
