@@ -17,7 +17,7 @@ export function exportarMesExcel(resumen, año, mes, mesLabel) {
 
   // Hoja 1: Resumen
   const resData = [
-    ['CajaBar — Resumen mensual', mesLabel],
+    ['Troco — Resumen mensual', mesLabel],
     [],
     ['Concepto', 'Monto'],
     ['Ventas brutas',  resumen.totalBruto],
@@ -49,7 +49,7 @@ export function exportarMesExcel(resumen, año, mes, mesLabel) {
   const buf = write(wb, { type: 'array', bookType: 'xlsx' });
   downloadBlob(
     new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-    `CajaBar_${año}-${String(mes).padStart(2,'0')}.xlsx`
+    `Troco_${año}-${String(mes).padStart(2,'0')}.xlsx`
   );
 }
 
@@ -67,7 +67,7 @@ export async function exportarMesPDF(resumen, año, mes, mesLabel, nombreBar = '
   doc.setTextColor(245, 247, 251);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('CajaBar', margin, 18);
+  doc.text('Troco', margin, 18);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(nombreBar, margin, 26);
@@ -136,7 +136,7 @@ export async function exportarMesPDF(resumen, año, mes, mesLabel, nombreBar = '
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`CajaBar · ${nombreBar} · ${mesLabel} · Pág. ${i}/${pageCount}`,
+    doc.text(`Troco · ${nombreBar} · ${mesLabel} · Pág. ${i}/${pageCount}`,
       105, 290, { align: 'center' });
   }
 
