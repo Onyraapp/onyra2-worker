@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useState, useEffect, useCallback } from 'react';
-import { translations, countryToLocale, defaultLocale, supportedLocales } from '/src/lib/i18n/translations';
+import { translations, countryToLocale, defaultLocale, supportedLocales } from '@/lib/lib/i18n/translations';
 export const I18nContext = createContext(null);
 
 const STORAGE_KEY = 'troco_locale';
