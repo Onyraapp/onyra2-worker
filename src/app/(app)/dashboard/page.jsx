@@ -149,7 +149,17 @@ export default function DashboardPage() {
           <Card>
            <CardHeader title="Por medio de pago" subtitle="Ventas brutas por canal" />
             <div className="p-4">
-              <TablaRetencion rows={retRows} />
+             <div className="flex flex-col divide-y divide-divider">
+  {retRows.map((r, i) => (
+    <div key={i} className="flex items-center justify-between py-3">
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
+        <span className="text-sm text-t1">{r.label}</span>
+      </div>
+      <span className="text-sm font-semibold text-t1 tabular-nums">{fmt(r.bruto)}</span>
+    </div>
+  ))}
+</div>
             </div>
           </Card>
         )}
