@@ -1,36 +1,25 @@
-
-// src/lib/i18n/translations.js
-// Troco — Diccionario de traducciones ES / PT / EN
-
 export const translations = {
   es: {
-    // App general
     appName: 'Troco',
     appTagline: 'el control diario de tu negocio',
-
-    // Auth
     auth: {
-      login: 'Iniciar sesión',
-      logout: 'Cerrar sesión',
-      email: 'Correo electrónico',
-      password: 'Contraseña',
-      forgotPassword: '¿Olvidaste tu contraseña?',
-      noAccount: '¿No tenés cuenta?',
+      login: 'Iniciar sesion',
+      logout: 'Cerrar sesion',
+      email: 'Correo electronico',
+      password: 'Contrasena',
+      forgotPassword: 'Olvidaste tu contrasena?',
+      noAccount: 'No tenes cuenta?',
       register: 'Registrarse',
-      loginError: 'Email o contraseña incorrectos',
+      loginError: 'Email o contrasena incorrectos',
     },
-
-    // Navegación
     nav: {
       home: 'Inicio',
       cash: 'Caja',
       history: 'Historial',
       products: 'Productos',
-      settings: 'Configuración',
+      settings: 'Configuracion',
       reports: 'Reportes',
     },
-
-    // Caja
     cash: {
       open: 'Abrir caja',
       close: 'Cerrar caja',
@@ -48,25 +37,21 @@ export const translations = {
       cashIsOpen: 'Caja abierta',
       cashIsClosed: 'Caja cerrada',
       noCashOpen: 'No hay caja abierta',
-      openFirst: 'Abrí la caja para comenzar',
-      dailySummary: 'Resumen del día',
+      openFirst: 'Abri la caja para comenzar',
+      dailySummary: 'Resumen del dia',
       totalIncome: 'Total ingresos',
       totalExpense: 'Total egresos',
       difference: 'Diferencia',
     },
-
-    // Historial
     history: {
       title: 'Historial de cajas',
-      noHistory: 'No hay historial todavía',
+      noHistory: 'No hay historial todavia',
       date: 'Fecha',
       openedAt: 'Apertura',
       closedAt: 'Cierre',
       movements: 'Movimientos',
       seeDetail: 'Ver detalle',
     },
-
-    // Productos
     products: {
       title: 'Productos',
       add: 'Agregar producto',
@@ -74,14 +59,12 @@ export const translations = {
       delete: 'Eliminar',
       name: 'Nombre',
       price: 'Precio',
-      category: 'Categoría',
+      category: 'Categoria',
       noProducts: 'No hay productos cargados',
-      confirmDelete: '¿Eliminar este producto?',
+      confirmDelete: 'Eliminar este producto?',
     },
-
-    // Configuración
     settings: {
-      title: 'Configuración',
+      title: 'Configuracion',
       businessName: 'Nombre del negocio',
       currency: 'Moneda',
       language: 'Idioma',
@@ -89,13 +72,11 @@ export const translations = {
       save: 'Guardar cambios',
       saved: 'Guardado correctamente',
     },
-
-    // Mensajes generales
     common: {
       loading: 'Cargando...',
-      error: 'Ocurrió un error',
+      error: 'Ocurrio un error',
       retry: 'Reintentar',
-      success: '¡Listo!',
+      success: 'Listo!',
       delete: 'Eliminar',
       edit: 'Editar',
       save: 'Guardar',
@@ -107,43 +88,38 @@ export const translations = {
       today: 'Hoy',
       yesterday: 'Ayer',
     },
-
-    // Monedas comunes en LATAM
     currencies: {
       ARS: 'Peso argentino',
-      BRL: 'Real brasileño',
+      BRL: 'Real brasileno',
       CLP: 'Peso chileno',
       COP: 'Peso colombiano',
       MXN: 'Peso mexicano',
       PEN: 'Sol peruano',
       UYU: 'Peso uruguayo',
-      USD: 'Dólar estadounidense',
+      USD: 'Dolar estadounidense',
     },
   },
-
   pt: {
     appName: 'Troco',
-   appTagline: 'o controle diario da sua loja',
+    appTagline: 'o controle diario da sua loja',
     auth: {
       login: 'Entrar',
       logout: 'Sair',
       email: 'E-mail',
       password: 'Senha',
       forgotPassword: 'Esqueceu a senha?',
-      noAccount: 'Não tem conta?',
+      noAccount: 'Nao tem conta?',
       register: 'Cadastrar',
       loginError: 'E-mail ou senha incorretos',
     },
-
     nav: {
-      home: 'Início',
+      home: 'Inicio',
       cash: 'Caixa',
-      history: 'Histórico',
+      history: 'Historico',
       products: 'Produtos',
-      settings: 'Configurações',
-      reports: 'Relatórios',
+      settings: 'Configuracoes',
+      reports: 'Relatorios',
     },
-
     cash: {
       open: 'Abrir caixa',
       close: 'Fechar caixa',
@@ -151,55 +127,51 @@ export const translations = {
       closeAmount: 'Valor de fechamento',
       currentBalance: 'Saldo atual',
       income: 'Entrada',
-      expense: 'Saída',
+      expense: 'Saida',
       addIncome: 'Adicionar entrada',
-      addExpense: 'Adicionar saída',
-      concept: 'Descrição',
+      addExpense: 'Adicionar saida',
+      concept: 'Descricao',
       amount: 'Valor',
       confirm: 'Confirmar',
       cancel: 'Cancelar',
       cashIsOpen: 'Caixa aberto',
       cashIsClosed: 'Caixa fechado',
       noCashOpen: 'Nenhum caixa aberto',
-      openFirst: 'Abra o caixa para começar',
+      openFirst: 'Abra o caixa para comecar',
       dailySummary: 'Resumo do dia',
       totalIncome: 'Total entradas',
-      totalExpense: 'Total saídas',
-      difference: 'Diferença',
+      totalExpense: 'Total saidas',
+      difference: 'Diferenca',
     },
-
     history: {
-      title: 'Histórico de caixas',
-      noHistory: 'Nenhum histórico ainda',
+      title: 'Historico de caixas',
+      noHistory: 'Nenhum historico ainda',
       date: 'Data',
       openedAt: 'Abertura',
       closedAt: 'Fechamento',
       movements: 'Movimentos',
       seeDetail: 'Ver detalhe',
     },
-
     products: {
       title: 'Produtos',
       add: 'Adicionar produto',
       edit: 'Editar',
       delete: 'Excluir',
       name: 'Nome',
-      price: 'Preço',
+      price: 'Preco',
       category: 'Categoria',
       noProducts: 'Nenhum produto cadastrado',
       confirmDelete: 'Excluir este produto?',
     },
-
     settings: {
-      title: 'Configurações',
-      businessName: 'Nome do negócio',
+      title: 'Configuracoes',
+      businessName: 'Nome do negocio',
       currency: 'Moeda',
       language: 'Idioma',
       theme: 'Tema',
-      save: 'Salvar alterações',
+      save: 'Salvar alteracoes',
       saved: 'Salvo com sucesso',
     },
-
     common: {
       loading: 'Carregando...',
       error: 'Ocorreu um erro',
@@ -216,7 +188,6 @@ export const translations = {
       today: 'Hoje',
       yesterday: 'Ontem',
     },
-
     currencies: {
       ARS: 'Peso argentino',
       BRL: 'Real brasileiro',
@@ -225,14 +196,12 @@ export const translations = {
       MXN: 'Peso mexicano',
       PEN: 'Sol peruano',
       UYU: 'Peso uruguaio',
-      USD: 'Dólar americano',
+      USD: 'Dolar americano',
     },
   },
-
   en: {
     appName: 'Troco',
-    appTagline:'daily control of your business',
-
+    appTagline: 'daily control of your business',
     auth: {
       login: 'Sign in',
       logout: 'Sign out',
@@ -243,7 +212,6 @@ export const translations = {
       register: 'Sign up',
       loginError: 'Incorrect email or password',
     },
-
     nav: {
       home: 'Home',
       cash: 'Cash',
@@ -252,7 +220,6 @@ export const translations = {
       settings: 'Settings',
       reports: 'Reports',
     },
-
     cash: {
       open: 'Open register',
       close: 'Close register',
@@ -276,7 +243,6 @@ export const translations = {
       totalExpense: 'Total expenses',
       difference: 'Difference',
     },
-
     history: {
       title: 'Register history',
       noHistory: 'No history yet',
@@ -286,7 +252,6 @@ export const translations = {
       movements: 'Movements',
       seeDetail: 'View detail',
     },
-
     products: {
       title: 'Products',
       add: 'Add product',
@@ -298,7 +263,6 @@ export const translations = {
       noProducts: 'No products added',
       confirmDelete: 'Delete this product?',
     },
-
     settings: {
       title: 'Settings',
       businessName: 'Business name',
@@ -308,7 +272,6 @@ export const translations = {
       save: 'Save changes',
       saved: 'Saved successfully',
     },
-
     common: {
       loading: 'Loading...',
       error: 'An error occurred',
@@ -325,7 +288,6 @@ export const translations = {
       today: 'Today',
       yesterday: 'Yesterday',
     },
-
     currencies: {
       ARS: 'Argentine peso',
       BRL: 'Brazilian real',
@@ -339,16 +301,12 @@ export const translations = {
   },
 };
 
-// Mapa de países → idioma por defecto
 export const countryToLocale = {
-  // Español
   AR: 'es', BO: 'es', CL: 'es', CO: 'es', CR: 'es',
   CU: 'es', DO: 'es', EC: 'es', ES: 'es', GT: 'es',
   HN: 'es', MX: 'es', NI: 'es', PA: 'es', PE: 'es',
   PR: 'es', PY: 'es', SV: 'es', UY: 'es', VE: 'es',
-  // Portugués
   BR: 'pt', PT: 'pt', AO: 'pt', MZ: 'pt',
-  // El resto: inglés
 };
 
 export const defaultLocale = 'es';
