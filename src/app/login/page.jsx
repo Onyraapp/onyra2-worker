@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from '../../lib/data';
@@ -24,7 +24,7 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-   }
+  }
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
@@ -39,4 +39,34 @@ export default function LoginPage() {
             <rect x="270" y="260" width="110" height="13" rx="6.5" fill="#FFFFFF" opacity="0.35"/>
           </svg>
         </div>
-        <span className="text-2xl font-bold text-t1 trackin
+        <span className="text-2xl font-bold text-t1 tracking-tight lowercase">troco</span>
+        <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">{t('appTagline')}</span>
+      </div>
+      <form onSubmit={handleLogin} className="w-full max-w-sm flex flex-col gap-3">
+        <div className="bg-surface rounded-2xl shadow-card overflow-hidden">
+          <div className="px-4 py-3 border-b border-divider">
+            <div className="text-[11px] font-medium text-t3 uppercase tracking-wide mb-1">{t('auth.email')}</div>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="tu@bar.com" required
+              className="w-full bg-transparent text-t1 text-[15px] focus:outline-none placeholder:text-t4" />
+          </div>
+          <div className="px-4 py-3">
+            <div className="text-[11px] font-medium text-t3 uppercase tracking-wide mb-1">{t('auth.password')}</div>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••" required
+              className="w-full bg-transparent text-t1 text-[15px] focus:outline-none placeholder:text-t4" />
+          </div>
+        </div>
+        {error && <p className="text-sm text-redtext text-center">{error}</p>}
+        <button type="submit" disabled={loading}
+          className="w-full h-12 rounded-xl bg-[#0F4C5C] font-semibold text-white text-[15px] disabled:opacity-40 active:scale-[0.98] transition-all uppercase tracking-wide">
+          {loading ? '...' : t('auth.login')}
+        </button>
+        <p className="text-center text-sm text-t3 lowercase">
+          {t('auth.noAccount')}{' '}
+          <Link href="/register" className="text-primary font-medium">{t('auth.register')}</Link>
+        </p>
+      </form>
+    </div>
+  );
+}
