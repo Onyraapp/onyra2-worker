@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
-import { getConfiguracion, updateConfiguracion, getCajeros, registrarCajero, signOut } from '../../../lib/data';
+import { getConfiguracion, updateConfiguracion, getCajeros, registrarCajero, updateBar, signOut } from '../../../lib/data';
 import { MEDIOS_PAGO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, BtnPrimary, BtnDanger,
@@ -18,6 +18,7 @@ export default function ConfiguracionPage() {
   const [config,   setConfig]   = useState(null);
   const [retMap,   setRetMap]   = useState({});
   const [cajeros,  setCajeros]  = useState([]);
+  const [nombreBar, setNombreBar] = useState('');
   const [waNumero, setWaNumero] = useState('');
   const [waCierreTurno,  setWaCierreTurno]  = useState(false);
   const [waAlertaGasto,  setWaAlertaGasto]  = useState(false);
@@ -25,8 +26,8 @@ export default function ConfiguracionPage() {
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [savingWa, setSavingWa] = useState(false);
+  const [savingBar, setSavingBar] = useState(false);
 
-  // Formulario nuevo cajero
   const [showFormCajero, setShowFormCajero] = useState(false);
   const [cajNombre,   setCajNombre]   = useState('');
   const [cajEmail,    setCajEmail]    = useState('');
@@ -49,8 +50,18 @@ export default function ConfiguracionPage() {
       setWaAlertaGasto(c.wa_alerta_gasto || false);
       setWaAlertaMonto(String(c.wa_alerta_gasto_monto || 10000));
       setCajeros(cajs);
+      setNombreBar(usuario.bares?.nombre || '');
     }).finally(() => setLoading(false));
   }, [usuario]);
+
+  async function guardarNombreBar() {
+    setSavingBar(true);
+    try {
+      await updateBar(usuario.bar_id, { nombre: nombreBar });
+      show('✓ Nombre actualizado');
+    } catch { show('✗ Error al guardar'); }
+    finally { setSavingBar(false); }
+  }
 
   async function guardar() {
     setSaving(true);
@@ -93,6 +104,11 @@ export default function ConfiguracionPage() {
     } finally { setSavingCaj(false); }
   }
 
+  async function handleSignOut() {
+    await signOut();
+    router.push('/login');
+  }
+
   function Toggle({ label, sublabel, value, onChange }) {
     return (
       <div className="flex items-center justify-between py-3 border-b border-divider last:border-0">
@@ -101,7 +117,7 @@ export default function ConfiguracionPage() {
           {sublabel && <div className="text-xs text-t3 mt-0.5">{sublabel}</div>}
         </div>
         <button onClick={() => onChange(!value)}
-          className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${value ? 'bg-green' : 'bg-t4'}`}>
+          className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${value ? 'bg-primary' : 'bg-t4'}`}>
           <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>
       </div>
@@ -115,11 +131,16 @@ export default function ConfiguracionPage() {
       <Toast msg={toast} visible={visible} />
 
       <Card>
-        <CardHeader title="Tu bar" />
-        <div className="p-4">
-          <div className="text-lg font-black text-t1">{usuario?.bares?.nombre}</div>
-          <div className="text-sm text-t3 mt-1">{usuario?.email}</div>
-          <div className="text-xs text-t3 mt-0.5">Admin · {usuario?.nombre}</div>
+        <CardHeader title="Tu negocio" />
+        <div className="p-4 flex flex-col gap-3">
+          <div className="text-xs text-t3">{usuario?.email} · Admin · {usuario?.nombre}</div>
+          <div>
+            <FieldLabel>Nombre del negocio</FieldLabel>
+            <input value={nombreBar} onChange={e => setNombreBar(e.target.value)}
+              placeholder="Ej: Bar El Gaucho"
+              className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm border border-transparent focus:outline-none focus:border-primary/40 placeholder:text-t4" />
+          </div>
+          <BtnPrimary label={savingBar ? 'Guardando...' : 'Guardar nombre'} onClick={guardarNombreBar} loading={savingBar} />
         </div>
       </Card>
 
@@ -215,9 +236,4 @@ export default function ConfiguracionPage() {
       <BtnDanger label="Cerrar sesión" onClick={handleSignOut} />
     </Screen>
   );
-
-  async function handleSignOut() {
-    await signOut();
-    router.push('/login');
-  }
 }
