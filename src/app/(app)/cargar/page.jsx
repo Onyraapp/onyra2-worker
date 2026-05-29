@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
+import { useOnline, agregarACola, getCola, limpiarCola } from '../../../hooks/useOnline';
 import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, fmt, todayStr,
@@ -17,11 +18,12 @@ import {
   FieldLabel, DivRow
 } from '../../../components/ui';
 
-const STORAGE_KEY = 'cajabar_lista_turno';
+const STORAGE_KEY = 'cajasmart_lista_turno';
 
 export default function CargarPage() {
   const { usuario } = useAuth();
   const router = useRouter();
+  const online = useOnline();
   const { toast, visible, show } = useToast();
 
   const [config,          setConfig]          = useState(null);
@@ -34,6 +36,8 @@ export default function CargarPage() {
   const [diaCerrado,      setDiaCerrado]      = useState(false);
   const [cajaInicial,     setCajaInicial]     = useState('');
   const [mostrarApertura, setMostrarApertura] = useState(false);
+  const [sincronizando,   setSincronizando]   = useState(false);
+  const [colaPendiente,   setColaPendiente]   = useState([]);
   const [anulando,        setAnulando]        = useState(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
 
@@ -44,6 +48,7 @@ export default function CargarPage() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) setLista(JSON.parse(saved));
     } catch {}
+    setColaPendiente(getCola());
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
       if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
       else if (cerrados.includes('1')) setTurno('2');
@@ -53,6 +58,35 @@ export default function CargarPage() {
       if (cierre) setDiaCerrado(true);
     }).catch(() => {});
   }, [usuario]);
+
+  // Sincronizar cola cuando vuelve la conexión
+  useEffect(() => {
+    if (online && colaPendiente.length > 0) {
+      sincronizarCola();
+    }
+  }, [online]);
+
+  async function sincronizarCola() {
+    setSincronizando(true);
+    try {
+      const cola = getCola();
+      if (cola.length === 0) { setSincronizando(false); return; }
+
+      for (const item of cola) {
+        const t = await abrirTurno(item.bar_id, item.usuario_id, item.fecha, item.turno, item.caja_inicial || 0);
+        await crearIngresosBulk(item.rows.map(r => ({ ...r, turno_id: t.id })));
+        await cerrarTurno(t.id);
+      }
+
+      limpiarCola();
+      setColaPendiente([]);
+      show('✓ Datos sincronizados con el servidor');
+    } catch {
+      show('✗ Error al sincronizar — reintentando más tarde');
+    } finally {
+      setSincronizando(false);
+    }
+  }
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lista)); } catch {}
@@ -101,17 +135,40 @@ export default function CargarPage() {
   async function cerrarTurnoHandler() {
     if (activas.length === 0) return show('⚠ No hay ventas para cerrar');
     setCerrando(true);
+
+    const rows = activas.map(item => ({
+      bar_id: usuario.bar_id, turno_id: null, usuario_id: usuario.id,
+      medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
+      retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,
+      monto_neto: item.monto_neto, nota: item.nota || '',
+      fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(),
+      anulada: false, motivo_anulacion: '',
+    }));
+
+    if (!online) {
+      // Guardar en cola para sincronizar después
+      agregarACola({
+        bar_id:      usuario.bar_id,
+        usuario_id:  usuario.id,
+        fecha:       todayStr(),
+        turno,
+        caja_inicial: parseFloat(cajaInicial) || 0,
+        rows,
+      });
+      setColaPendiente(getCola());
+      localStorage.removeItem(STORAGE_KEY);
+      setLista([]);
+      if (turno === '1') setTurno('2');
+      else if (turno === '2') setTurno('sin_turno');
+      show(`📴 Sin conexión · Turno guardado localmente · Se sincronizará al reconectar`);
+      setCerrando(false);
+      setTimeout(() => router.push('/resumen'), 2000);
+      return;
+    }
+
     try {
       const t = await abrirTurno(usuario.bar_id, usuario.id, todayStr(), turno, parseFloat(cajaInicial) || 0);
-      const rows = activas.map(item => ({
-        bar_id: usuario.bar_id, turno_id: t.id, usuario_id: usuario.id,
-        medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
-        retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,
-        monto_neto: item.monto_neto, nota: item.nota || '',
-        fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(),
-        anulada: false, motivo_anulacion: '',
-      }));
-      await crearIngresosBulk(rows);
+      await crearIngresosBulk(rows.map(r => ({ ...r, turno_id: t.id })));
       await cerrarTurno(t.id);
       localStorage.removeItem(STORAGE_KEY);
       setLista([]);
@@ -153,6 +210,39 @@ export default function CargarPage() {
   return (
     <Screen>
       <Toast msg={toast} visible={visible} />
+
+      {/* Banner offline */}
+      {!online && (
+        <div className="bg-ambersoft border border-amber/20 rounded-2xl p-3 flex items-center gap-3">
+          <span className="text-xl">📴</span>
+          <div>
+            <div className="text-sm font-semibold text-ambertext">Sin conexión</div>
+            <div className="text-xs text-t3">Podés seguir cargando — se sincroniza al reconectar</div>
+          </div>
+        </div>
+      )}
+
+      {/* Banner sincronizando */}
+      {sincronizando && (
+        <div className="bg-greensoft border border-primary/20 rounded-2xl p-3 flex items-center gap-3">
+          <span className="text-xl">🔄</span>
+          <div className="text-sm font-semibold text-greentext">Sincronizando datos...</div>
+        </div>
+      )}
+
+      {/* Cola pendiente */}
+      {colaPendiente.length > 0 && online && !sincronizando && (
+        <div className="bg-ambersoft border border-amber/20 rounded-2xl p-3 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold text-ambertext">Datos pendientes</div>
+            <div className="text-xs text-t3">{colaPendiente.length} turno(s) sin sincronizar</div>
+          </div>
+          <button onClick={sincronizarCola}
+            className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold">
+            Sincronizar
+          </button>
+        </div>
+      )}
 
       {/* Modal apertura de caja */}
       {mostrarApertura && (
