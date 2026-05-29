@@ -219,7 +219,6 @@ export default function CargarPage() {
         </div>
       </Card>
 
-      {turno === '1' && (
         <Card>
           <div className="p-4">
             <FieldLabel>Caja inicial</FieldLabel>
@@ -231,7 +230,7 @@ export default function CargarPage() {
             </div>
           </div>
         </Card>
-      )}
+    
 
       <Card>
         <CardHeader title="Nueva venta" subtitle="Se agrega a la lista del turno" />
