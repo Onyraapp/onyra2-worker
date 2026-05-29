@@ -6,7 +6,8 @@ import { useAuth } from '../../../hooks/useAuth';
 import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, fmt, todayStr,
-  getIngresosDia, getEgresosDia, calcularResumenDia, getTurnosCerradosHoy
+  getIngresosDia, getEgresosDia, calcularResumenDia,
+  getTurnosCerradosHoy, getCierreDiario, crearCierreDiario
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
@@ -23,15 +24,16 @@ export default function CargarPage() {
   const router = useRouter();
   const { toast, visible, show } = useToast();
 
-  const [config,      setConfig]      = useState(null);
-  const [turno,       setTurno]       = useState(null);
-  const [medio,       setMedio]       = useState('efectivo');
-  const [monto,       setMonto]       = useState('');
-  const [nota,        setNota]        = useState('');
-  const [lista,       setLista]       = useState([]);
-  const [cerrando,    setCerrando]    = useState(false);
-  const [cerrandoDia, setCerrandoDia] = useState(false);
-  const [anulando,    setAnulando]    = useState(null);
+  const [config,       setConfig]       = useState(null);
+  const [turno,        setTurno]        = useState(null);
+  const [medio,        setMedio]        = useState('efectivo');
+  const [monto,        setMonto]        = useState('');
+  const [nota,         setNota]         = useState('');
+  const [lista,        setLista]        = useState([]);
+  const [cerrando,     setCerrando]     = useState(false);
+  const [cerrandoDia,  setCerrandoDia]  = useState(false);
+  const [diaCerrado,   setDiaCerrado]   = useState(false);
+  const [anulando,     setAnulando]     = useState(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
 
   useEffect(() => {
@@ -46,6 +48,11 @@ export default function CargarPage() {
       else if (cerrados.includes('1')) setTurno('2');
       else setTurno('1');
     }).catch(() => setTurno('1'));
+
+    // Verificar si el día ya está cerrado
+    getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
+      if (cierre) setDiaCerrado(true);
+    }).catch(() => {});
   }, [usuario]);
 
   useEffect(() => {
@@ -60,6 +67,9 @@ export default function CargarPage() {
   const totalBruto     = activas.reduce((s, i) => s + i.monto_bruto, 0);
   const totalRetencion = activas.reduce((s, i) => s + i.retencion_monto, 0);
   const totalNeto      = activas.reduce((s, i) => s + i.monto_neto, 0);
+
+  const esCajero = usuario?.rol === 'cajero';
+  const bloqueado = esCajero && diaCerrado;
 
   function agregarALista() {
     if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
@@ -113,35 +123,61 @@ export default function CargarPage() {
   }
 
   async function cierreDiario() {
-  setCerrandoDia(true);
-  try {
-    const [ing, egr, cfg] = await Promise.all([
-      getIngresosDia(usuario.bar_id, todayStr()),
-      getEgresosDia(usuario.bar_id, todayStr()),
-      getConfiguracion(usuario.bar_id),
-    ]);
-    const res = calcularResumenDia(ing, egr);
-    const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
-    const pos = res.resultado >= 0;
-    const msg = [
-      `*CajaBar - Cierre del ${fechaLabel}*`, ``,
-      `Ventas brutas:  ${fmt(res.totalBruto)}`,
-      `Retenciones:    -${fmt(res.totalRetencion)}`,
-      `Ventas netas:   ${fmt(res.totalNeto)}`,
-      `Gastos:         -${fmt(res.totalEgresos)}`, ``,
-      `Resultado: *${res.resultado >= 0 ? '' : '-'}${fmt(Math.abs(res.resultado))}*`, ``,
-      `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
-    ].join('\n');
-    const numero = cfg?.whatsapp_numero?.trim();
-    const url = numero
-      ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
-  } catch { show('Error al generar el cierre'); }
-  finally { setCerrandoDia(false); }
-}
+    setCerrandoDia(true);
+    try {
+      const [ing, egr, cfg] = await Promise.all([
+        getIngresosDia(usuario.bar_id, todayStr()),
+        getEgresosDia(usuario.bar_id, todayStr()),
+        getConfiguracion(usuario.bar_id),
+      ]);
+      const res = calcularResumenDia(ing, egr);
+      const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+      const pos = res.resultado >= 0;
+      const msg = [
+        `*CajaBar - Cierre del ${fechaLabel}*`, ``,
+        `Ventas brutas:  ${fmt(res.totalBruto)}`,
+        `Retenciones:    -${fmt(res.totalRetencion)}`,
+        `Ventas netas:   ${fmt(res.totalNeto)}`,
+        `Gastos:         -${fmt(res.totalEgresos)}`, ``,
+        `Resultado: *${res.resultado >= 0 ? '' : '-'}${fmt(Math.abs(res.resultado))}*`, ``,
+        `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
+      ].join('\n');
+      const numero = cfg?.whatsapp_numero?.trim();
+      const url = numero
+        ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
+        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+
+      // Registrar cierre diario y bloquear cajero
+      await crearCierreDiario(usuario.bar_id, usuario.id, todayStr());
+      setDiaCerrado(true);
+      show('✓ Día cerrado · WhatsApp enviado');
+    } catch (e) {
+      // Si el cierre ya existe (UNIQUE constraint), igual bloqueamos
+      if (e?.code === '23505') {
+        setDiaCerrado(true);
+        show('El día ya estaba cerrado');
+      } else {
+        show('✗ Error al cerrar el día');
+      }
+    }
+    finally { setCerrandoDia(false); }
+  }
 
   if (!config || turno === null) return <Spinner />;
+
+  // Pantalla bloqueada para cajero
+  if (bloqueado) {
+    return (
+      <Screen>
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+          <span className="text-5xl">🔒</span>
+          <div className="text-lg font-bold text-t1">Día cerrado</div>
+          <div className="text-sm text-t3">El administrador cerró el día de hoy. No se pueden cargar más ventas.</div>
+        </div>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -172,9 +208,10 @@ export default function CargarPage() {
         <div className="p-4">
           <div className="flex items-center justify-between mb-2">
             <FieldLabel>Turno</FieldLabel>
-            <button onClick={cierreDiario} disabled={cerrandoDia}
-              className="px-3 py-1.5 rounded-xl bg-green text-white text-xs font-semibold shadow-sm disabled:opacity-40">
-              {cerrandoDia ? '...' : '📲 Cierre diario'}
+            <button onClick={cierreDiario} disabled={cerrandoDia || diaCerrado}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm disabled:opacity-40
+                ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-green text-white'}`}>
+              {cerrandoDia ? '...' : diaCerrado ? '✓ Día cerrado' : '📲 Cierre diario'}
             </button>
           </div>
           <ChipGroup options={TURNOS.map(t => ({ value: t.key, label: `${t.icon} ${t.label}` }))} value={turno} onChange={setTurno} />
