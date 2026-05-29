@@ -94,7 +94,7 @@ export default function DashboardPage() {
       const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 
       const msg = [
-        `*CajaSmart - Cierre del ${fechaLabel}*`, ``,
+        `*Troco - Cierre del ${fechaLabel}*`, ``,
         `Caja inicial:   ${fmt(caja)}`,
         `Ventas brutas:  ${fmt(r.totalBruto)}`,
         `Retenciones:    -${fmt(r.totalRetencion)}`,
