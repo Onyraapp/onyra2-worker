@@ -130,7 +130,7 @@ export async function abrirTurno(barId, usuarioId, fecha, numero, cajaInicial = 
 
   const { data, error } = await sb
     .from('turnos')
-    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha, numero, caja_inicial: 0 }])
+    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha, numero, caja_inicial: cajaInicial }])
     .select().single();
   if (error) throw error;
   return data;
