@@ -1,6 +1,5 @@
-'use client';
 import './globals.css';
-import { I18nProvider } from '../context/I18nContext';
+import { Providers } from '../components/Providers';
 
 export const metadata = {
   title: 'Troco',
@@ -21,9 +20,9 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="bg-bg text-t1 antialiased">
-        <I18nProvider>
+        <Providers>
           {children}
-        </I18nProvider>
+        </Providers>
       </body>
     </html>
   );
