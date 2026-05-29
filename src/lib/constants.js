@@ -15,7 +15,7 @@ export const TIPOS_EGRESO = [
   { key: 'servicios',         label: 'Luz / Gas / Agua' },
   { key: 'sueldos',           label: 'Sueldos' },
   { key: 'comision_delivery', label: 'Comisión Delivery' },
-  { key: 'otros',             label: 'Otros' },
+  { key: 'retiros', label: 'Retiros' },
 ];
 
 export const TURNOS = [
