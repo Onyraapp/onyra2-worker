@@ -163,15 +163,24 @@ function getEgrTurno(t) {
                         {egrT.length > 0 && (
                           <div>
                             <div className="text-[11px] font-medium text-t3 uppercase tracking-wide mb-2">Gastos</div>
-                            {egrT.map(e => {
-                              const tipo = TIPOS_EGRESO.find(te => te.key === e.tipo);
-                              return (
-                                <div key={e.id} className="flex justify-between py-2 border-b border-divider last:border-0">
-                                  <span className="text-sm text-t2">{tipo?.label || e.tipo}{e.detalle ? ` · ${e.detalle}` : ''}</span>
-                                  <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmt(e.monto)}</span>
-                                </div>
-                              );
-                            })}
+                            {(() => {
+  const totalEgr = egrT.reduce((s, e) => s + e.monto, 0);
+  const porTipo = {};
+  egrT.forEach(e => { porTipo[e.tipo] = (porTipo[e.tipo] || 0) + e.monto; });
+  return Object.entries(porTipo).map(([tipo, monto]) => {
+    const t = TIPOS_EGRESO.find(te => te.key === tipo);
+    const pct = totalEgr > 0 ? ((monto / totalEgr) * 100).toFixed(0) : 0;
+    return (
+      <div key={tipo} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
+        <span className="text-sm text-t2">{t?.label || tipo}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-t3">{pct}%</span>
+          <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmt(monto)}</span>
+        </div>
+      </div>
+    );
+  });
+})()}
                           </div>
                         )}
                         <div className="bg-offset rounded-xl p-3">
