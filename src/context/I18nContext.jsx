@@ -19,8 +19,8 @@ function resolve(obj, key) {
 }
 
 export function I18nProvider({ children }) {
-  const [mounted, setMounted] = useState(false);
   const [locale, setLocaleState] = useState(defaultLocale);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -65,10 +65,8 @@ export function I18nProvider({ children }) {
     } catch { return String(date); }
   }, [locale]);
 
-  if (!mounted) return <>{children}</>;
-
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t, formatCurrency, formatDate, loading: false, supportedLocales }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, formatCurrency, formatDate, loading: !mounted, supportedLocales }}>
       {children}
     </I18nContext.Provider>
   );
