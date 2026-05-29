@@ -113,28 +113,33 @@ export default function CargarPage() {
   }
 
   async function cierreDiario() {
-    setCerrandoDia(true);
-    try {
-      const [ing, egr] = await Promise.all([
-        getIngresosDia(usuario.bar_id, todayStr()),
-        getEgresosDia(usuario.bar_id, todayStr()),
-      ]);
-      const res = calcularResumenDia(ing, egr);
-      const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
-      const pos = res.resultado >= 0;
-      const msg = [
-  `*CajaBar - Cierre del ${fechaLabel}*`, ``,
-  `Ventas brutas:  ${fmt(res.totalBruto)}`,
-  `Retenciones:    -${fmt(res.totalRetencion)}`,
-  `Ventas netas:   ${fmt(res.totalNeto)}`,
-  `Gastos:         -${fmt(res.totalEgresos)}`, ``,
-  `Resultado: *${res.resultado >= 0 ? '' : '-'}${fmt(Math.abs(res.resultado))}*`, ``,
-  `_${ing.filter(i => !i.anulada).length} ventas · ${ing.filter(i => i.anulada).length} anulaciones_`,
-].join('\n');
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    } catch { show('✗ Error al generar el cierre'); }
-    finally { setCerrandoDia(false); }
-  }
+  setCerrandoDia(true);
+  try {
+    const [ing, egr, cfg] = await Promise.all([
+      getIngresosDia(usuario.bar_id, todayStr()),
+      getEgresosDia(usuario.bar_id, todayStr()),
+      getConfiguracion(usuario.bar_id),
+    ]);
+    const res = calcularResumenDia(ing, egr);
+    const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const pos = res.resultado >= 0;
+    const msg = [
+      `*CajaBar - Cierre del ${fechaLabel}*`, ``,
+      `Ventas brutas:  ${fmt(res.totalBruto)}`,
+      `Retenciones:    -${fmt(res.totalRetencion)}`,
+      `Ventas netas:   ${fmt(res.totalNeto)}`,
+      `Gastos:         -${fmt(res.totalEgresos)}`, ``,
+      `Resultado: *${res.resultado >= 0 ? '' : '-'}${fmt(Math.abs(res.resultado))}*`, ``,
+      `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
+    ].join('\n');
+    const numero = cfg?.whatsapp_numero?.trim();
+    const url = numero
+      ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  } catch { show('Error al generar el cierre'); }
+  finally { setCerrandoDia(false); }
+}
 
   if (!config || turno === null) return <Spinner />;
 
