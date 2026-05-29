@@ -31,7 +31,7 @@ export default function LoginPage() {
         <div className="w-16 h-16 rounded-[20px] bg-green flex items-center justify-center shadow-md mb-4">
           <span className="text-white text-2xl font-bold">C</span>
         </div>
-        <span className="text-2xl font-bold text-t1 tracking-tight">CajaBar</span>
+        <span className="text-2xl font-bold text-t1 tracking-tight"> CajaSmart</span>
         <span className="text-sm text-t3 mt-1">Control de caja para bares</span>
       </div>
 
