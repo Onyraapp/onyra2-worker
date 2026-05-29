@@ -53,7 +53,7 @@ export function exportarMesExcel(resumen, año, mes, mesLabel) {
   );
 }
 
-export async function exportarMesPDF(resumen, año, mes, mesLabel, nombreBar = 'CajaBar') {
+export async function exportarMesPDF(resumen, año, mes, mesLabel, nombreBar = 'Troco') {
   const { jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
 
@@ -146,7 +146,7 @@ export async function exportarMesPDF(resumen, año, mes, mesLabel, nombreBar = '
 export function compartirWhatsApp(resumen, mesLabel, nombreBar = '') {
   const pos = resumen.resultado >= 0;
   const msg = [
-    `🧾 *CajaBar${nombreBar ? ' — ' + nombreBar : ''}*`,
+    `🧾 *Troco${nombreBar ? ' — ' + nombreBar : ''}*`,
     `📅 ${mesLabel}`,
     ``,
     `📈 Ventas brutas:  ${fmt(resumen.totalBruto)}`,
