@@ -108,7 +108,7 @@ export default function CargarPage() {
         medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
         retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,
         monto_neto: item.monto_neto, nota: item.nota || '',
-        fecha: new Date().toISOString(), anulada: false, motivo_anulacion: '',
+        fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(), anulada: false, motivo_anulacion: '',
       }));
       await crearIngresosBulk(rows);
       await cerrarTurno(t.id);
