@@ -8,7 +8,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import {
   getIngresosDia, getEgresosDia, calcularResumenDia,
   getConfiguracion, getCierreDiario, crearCierreDiario,
-  getCajaInicialDia, fmt, todayStr
+  getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr
 } from '../../../lib/data';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
 import {
@@ -27,7 +27,10 @@ export default function DashboardPage() {
   const [loading,     setLoading]     = useState(true);
   const [diaCerrado,  setDiaCerrado]  = useState(false);
   const [cerrandoDia, setCerrandoDia] = useState(false);
+  const [cajaInicial, setCajaInicial] = useState(0);
   const [turnoActivo, setTurnoActivo] = useState('');
+
+  const esHoy = fecha === todayStr();
 
   const cargar = useCallback(async () => {
     if (!usuario) return;
@@ -42,13 +45,19 @@ export default function DashboardPage() {
       setIngresos(ing); setEgresos(egr);
       setDiaCerrado(!!cierre);
       setCajaInicial(caja);
+
+      if (esHoy) {
+        const cerrados = await getTurnosCerradosHoy(usuario.bar_id);
+        if (cerrados.includes('1') && cerrados.includes('2')) setTurnoActivo('— Sin turno');
+        else if (cerrados.includes('1')) setTurnoActivo('🌙 Turno 2');
+        else setTurnoActivo('☀️ Turno 1');
+      }
     } finally { setLoading(false); }
   }, [usuario, fecha]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const esHoy  = fecha === todayStr();
-  const res    = calcularResumenDia(ingresos, egresos);
+  const res = calcularResumenDia(ingresos, egresos);
   const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
 
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
@@ -79,7 +88,6 @@ export default function DashboardPage() {
       ]);
       const r = calcularResumenDia(ing, egr);
       const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
-      const pos = r.resultado >= 0;
       const msg = [
         `*CajaSmart - Cierre del ${fechaLabel}*`, ``,
         `Caja inicial:   ${fmt(cajaInicial)}`,
@@ -113,8 +121,9 @@ export default function DashboardPage() {
           className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold">‹</button>
         <div className="flex-1 flex flex-col items-center gap-1">
           <span className="text-sm font-semibold text-t1 capitalize">{fechaDisplay}</span>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap justify-center">
             {esHoy && <Badge label="Hoy" variant="success" />}
+            {esHoy && turnoActivo && <Badge label={turnoActivo} variant="primary" />}
             {diaCerrado && <Badge label="Cerrado" variant="danger" />}
           </div>
         </div>
