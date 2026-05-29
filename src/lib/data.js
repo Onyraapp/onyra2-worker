@@ -372,6 +372,7 @@ export async function updateBar(barId, updates) {
     .select().single();
   if (error) throw error;
   return data;
+  }
 export async function getCajaInicialDia(barId, fechaStr) {
   const sb = getClient();
   const { data } = await sb
