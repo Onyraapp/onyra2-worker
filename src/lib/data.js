@@ -319,5 +319,25 @@ export async function getTurnosCerradosHoy(barId) {
     .gte('created_at', inicio)
     .lte('created_at', fin);
   return (data || []).map(t => t.numero);
+  export async function getCierreDiario(barId, fechaStr) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('cierres_diarios')
+    .select('*')
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr)
+    .maybeSingle();
+  return data;
+}
+
+export async function crearCierreDiario(barId, usuarioId, fechaStr) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('cierres_diarios')
+    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha: fechaStr }])
+    .select().single();
+  if (error) throw error;
+  return data;
+}
 }
 
