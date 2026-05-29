@@ -339,6 +339,7 @@ export async function crearCierreDiario(barId, usuarioId, fechaStr) {
     .select().single();
   if (error) throw error;
   return data;
+  }
   export async function registrarCajero({ barId, nombre, email, password }) {
   const sb = getClient();
   const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
