@@ -318,4 +318,4 @@ export async function getTurnosCerradosHoy(barId) {
     .lte('created_at', fin);
   return (data || []).map(t => t.numero);
 }
-}
+
