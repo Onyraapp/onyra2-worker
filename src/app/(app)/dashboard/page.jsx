@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [loading,     setLoading]     = useState(true);
   const [diaCerrado,  setDiaCerrado]  = useState(false);
   const [cerrandoDia, setCerrandoDia] = useState(false);
-  const [cajaInicial, setCajaInicial] = useState(0);
+  const [turnoActivo, setTurnoActivo] = useState('');
 
   const cargar = useCallback(async () => {
     if (!usuario) return;
