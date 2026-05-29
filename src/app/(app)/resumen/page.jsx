@@ -68,7 +68,10 @@ export default function ResumenPage() {
 
   const ingresosActivos = ingresos.filter(i => !i.anulada);
   const ingresosAnulados = ingresos.filter(i => i.anulada);
-  const resDia = calcularResumenDia(ingresos, egresos);
+const egresosFiltrados = usuario?.rol === 'admin'
+  ? egresos
+  : egresos.filter(e => e.tipo !== 'retiros');
+const resDia = calcularResumenDia(ingresos, egresosFiltrados);
 
   function getIngTurno(t) {
   return ingresosActivos.filter(i => {
