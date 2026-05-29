@@ -46,7 +46,7 @@ export default function RegisterPage() {
         <div className="w-14 h-14 rounded-[18px] bg-green/15 border border-green/30 flex items-center justify-center mb-3">
           <span className="text-2xl font-black text-greentext">⇡</span>
         </div>
-        <span className="text-2xl font-black text-t1 tracking-tight">CajaBar</span>
+        <span className="text-2xl font-black text-t1 tracking-tight">CajaSmart</span>
         <span className="text-xs text-t3 mt-1">Registrá tu bar</span>
       </div>
 
