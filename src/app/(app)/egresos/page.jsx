@@ -34,8 +34,6 @@ export default function EgresosPage() {
       });
       setMonto(''); setDetalle('');
       show('✓ Gasto registrado');
-
-      // Alerta WhatsApp si el gasto supera el monto mínimo
       if (config?.wa_alerta_gasto && config?.whatsapp_numero) {
         const montoMinimo = config?.wa_alerta_gasto_monto || 10000;
         if (m >= montoMinimo) {
@@ -76,4 +74,11 @@ export default function EgresosPage() {
           </div>
           <div>
             <FieldLabel>Detalle (opcional)</FieldLabel>
-            <Textarea value={detalle} onChange={setDetalle} placeholder="Ej: Pago cervezas Quilmes, factur
+            <Textarea value={detalle} onChange={setDetalle} placeholder="Ej: Pago cervezas Quilmes, factura luz mayo..." />
+          </div>
+          <BtnPrimary label="Registrar gasto" onClick={guardar} loading={loading} className="bg-amber" />
+        </div>
+      </Card>
+    </Screen>
+  );
+}
