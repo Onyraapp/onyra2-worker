@@ -12,8 +12,8 @@ import {
 } from '../../../lib/data';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
 import {
-  Screen, Card, CardHeader, KpiCard, ResultadoCard,
-  TablaRetencion, BreakdownBar, EmptyState, Spinner,
+  Screen, Card, CardHeader, KpiCard,
+  BreakdownBar, EmptyState, Spinner,
   BtnPrimary, Badge, DivRow, Toast, useToast
 } from '../../../components/ui';
 
@@ -72,9 +72,7 @@ export default function DashboardPage() {
     .filter(m => res.porMedio[m.key])
     .map(m => ({
       label: m.label, color: m.color,
-      bruto:     res.porMedio[m.key].bruto,
-      retencion: res.porMedio[m.key].retencion,
-      neto:      res.porMedio[m.key].neto,
+      bruto: res.porMedio[m.key].bruto,
     }));
 
   const egresosPorTipo = egresos.reduce((acc, e) => {
@@ -111,11 +109,7 @@ export default function DashboardPage() {
         ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
         : `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-      // Abrir WhatsApp automáticamente
-      window.open(url, '_blank');
-
-      // Guardar resumen para el modal
-      setResumenCierre({ r, caja, ing, fechaLabel });
+      setResumenCierre({ r, caja, ing, fechaLabel, url });
       setModalCierre(true);
     } catch { show('✗ Error al generar el cierre'); }
     finally { setCerrandoDia(false); }
@@ -124,13 +118,14 @@ export default function DashboardPage() {
   async function confirmarCierre() {
     try {
       await crearCierreDiario(usuario.bar_id, usuario.id, todayStr());
+      window.open(resumenCierre.url, '_blank');
       setDiaCerrado(true);
       setModalCierre(false);
       show('✓ Día cerrado');
-      // Avanzar al día siguiente
       setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
     } catch (e) {
       if (e?.code === '23505') {
+        window.open(resumenCierre.url, '_blank');
         setDiaCerrado(true);
         setModalCierre(false);
         setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
@@ -153,12 +148,12 @@ export default function DashboardPage() {
               <div className="text-lg font-bold text-t1">Cierre del día</div>
               <div className="text-sm text-t3 mt-1 capitalize">{resumenCierre.fechaLabel}</div>
             </div>
-            <div className="bg-offset rounded-2xl p-4 flex flex-col gap-0">
-              <DivRow label="Caja inicial"   value={fmt(resumenCierre.caja)} />
-              <DivRow label="Ventas brutas"  value={fmt(resumenCierre.r.totalBruto)} />
-              <DivRow label="Retenciones"    value={`-${fmt(resumenCierre.r.totalRetencion)}`} valueClass="text-redtext" />
-              <DivRow label="Ventas netas"   value={fmt(resumenCierre.r.totalNeto)} valueClass="text-greentext" />
-              <DivRow label="Gastos"         value={`-${fmt(resumenCierre.r.totalEgresos)}`} valueClass="text-ambertext" />
+            <div className="bg-offset rounded-2xl p-4">
+              <DivRow label="Caja inicial"  value={fmt(resumenCierre.caja)} />
+              <DivRow label="Ventas brutas" value={fmt(resumenCierre.r.totalBruto)} />
+              <DivRow label="Retenciones"   value={`-${fmt(resumenCierre.r.totalRetencion)}`} valueClass="text-redtext" />
+              <DivRow label="Ventas netas"  value={fmt(resumenCierre.r.totalNeto)} valueClass="text-greentext" />
+              <DivRow label="Gastos"        value={`-${fmt(resumenCierre.r.totalEgresos)}`} valueClass="text-ambertext" />
               <DivRow label="Resultado"
                 value={`${resumenCierre.r.resultado >= 0 ? '' : '-'}${fmt(Math.abs(resumenCierre.r.resultado))}`}
                 valueClass={resumenCierre.r.resultado >= 0 ? 'text-greentext' : 'text-redtext'} bold />
@@ -166,10 +161,7 @@ export default function DashboardPage() {
             <div className="text-center text-xs text-t3">
               {resumenCierre.ing.filter(i => !i.anulada).length} ventas · {resumenCierre.ing.filter(i => i.anulada).length} anulaciones
             </div>
-            <div className="text-center text-xs text-t3 bg-greensoft rounded-xl py-2">
-              ✓ WhatsApp enviado automáticamente
-            </div>
-            <BtnPrimary label="Confirmar cierre del día" onClick={confirmarCierre} />
+            <BtnPrimary label="Confirmar y enviar por WhatsApp" onClick={confirmarCierre} />
             <button onClick={() => setModalCierre(false)}
               className="w-full h-10 text-t3 text-sm">
               Cancelar
