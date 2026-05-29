@@ -122,7 +122,7 @@ export async function getTurnoAbierto(barId, fecha, numero) {
   return data;
 }
 
-export async function abrirTurno(barId, usuarioId, fecha, numero) {
+export async function abrirTurno(barId, usuarioId, fecha, numero, cajaInicial = 0) {
   const sb = getClient();
   // Si ya existe uno abierto, lo devolvemos
   const existente = await getTurnoAbierto(barId, fecha, numero);
