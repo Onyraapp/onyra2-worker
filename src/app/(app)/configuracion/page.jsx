@@ -55,13 +55,14 @@ export default function ConfiguracionPage() {
   }, [usuario]);
 
   async function guardarNombreBar() {
-    setSavingBar(true);
-    try {
-      await updateBar(usuario.bar_id, { nombre: nombreBar });
-      show('✓ Nombre actualizado');
-    } catch { show('✗ Error al guardar'); }
-    finally { setSavingBar(false); }
-  }
+  setSavingBar(true);
+  try {
+    await updateBar(usuario.bar_id, { nombre: nombreBar });
+    show('✓ Nombre actualizado');
+    setTimeout(() => window.location.reload(), 1000);
+  } catch { show('✗ Error al guardar'); }
+  finally { setSavingBar(false); }
+}
 
   async function guardar() {
     setSaving(true);
