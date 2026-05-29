@@ -123,7 +123,7 @@ export const translations = {
 
   pt: {
     appName: 'Troco',
-    appTagline: 'o controle diário da sua loja',
+   appTagline: 'o controle diario da sua loja',
     auth: {
       login: 'Entrar',
       logout: 'Sair',
