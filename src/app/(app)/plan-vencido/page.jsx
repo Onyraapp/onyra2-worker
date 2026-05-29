@@ -14,7 +14,7 @@ export default function PlanVencidoPage() {
         <div>
           <div className="text-2xl font-bold text-t1 tracking-tight">Tu período de prueba terminó</div>
           <div className="text-sm text-t3 mt-2">
-            Gracias por probar CajaSmart. Para seguir usando la app elegí un plan.
+            Gracias por probar Troco. Para seguir usando la app elegí un plan.
           </div>
         </div>
 
@@ -31,12 +31,12 @@ export default function PlanVencidoPage() {
           </div>
         </div>
 
-        <a href={`https://wa.me/549TUNUMERO?text=Hola%2C%20quiero%20contratar%20CajaSmart%20para%20${encodeURIComponent(usuario?.bares?.nombre || '')}`}
+        <a href={`https://wa.me/549TUNUMERO?text=Hola%2C%20quiero%20contratar%20Troco%20para%20${encodeURIComponent(usuario?.bares?.nombre || '')}`}
           target="_blank"
           className="w-full h-12 rounded-xl bg-primary text-white font-semibold text-[15px] flex items-center justify-center shadow-sm">
           Contratar por WhatsApp
         </a>
-        <div className="text-xs text-t3">También podés escribirnos a cajasmart@email.com</div>
+        <div className="text-xs text-t3">También podés escribirnos a troco@email.com</div>
       </div>
     </div>
   );
