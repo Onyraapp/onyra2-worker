@@ -71,7 +71,7 @@ export default function CargarPage() {
   const esCajero = usuario?.rol === 'cajero';
   const bloqueado = esCajero && diaCerrado;
 
-  function agregarALista() {
+  function agregarAVentas() {
     if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
     const m    = MEDIOS_PAGO.find(mp => mp.key === medio);
     const calc = calcularRetencion(montoBruto, pct);
@@ -236,8 +236,8 @@ export default function CargarPage() {
             <input value={nota} onChange={e => setNota(e.target.value)} placeholder="Mesa 5, delivery, etc..."
               className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm border border-transparent focus:outline-none focus:border-primary/40 placeholder:text-t4" />
           </div>
-          <button onClick={agregarALista} className="w-full h-11 rounded-xl bg-primary/10 border border-primary/20 text-primary font-semibold text-sm active:scale-[0.98] transition-all">
-            + Agregar a lista
+          <button onClick={agregarAVentas} className="w-full h-11 rounded-xl bg-primary/10 border border-primary/20 text-primary font-semibold text-sm active:scale-[0.98] transition-all">
+            + Agregar a ventas
           </button>
         </div>
       </Card>
