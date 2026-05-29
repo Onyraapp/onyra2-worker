@@ -7,32 +7,38 @@ import { es } from 'date-fns/locale';
 import { useAuth } from '../../../hooks/useAuth';
 import {
   getIngresosDia, getEgresosDia, calcularResumenDia,
+  getConfiguracion, getCierreDiario, crearCierreDiario,
   fmt, todayStr
 } from '../../../lib/data';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, KpiCard, ResultadoCard,
   TablaRetencion, BreakdownBar, EmptyState, Spinner,
-  BtnPrimary, Badge, DivRow
+  BtnPrimary, Badge, DivRow, Toast, useToast
 } from '../../../components/ui';
 
 export default function DashboardPage() {
   const { usuario } = useAuth();
   const router = useRouter();
-  const [fecha, setFecha] = useState(todayStr());
-  const [ingresos, setIngresos] = useState([]);
-  const [egresos,  setEgresos]  = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  const { toast, visible, show } = useToast();
+  const [fecha,      setFecha]      = useState(todayStr());
+  const [ingresos,   setIngresos]   = useState([]);
+  const [egresos,    setEgresos]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [diaCerrado, setDiaCerrado] = useState(false);
+  const [cerrandoDia, setCerrandoDia] = useState(false);
 
   const cargar = useCallback(async () => {
     if (!usuario) return;
     setLoading(true);
     try {
-      const [ing, egr] = await Promise.all([
+      const [ing, egr, cierre] = await Promise.all([
         getIngresosDia(usuario.bar_id, fecha),
         getEgresosDia(usuario.bar_id, fecha),
+        getCierreDiario(usuario.bar_id, fecha),
       ]);
       setIngresos(ing); setEgresos(egr);
+      setDiaCerrado(!!cierre);
     } finally { setLoading(false); }
   }, [usuario, fecha]);
 
@@ -48,8 +54,7 @@ export default function DashboardPage() {
   const retRows = MEDIOS_PAGO
     .filter(m => res.porMedio[m.key])
     .map(m => ({
-      label:     m.label,
-      color:     m.color,
+      label: m.label, color: m.color,
       bruto:     res.porMedio[m.key].bruto,
       retencion: res.porMedio[m.key].retencion,
       neto:      res.porMedio[m.key].neto,
@@ -60,28 +65,62 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
+  async function cierreDiario() {
+    if (diaCerrado) return;
+    setCerrandoDia(true);
+    try {
+      const [ing, egr, cfg] = await Promise.all([
+        getIngresosDia(usuario.bar_id, todayStr()),
+        getEgresosDia(usuario.bar_id, todayStr()),
+        getConfiguracion(usuario.bar_id),
+      ]);
+      const r = calcularResumenDia(ing, egr);
+      const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+      const pos = r.resultado >= 0;
+      const msg = [
+        `*CajaBar - Cierre del ${fechaLabel}*`, ``,
+        `Ventas brutas:  ${fmt(r.totalBruto)}`,
+        `Retenciones:    -${fmt(r.totalRetencion)}`,
+        `Ventas netas:   ${fmt(r.totalNeto)}`,
+        `Gastos:         -${fmt(r.totalEgresos)}`, ``,
+        `Resultado: *${r.resultado >= 0 ? '' : '-'}${fmt(Math.abs(r.resultado))}*`, ``,
+        `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
+      ].join('\n');
+      const numero = cfg?.whatsapp_numero?.trim();
+      const url = numero
+        ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
+        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+      await crearCierreDiario(usuario.bar_id, usuario.id, todayStr());
+      setDiaCerrado(true);
+      show('✓ Día cerrado · WhatsApp enviado');
+    } catch (e) {
+      if (e?.code === '23505') { setDiaCerrado(true); show('El día ya estaba cerrado'); }
+      else show('✗ Error al cerrar el día');
+    } finally { setCerrandoDia(false); }
+  }
+
   return (
     <Screen>
-      {/* Date selector */}
+      <Toast msg={toast} visible={visible} />
+
       <div className="flex items-center gap-2 bg-surface rounded-2xl shadow-card p-3">
         <button onClick={() => setFecha(d => subDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold">
-          ‹
-        </button>
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold">‹</button>
         <div className="flex-1 flex flex-col items-center gap-1">
           <span className="text-sm font-semibold text-t1 capitalize">{fechaDisplay}</span>
-          {esHoy && <Badge label="Hoy" variant="success" />}
+          <div className="flex gap-1.5">
+            {esHoy && <Badge label="Hoy" variant="success" />}
+            {diaCerrado && <Badge label="Cerrado" variant="danger" />}
+          </div>
         </div>
         <button onClick={() => setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
           disabled={esHoy}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold disabled:opacity-30">
-          ›
-        </button>
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold disabled:opacity-30">›</button>
       </div>
 
       {loading ? <Spinner /> : (<>
 
-        {/* KPIs */}
         <div className="flex gap-3">
           <KpiCard label="Ventas brutas" value={res.totalBruto} color="green" />
           <KpiCard label="Retenciones"   value={res.totalRetencion} color="red"
@@ -94,7 +133,6 @@ export default function DashboardPage() {
 
         <ResultadoCard valor={res.resultado} />
 
-        {/* Desglose por medio de pago */}
         {retRows.length > 0 && (
           <Card>
             <CardHeader title="Por medio de pago" subtitle="Bruto · Retención · Neto" />
@@ -104,7 +142,6 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Egresos por tipo */}
         {egresos.length > 0 && (
           <Card>
             <CardHeader title="Gastos del día"
@@ -118,7 +155,6 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Anulaciones - solo admin */}
         {usuario?.rol === 'admin' && ingresosAnulados.length > 0 && (
           <Card>
             <CardHeader title="Anulaciones del día"
@@ -139,7 +175,6 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Movimientos */}
         <Card>
           <CardHeader title="Movimientos"
             subtitle={`${ingresosActivos.length + egresos.length} registros`} />
@@ -157,7 +192,6 @@ export default function DashboardPage() {
                           <div className="text-sm font-semibold text-t1">{m?.label}</div>
                           <div className="text-xs text-t3 mt-0.5">
                             {i.fecha?.slice(11,16)}
-                            {i.turnos?.numero && i.turnos.numero !== 'sin_turno' && ` · T${i.turnos.numero}`}
                             {i.retencion_pct > 0 && ` · ${i.retencion_pct}% ret.`}
                           </div>
                           {i.nota && <div className="text-xs text-t2 mt-0.5 italic truncate">{i.nota}</div>}
@@ -178,10 +212,7 @@ export default function DashboardPage() {
                         <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0 bg-amber" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-t1">{t?.label || e.tipo}</div>
-                          <div className="text-xs text-t3 mt-0.5">
-                            {e.fecha?.slice(11,16)}
-                            {e.turnos?.numero && e.turnos.numero !== 'sin_turno' && ` · T${e.turnos.numero}`}
-                          </div>
+                          <div className="text-xs text-t3 mt-0.5">{e.fecha?.slice(11,16)}</div>
                           {e.detalle && <div className="text-xs text-t2 mt-0.5 italic truncate">{e.detalle}</div>}
                         </div>
                         <div className="text-sm font-bold tabular-nums text-ambertext flex-shrink-0">
@@ -200,6 +231,13 @@ export default function DashboardPage() {
           <button onClick={() => router.push('/egresos')}
             className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium">
             − Registrar gasto
+          </button>
+          <button
+            onClick={cierreDiario}
+            disabled={cerrandoDia || diaCerrado || !esHoy}
+            className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40
+              ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-green text-white'}`}>
+            {cerrandoDia ? '...' : diaCerrado ? '✓ Cerrado' : '📲 Cierre diario'}
           </button>
         </div>
 
