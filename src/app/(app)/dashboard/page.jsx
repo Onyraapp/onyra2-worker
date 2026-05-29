@@ -147,7 +147,7 @@ export default function DashboardPage() {
 
         {retRows.length > 0 && (
           <Card>
-            <CardHeader title="Por medio de pago" subtitle="Bruto · Retención · Neto" />
+           <CardHeader title="Por medio de pago" subtitle="Ventas brutas por canal" />
             <div className="p-4">
               <TablaRetencion rows={retRows} />
             </div>
