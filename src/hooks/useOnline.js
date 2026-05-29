@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-const COLA_KEY = 'cajasmart_cola_pendiente';
+const COLA_KEY = 'troco_cola_pendiente';
 
 export function useOnline() {
   const [online, setOnline] = useState(true);
