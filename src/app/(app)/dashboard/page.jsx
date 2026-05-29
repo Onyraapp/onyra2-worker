@@ -57,7 +57,10 @@ export default function DashboardPage() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const res = calcularResumenDia(ingresos, egresos);
+  const egresosFiltrados = usuario?.rol === 'admin' 
+  ? egresos 
+  : egresos.filter(e => e.tipo !== 'retiros');
+const res = calcularResumenDia(ingresos, egresosFiltrados);
   const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
 
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
