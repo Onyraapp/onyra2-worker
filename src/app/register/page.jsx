@@ -76,4 +76,18 @@ export default function RegisterPage() {
             Acepto los{' '}
             <a href="/terminos" className="text-primary underline">Términos y Condiciones</a>,{' '}
             la <a href="/privacidad" className="text-primary underline">Política de Privacidad</a>{' '}
-            y
+         y{' '}
+          <a href="/privacidad" className="text-primary underline">Política de Privacidad</a>
+          {'.'}
+        </label>
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-accent text-white py-3 rounded-2xl font-semibold text-[15px] mt-2"
+      >
+        Crear cuenta
+      </button>
+    </form>
+  );
+}
