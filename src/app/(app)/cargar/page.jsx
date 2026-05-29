@@ -33,6 +33,7 @@ export default function CargarPage() {
   const [cerrando,     setCerrando]     = useState(false);
   const [cerrandoDia,  setCerrandoDia]  = useState(false);
   const [diaCerrado,   setDiaCerrado]   = useState(false);
+  const [cajaInicial,  setCajaInicial]  = useState('');
   const [anulando,     setAnulando]     = useState(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
 
@@ -48,8 +49,6 @@ export default function CargarPage() {
       else if (cerrados.includes('1')) setTurno('2');
       else setTurno('1');
     }).catch(() => setTurno('1'));
-
-    // Verificar si el día ya está cerrado
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
     }).catch(() => {});
@@ -90,7 +89,8 @@ export default function CargarPage() {
         medio_pago: anulando.medio_pago, monto_bruto: anulando.monto_bruto,
         retencion_pct: anulando.retencion_pct, retencion_monto: anulando.retencion_monto,
         monto_neto: anulando.monto_neto, nota: anulando.nota || '',
-        fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(), anulada: true, motivo_anulacion: motivoAnulacion,
+        fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(),
+        anulada: true, motivo_anulacion: motivoAnulacion,
       }]);
       setLista(l => l.map(i => i._id === anulando._id ? { ...i, anulada: true, motivo_anulacion: motivoAnulacion } : i));
       setAnulando(null);
@@ -102,13 +102,14 @@ export default function CargarPage() {
     if (activas.length === 0) return show('⚠ No hay ventas para cerrar');
     setCerrando(true);
     try {
-      const t = await abrirTurno(usuario.bar_id, usuario.id, todayStr(), turno);
+      const t = await abrirTurno(usuario.bar_id, usuario.id, todayStr(), turno, parseFloat(cajaInicial) || 0);
       const rows = activas.map(item => ({
         bar_id: usuario.bar_id, turno_id: t.id, usuario_id: usuario.id,
         medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
         retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,
         monto_neto: item.monto_neto, nota: item.nota || '',
-        fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(), anulada: false, motivo_anulacion: '',
+        fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(),
+        anulada: false, motivo_anulacion: '',
       }));
       await crearIngresosBulk(rows);
       await cerrarTurno(t.id);
@@ -116,19 +117,21 @@ export default function CargarPage() {
       setLista([]);
       if (turno === '1') setTurno('2');
       else if (turno === '2') setTurno('sin_turno');
+
       // Notificar por WhatsApp si está configurado
-if (config?.wa_cierre_turno && config?.whatsapp_numero) {
-  const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Sin turno';
-  const msg = [
-    `*CajaBar - Cierre de ${turnoLabel}*`, ``,
-    `Ventas brutas:  ${fmt(totalBruto)}`,
-    `Retenciones:    -${fmt(totalRetencion)}`,
-    `Ventas netas:   ${fmt(totalNeto)}`,
-    ``,
-    `_${activas.length} ventas_`,
-  ].join('\n');
-  window.open(`https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
-}
+      if (config?.wa_cierre_turno && config?.whatsapp_numero) {
+        const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Sin turno';
+        const msg = [
+          `*CajaSmart - Cierre de ${turnoLabel}*`, ``,
+          `Ventas brutas:  ${fmt(totalBruto)}`,
+          `Retenciones:    -${fmt(totalRetencion)}`,
+          `Ventas netas:   ${fmt(totalNeto)}`, ``,
+          `_${activas.length} ventas_`,
+        ].join('\n');
+        window.open(`https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+
+      show(`✓ Turno cerrado · ${activas.length} ventas · ${fmt(totalBruto)} bruto`);
       setTimeout(() => router.push('/resumen'), 1500);
     } catch { show('✗ Error al cerrar turno'); }
     finally { setCerrando(false); }
@@ -146,7 +149,7 @@ if (config?.wa_cierre_turno && config?.whatsapp_numero) {
       const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
       const pos = res.resultado >= 0;
       const msg = [
-        `*CajaBar - Cierre del ${fechaLabel}*`, ``,
+        `*CajaSmart - Cierre del ${fechaLabel}*`, ``,
         `Ventas brutas:  ${fmt(res.totalBruto)}`,
         `Retenciones:    -${fmt(res.totalRetencion)}`,
         `Ventas netas:   ${fmt(res.totalNeto)}`,
@@ -159,33 +162,24 @@ if (config?.wa_cierre_turno && config?.whatsapp_numero) {
         ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
         : `https://wa.me/?text=${encodeURIComponent(msg)}`;
       window.open(url, '_blank');
-
-      // Registrar cierre diario y bloquear cajero
       await crearCierreDiario(usuario.bar_id, usuario.id, todayStr());
       setDiaCerrado(true);
       show('✓ Día cerrado · WhatsApp enviado');
     } catch (e) {
-      // Si el cierre ya existe (UNIQUE constraint), igual bloqueamos
-      if (e?.code === '23505') {
-        setDiaCerrado(true);
-        show('El día ya estaba cerrado');
-      } else {
-        show('✗ Error al cerrar el día');
-      }
-    }
-    finally { setCerrandoDia(false); }
+      if (e?.code === '23505') { setDiaCerrado(true); show('El día ya estaba cerrado'); }
+      else show('✗ Error al cerrar el día');
+    } finally { setCerrandoDia(false); }
   }
 
   if (!config || turno === null) return <Spinner />;
 
-  // Pantalla bloqueada para cajero
   if (bloqueado) {
     return (
       <Screen>
         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
           <span className="text-5xl">🔒</span>
           <div className="text-lg font-bold text-t1">Día cerrado</div>
-          <div className="text-sm text-t3">El administrador cerró el día de hoy. No se pueden cargar más ventas.</div>
+          <div className="text-sm text-t3">El administrador cerró el día de hoy.</div>
         </div>
       </Screen>
     );
@@ -218,12 +212,26 @@ if (config?.wa_cierre_turno && config?.whatsapp_numero) {
 
       <Card>
         <div className="p-4">
-         <div className="mb-2">
-  <FieldLabel>Turno</FieldLabel>
-</div>
+          <div className="flex items-center justify-between mb-2">
+            <FieldLabel>Turno</FieldLabel>
+          </div>
           <ChipGroup options={TURNOS.map(t => ({ value: t.key, label: `${t.icon} ${t.label}` }))} value={turno} onChange={setTurno} />
         </div>
       </Card>
+
+      {turno === '1' && (
+        <Card>
+          <div className="p-4">
+            <FieldLabel>Caja inicial</FieldLabel>
+            <div className="flex items-center bg-offset rounded-xl px-4 border border-transparent focus-within:border-primary/40 transition">
+              <span className="text-xl font-light text-t3 mr-1">$</span>
+              <input type="number" inputMode="decimal" value={cajaInicial}
+                onChange={e => setCajaInicial(e.target.value)} placeholder="0"
+                className="flex-1 bg-transparent py-3 text-xl font-bold tracking-tight placeholder:text-t4 focus:outline-none tabular-nums text-t1" />
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <CardHeader title="Nueva venta" subtitle="Se agrega a la lista del turno" />
@@ -238,7 +246,7 @@ if (config?.wa_cierre_turno && config?.whatsapp_numero) {
           </div>
           {preview && (
             <div className="bg-offset rounded-xl border border-divider p-3">
-              <DivRow label="Monto bruto" value={fmt(preview.monto_bruto)} />
+              <DivRow label="Importe" value={fmt(preview.monto_bruto)} />
               {preview.retencion_pct > 0 && <DivRow label={`Retención (${preview.retencion_pct}%)`} value={`−${fmt(preview.retencion_monto)}`} valueClass="text-redtext" />}
               <DivRow label="Monto neto" value={fmt(preview.monto_neto)} valueClass="text-greentext" bold />
             </div>
