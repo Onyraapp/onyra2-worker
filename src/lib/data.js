@@ -360,5 +360,15 @@ export async function getCajeros(barId) {
     .order('nombre');
   if (error) throw error;
   return data || [];
+  export async function updateBar(barId, updates) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('bares')
+    .update(updates)
+    .eq('id', barId)
+    .select().single();
+  if (error) throw error;
+  return data;
+}
 }
 
