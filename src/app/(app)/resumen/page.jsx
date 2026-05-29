@@ -71,17 +71,17 @@ export default function ResumenPage() {
   const resDia = calcularResumenDia(ingresos, egresos);
 
   function getIngTurno(t) {
-    return ingresosActivos.filter(i => {
-      const num = i.turnos?.numero;
-      return t === 'sin_turno' ? !num || num === 'sin_turno' : num === t;
-    });
-  }
-  function getEgrTurno(t) {
-    return egresos.filter(e => {
-      const num = e.turnos?.numero;
-      return t === 'sin_turno' ? !num || num === 'sin_turno' : num === t;
-    });
-  }
+  return ingresosActivos.filter(i => {
+    const num = i.turnos?.numero ?? 'sin_turno';
+    return num === t;
+  });
+}
+function getEgrTurno(t) {
+  return egresos.filter(e => {
+    const num = e.turnos?.numero ?? 'sin_turno';
+    return num === t;
+  });
+}
 
   const turnosKeys = ['1', '2', 'sin_turno'];
   const turnosConDatos = turnosKeys.filter(t => getIngTurno(t).length > 0 || getEgrTurno(t).length > 0);
