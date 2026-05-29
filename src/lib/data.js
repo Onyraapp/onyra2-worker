@@ -303,7 +303,9 @@ export function fmtPct(n) {
 
 export function todayStr() {
   return new Date().toISOString().slice(0, 10);
-  export async function getTurnosCerradosHoy(barId) {
+}
+
+export async function getTurnosCerradosHoy(barId) {
   const sb = getClient();
   const inicio = startOfDay(new Date()).toISOString();
   const fin    = endOfDay(new Date()).toISOString();
