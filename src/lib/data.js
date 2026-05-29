@@ -319,6 +319,7 @@ export async function getTurnosCerradosHoy(barId) {
     .gte('created_at', inicio)
     .lte('created_at', fin);
   return (data || []).map(t => t.numero);
+}
   export async function getCierreDiario(barId, fechaStr) {
   const sb = getClient();
   const { data } = await sb
