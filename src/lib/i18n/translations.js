@@ -123,8 +123,7 @@ export const translations = {
 
   pt: {
     appName: 'Troco',
-    appTagline: 'Gestão de caixa simples e rápida',
-
+    appTagline: o controle diário da sua loja
     auth: {
       login: 'Entrar',
       logout: 'Sair',
@@ -232,7 +231,7 @@ export const translations = {
 
   en: {
     appName: 'Troco',
-    appTagline: 'Simple and fast cash register management',
+    appTagline:'daily control of your business',
 
     auth: {
       login: 'Sign in',
