@@ -58,6 +58,12 @@ if (planVencido && pathname !== '/plan-vencido') {
                 : 'bg-amber/10 border-amber/20 text-ambertext'}`}>
               {usuario.rol}
             </span>
+            {usuario.bares?.plan === 'trial' && (() => {
+  const dias = Math.ceil((new Date(usuario.bares.trial_hasta) - new Date()) / (1000 * 60 * 60 * 24));
+  if (dias <= 0) return <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-redsoft text-redtext">Vencido</span>;
+  if (dias <= 7) return <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-ambersoft text-ambertext">{dias}d trial</span>;
+  return <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-offset text-t3">{dias}d trial</span>;
+})()}
             {usuario.rol === 'admin' && (
               <Link href="/configuracion"
                 className="w-7 h-7 rounded-lg bg-surface2 border border-white/10
