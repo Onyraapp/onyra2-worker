@@ -21,14 +21,16 @@ export default function DashboardPage() {
   const { usuario } = useAuth();
   const router = useRouter();
   const { toast, visible, show } = useToast();
-  const [fecha,       setFecha]       = useState(todayStr());
-  const [ingresos,    setIngresos]    = useState([]);
-  const [egresos,     setEgresos]     = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [diaCerrado,  setDiaCerrado]  = useState(false);
-  const [cerrandoDia, setCerrandoDia] = useState(false);
-  const [cajaInicial, setCajaInicial] = useState(0);
-  const [turnoActivo, setTurnoActivo] = useState('');
+  const [fecha,         setFecha]         = useState(todayStr());
+  const [ingresos,      setIngresos]      = useState([]);
+  const [egresos,       setEgresos]       = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [diaCerrado,    setDiaCerrado]    = useState(false);
+  const [cerrandoDia,   setCerrandoDia]   = useState(false);
+  const [cajaInicial,   setCajaInicial]   = useState(0);
+  const [turnoActivo,   setTurnoActivo]   = useState('');
+  const [modalCierre,   setModalCierre]   = useState(false);
+  const [resumenCierre, setResumenCierre] = useState(null);
 
   const esHoy = fecha === todayStr();
 
@@ -45,7 +47,6 @@ export default function DashboardPage() {
       setIngresos(ing); setEgresos(egr);
       setDiaCerrado(!!cierre);
       setCajaInicial(caja);
-
       if (esHoy) {
         const cerrados = await getTurnosCerradosHoy(usuario.bar_id);
         if (cerrados.includes('1') && cerrados.includes('2')) setTurnoActivo('— Sin turno');
@@ -57,14 +58,15 @@ export default function DashboardPage() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const egresosFiltrados = usuario?.rol === 'admin' 
-  ? egresos 
-  : egresos.filter(e => e.tipo !== 'retiros');
-const res = calcularResumenDia(ingresos, egresosFiltrados);
+  const res = calcularResumenDia(ingresos, egresos);
   const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
-
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
   const ingresosAnulados = ingresos.filter(i => i.anulada);
+
+  const egresosFiltrados = usuario?.rol === 'admin'
+    ? egresos
+    : egresos.filter(e => e.tipo !== 'retiros');
+  const resFiltrado = calcularResumenDia(ingresos, egresosFiltrados);
 
   const retRows = MEDIOS_PAGO
     .filter(m => res.porMedio[m.key])
@@ -80,20 +82,22 @@ const res = calcularResumenDia(ingresos, egresosFiltrados);
     return acc;
   }, {});
 
-  async function cierreDiario() {
+  async function abrirCierreDiario() {
     if (diaCerrado) return;
     setCerrandoDia(true);
     try {
-      const [ing, egr, cfg] = await Promise.all([
+      const [ing, egr, cfg, caja] = await Promise.all([
         getIngresosDia(usuario.bar_id, todayStr()),
         getEgresosDia(usuario.bar_id, todayStr()),
         getConfiguracion(usuario.bar_id),
+        getCajaInicialDia(usuario.bar_id, todayStr()),
       ]);
       const r = calcularResumenDia(ing, egr);
       const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+
       const msg = [
         `*CajaSmart - Cierre del ${fechaLabel}*`, ``,
-        `Caja inicial:   ${fmt(cajaInicial)}`,
+        `Caja inicial:   ${fmt(caja)}`,
         `Ventas brutas:  ${fmt(r.totalBruto)}`,
         `Retenciones:    -${fmt(r.totalRetencion)}`,
         `Ventas netas:   ${fmt(r.totalNeto)}`,
@@ -101,23 +105,78 @@ const res = calcularResumenDia(ingresos, egresosFiltrados);
         `Resultado: *${r.resultado >= 0 ? '' : '-'}${fmt(Math.abs(r.resultado))}*`, ``,
         `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
       ].join('\n');
+
       const numero = cfg?.whatsapp_numero?.trim();
       const url = numero
         ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
         : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+      // Abrir WhatsApp automáticamente
       window.open(url, '_blank');
+
+      // Guardar resumen para el modal
+      setResumenCierre({ r, caja, ing, fechaLabel });
+      setModalCierre(true);
+    } catch { show('✗ Error al generar el cierre'); }
+    finally { setCerrandoDia(false); }
+  }
+
+  async function confirmarCierre() {
+    try {
       await crearCierreDiario(usuario.bar_id, usuario.id, todayStr());
       setDiaCerrado(true);
-      show('✓ Día cerrado · WhatsApp enviado');
+      setModalCierre(false);
+      show('✓ Día cerrado');
+      // Avanzar al día siguiente
+      setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
     } catch (e) {
-      if (e?.code === '23505') { setDiaCerrado(true); show('El día ya estaba cerrado'); }
-      else show('✗ Error al cerrar el día');
-    } finally { setCerrandoDia(false); }
+      if (e?.code === '23505') {
+        setDiaCerrado(true);
+        setModalCierre(false);
+        setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
+      } else {
+        show('✗ Error al confirmar el cierre');
+      }
+    }
   }
 
   return (
     <Screen>
       <Toast msg={toast} visible={visible} />
+
+      {/* Modal cierre diario */}
+      {modalCierre && resumenCierre && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-8 px-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
+            <div className="text-center">
+              <div className="text-3xl mb-2">📋</div>
+              <div className="text-lg font-bold text-t1">Cierre del día</div>
+              <div className="text-sm text-t3 mt-1 capitalize">{resumenCierre.fechaLabel}</div>
+            </div>
+            <div className="bg-offset rounded-2xl p-4 flex flex-col gap-0">
+              <DivRow label="Caja inicial"   value={fmt(resumenCierre.caja)} />
+              <DivRow label="Ventas brutas"  value={fmt(resumenCierre.r.totalBruto)} />
+              <DivRow label="Retenciones"    value={`-${fmt(resumenCierre.r.totalRetencion)}`} valueClass="text-redtext" />
+              <DivRow label="Ventas netas"   value={fmt(resumenCierre.r.totalNeto)} valueClass="text-greentext" />
+              <DivRow label="Gastos"         value={`-${fmt(resumenCierre.r.totalEgresos)}`} valueClass="text-ambertext" />
+              <DivRow label="Resultado"
+                value={`${resumenCierre.r.resultado >= 0 ? '' : '-'}${fmt(Math.abs(resumenCierre.r.resultado))}`}
+                valueClass={resumenCierre.r.resultado >= 0 ? 'text-greentext' : 'text-redtext'} bold />
+            </div>
+            <div className="text-center text-xs text-t3">
+              {resumenCierre.ing.filter(i => !i.anulada).length} ventas · {resumenCierre.ing.filter(i => i.anulada).length} anulaciones
+            </div>
+            <div className="text-center text-xs text-t3 bg-greensoft rounded-xl py-2">
+              ✓ WhatsApp enviado automáticamente
+            </div>
+            <BtnPrimary label="Confirmar cierre del día" onClick={confirmarCierre} />
+            <button onClick={() => setModalCierre(false)}
+              className="w-full h-10 text-t3 text-sm">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 bg-surface rounded-2xl shadow-card p-3">
         <button onClick={() => setFecha(d => subDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
@@ -138,30 +197,27 @@ const res = calcularResumenDia(ingresos, egresosFiltrados);
       {loading ? <Spinner /> : (<>
 
         <div className="flex gap-3">
-  <KpiCard label="Caja inicial"  value={cajaInicial} />
-  <KpiCard label="Ventas brutas" value={res.totalBruto} color="green" />
-</div>
-<div className="flex gap-3">
-  <KpiCard label="Gastos"  value={res.totalEgresos} color="amber" />
-  <KpiCard label="Saldo"   value={res.resultado} color={res.resultado >= 0 ? 'green' : 'red'} />
-</div>
-        <ResultadoCard valor={res.resultado} />
+          <KpiCard label="Caja inicial"  value={cajaInicial} />
+          <KpiCard label="Ventas brutas" value={resFiltrado.totalBruto} color="green" />
+        </div>
+        <div className="flex gap-3">
+          <KpiCard label="Gastos"  value={resFiltrado.totalEgresos} color="amber" />
+          <KpiCard label="Saldo"   value={resFiltrado.resultado} color={resFiltrado.resultado >= 0 ? 'green' : 'red'} />
+        </div>
 
         {retRows.length > 0 && (
           <Card>
-           <CardHeader title="Por medio de pago" subtitle="Ventas brutas por canal" />
-            <div className="p-4">
-             <div className="flex flex-col divide-y divide-divider">
-  {retRows.map((r, i) => (
-    <div key={i} className="flex items-center justify-between py-3">
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
-        <span className="text-sm text-t1">{r.label}</span>
-      </div>
-      <span className="text-sm font-semibold text-t1 tabular-nums">{fmt(r.bruto)}</span>
-    </div>
-  ))}
-</div>
+            <CardHeader title="Por medio de pago" subtitle="Ventas brutas por canal" />
+            <div className="p-4 flex flex-col divide-y divide-divider">
+              {retRows.map((r, i) => (
+                <div key={i} className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
+                    <span className="text-sm text-t1">{r.label}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-t1 tabular-nums">{fmt(r.bruto)}</span>
+                </div>
+              ))}
             </div>
           </Card>
         )}
@@ -257,7 +313,7 @@ const res = calcularResumenDia(ingresos, egresosFiltrados);
             − Registrar gasto
           </button>
           <button
-            onClick={cierreDiario}
+            onClick={abrirCierreDiario}
             disabled={cerrandoDia || diaCerrado || !esHoy}
             className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40
               ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-primary text-white'}`}>
