@@ -221,7 +221,7 @@ export default function CargarPage() {
             <ChipGroup options={MEDIOS_PAGO.map(m => ({ value: m.key, label: m.label, color: m.color }))} value={medio} onChange={setMedio} />
           </div>
           <div>
-            <FieldLabel>Monto bruto</FieldLabel>
+            <FieldLabel>Importe</FieldLabel>
             <MontoInput value={monto} onChange={setMonto} color={medio ? MEDIOS_PAGO.find(m => m.key === medio)?.color : null} />
           </div>
           {preview && (
