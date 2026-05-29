@@ -1,12 +1,15 @@
 import './globals.css';
+import { I18nProvider } from '../context/I18nContext';
+
 export const metadata = {
-  title: 'CajaSmart',
-description: 'Control de caja inteligente',
+  title: 'Troco',
+  description: 'Control de caja inteligente',
   manifest: '/manifest.json',
   themeColor: '#F5F5F7',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'CajaBar' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Troco' },
   viewport: { width: 'device-width', initialScale: 1, maximumScale: 1, userScalable: false },
 };
+
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
@@ -16,7 +19,11 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="bg-bg text-t1 antialiased">{children}</body>
+      <body className="bg-bg text-t1 antialiased">
+        <I18nProvider>
+          {children}
+        </I18nProvider>
+      </body>
     </html>
   );
 }
