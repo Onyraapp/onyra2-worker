@@ -116,7 +116,19 @@ export default function CargarPage() {
       setLista([]);
       if (turno === '1') setTurno('2');
       else if (turno === '2') setTurno('sin_turno');
-      show(`✓ Turno cerrado · ${activas.length} ventas · ${fmt(totalBruto)} bruto`);
+      // Notificar por WhatsApp si está configurado
+if (config?.wa_cierre_turno && config?.whatsapp_numero) {
+  const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Sin turno';
+  const msg = [
+    `*CajaBar - Cierre de ${turnoLabel}*`, ``,
+    `Ventas brutas:  ${fmt(totalBruto)}`,
+    `Retenciones:    -${fmt(totalRetencion)}`,
+    `Ventas netas:   ${fmt(totalNeto)}`,
+    ``,
+    `_${activas.length} ventas_`,
+  ].join('\n');
+  window.open(`https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
+}
       setTimeout(() => router.push('/resumen'), 1500);
     } catch { show('✗ Error al cerrar turno'); }
     finally { setCerrando(false); }
