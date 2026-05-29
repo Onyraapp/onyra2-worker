@@ -123,14 +123,14 @@ export default function CargarPage() {
       const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
       const pos = res.resultado >= 0;
       const msg = [
-        `🧾 *CajaBar — Cierre del ${fechaLabel}*`, ``,
-        `📈 Ventas brutas:  ${fmt(res.totalBruto)}`,
-        `📉 Retenciones:    −${fmt(res.totalRetencion)}`,
-        `💰 Ventas netas:   ${fmt(res.totalNeto)}`,
-        `🔴 Gastos:         −${fmt(res.totalEgresos)}`, ``,
-        `${pos ? '✅' : '❌'} Resultado: *${res.resultado >= 0 ? '' : '−'}${fmt(Math.abs(res.resultado))}*`, ``,
-        `_${ing.filter(i => !i.anulada).length} ventas · ${ing.filter(i => i.anulada).length} anulaciones_`,
-      ].join('\n');
+  `*CajaBar - Cierre del ${fechaLabel}*`, ``,
+  `Ventas brutas:  ${fmt(res.totalBruto)}`,
+  `Retenciones:    -${fmt(res.totalRetencion)}`,
+  `Ventas netas:   ${fmt(res.totalNeto)}`,
+  `Gastos:         -${fmt(res.totalEgresos)}`, ``,
+  `Resultado: *${res.resultado >= 0 ? '' : '-'}${fmt(Math.abs(res.resultado))}*`, ``,
+  `_${ing.filter(i => !i.anulada).length} ventas · ${ing.filter(i => i.anulada).length} anulaciones_`,
+].join('\n');
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     } catch { show('✗ Error al generar el cierre'); }
     finally { setCerrandoDia(false); }
