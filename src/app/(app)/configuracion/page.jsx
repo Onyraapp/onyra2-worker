@@ -21,7 +21,6 @@ export default function ConfiguracionPage() {
   const [waCierreTurno,    setWaCierreTurno]    = useState(false);
   const [waAlertaGasto,    setWaAlertaGasto]    = useState(false);
   const [waAlertaMonto,    setWaAlertaMonto]    = useState('10000');
-  const [waResumenSemanal, setWaResumenSemanal] = useState(false);
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [savingWa, setSavingWa] = useState(false);
@@ -61,7 +60,6 @@ export default function ConfiguracionPage() {
         wa_cierre_turno:      waCierreTurno,
         wa_alerta_gasto:      waAlertaGasto,
         wa_alerta_gasto_monto: parseFloat(waAlertaMonto) || 10000,
-        wa_resumen_semanal:   waResumenSemanal,
       });
       show('✓ Configuración guardada');
     } catch { show('✗ Error al guardar'); }
@@ -160,12 +158,7 @@ export default function ConfiguracionPage() {
                 </div>
               </div>
             )}
-            <Toggle
-              label="Resumen semanal"
-              sublabel="Manda el resumen de la semana los lunes"
-              value={waResumenSemanal}
-              onChange={setWaResumenSemanal}
-            />
+          
           </div>
 
           <BtnPrimary label={savingWa ? 'Guardando...' : 'Guardar configuración'} onClick={guardarWa} loading={savingWa} />
