@@ -1,306 +1,305 @@
-// src/lib/data.js
-import { getClient } from './supabase';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfDay as sod } from 'date-fns';
-import { CONFIG_KEYS } from './constants';
+// src/app/(app)/cargar/page.jsx
+'use client';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../../hooks/useAuth';
+import {
+  getConfiguracion, calcularRetencion, getRetencionPct,
+  abrirTurno, cerrarTurno, crearIngresosBulk, crearIngreso, fmt, todayStr
+} from '../../../lib/data';
+import { getClient } from '../../../lib/supabase';
+import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
+import {
+  Screen, Card, CardHeader, MontoInput, ChipGroup,
+  BtnPrimary, BtnSecondary, Toast, useToast, Spinner,
+  FieldLabel, DivRow
+} from '../../../components/ui';
 
-// ── AUTH ─────────────────────────────────────────────────
+const STORAGE_KEY = 'cajabar_lista_turno';
 
-export async function signIn(email, password) {
-  const sb = getClient();
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data;
-}
+export default function CargarPage() {
+  const { usuario } = useAuth();
+  const { toast, visible, show } = useToast();
 
-export async function signOut() {
-  const sb = getClient();
-  await sb.auth.signOut();
-}
+  const [config,   setConfig]   = useState(null);
+  const [turno,    setTurno]    = useState('1');
+  const [medio,    setMedio]    = useState('efectivo');
+  const [monto,    setMonto]    = useState('');
+  const [nota,     setNota]     = useState('');
+  const [lista,    setLista]    = useState([]);
+  const [cerrando, setCerrando] = useState(false);
 
-export async function getSession() {
-  const sb = getClient();
-  const { data } = await sb.auth.getSession();
-  return data.session;
-}
+  // Modal de anulación
+  const [anulando,      setAnulando]      = useState(null); // item a anular
+  const [motivoAnulacion, setMotivoAnulacion] = useState('');
 
-export async function getUsuarioActual() {
-  const sb = getClient();
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return null;
-  const { data } = await sb.from('usuarios').select('*, bares(*)').eq('id', user.id).single();
-  return data;
-}
-
-// ── REGISTRO ─────────────────────────────────────────────
-
-export async function registrarBar({ nombreBar, nombre, email, password }) {
-  const sb = getClient();
-
-  // 1. Crear usuario en Supabase Auth
-  const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
-  if (authError) throw authError;
-
-  // 2. Crear bar
-  const { data: bar, error: barError } = await sb
-    .from('bares')
-    .insert([{ nombre: nombreBar, email }])
-    .select().single();
-  if (barError) throw barError;
-
-  // 3. Crear usuario admin
-  const { error: userError } = await sb
-    .from('usuarios')
-    .insert([{ id: authData.user.id, bar_id: bar.id, nombre, email, rol: 'admin' }]);
-  if (userError) throw userError;
-
-  return { bar, user: authData.user };
-}
-
-export async function crearCajero({ nombre, email, password, barId }) {
-  const sb = getClient();
-  const { data: authData, error: authError } = await sb.auth.admin.createUser({
-    email, password, email_confirm: true,
-  });
-  if (authError) throw authError;
-
-  const { error } = await sb.from('usuarios')
-    .insert([{ id: authData.user.id, bar_id: barId, nombre, email, rol: 'cajero' }]);
-  if (error) throw error;
-  return authData.user;
-}
-
-// ── CONFIGURACION ─────────────────────────────────────────
-
-export async function getConfiguracion(barId) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('configuracion').select('*').eq('bar_id', barId).single();
-  if (error) throw error;
-  return data;
-}
-
-export async function updateConfiguracion(barId, updates) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('configuracion')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('bar_id', barId)
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-// ── RETENCIONES ───────────────────────────────────────────
-
-export function calcularRetencion(montoBruto, pct) {
-  const retencionMonto = (montoBruto * pct) / 100;
-  return {
-    monto_bruto:     montoBruto,
-    retencion_pct:   pct,
-    retencion_monto: Math.round(retencionMonto * 100) / 100,
-    monto_neto:      Math.round((montoBruto - retencionMonto) * 100) / 100,
-  };
-}
-
-export function getRetencionPct(config, medioPago) {
-  const key = CONFIG_KEYS[medioPago];
-  return config?.[key] ?? 0;
-}
-
-// ── TURNOS ────────────────────────────────────────────────
-
-export async function getTurnoAbierto(barId, fecha, numero) {
-  const sb = getClient();
-  const { data } = await sb
-    .from('turnos')
-    .select('*')
-    .eq('bar_id', barId)
-    .eq('fecha', fecha)
-    .eq('numero', numero)
-    .eq('cerrado', false)
-    .maybeSingle();
-  return data;
-}
-
-export async function abrirTurno(barId, usuarioId, fecha, numero) {
-  const sb = getClient();
-  // Si ya existe uno abierto, lo devolvemos
-  const existente = await getTurnoAbierto(barId, fecha, numero);
-  if (existente) return existente;
-
-  const { data, error } = await sb
-    .from('turnos')
-    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha, numero }])
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-export async function cerrarTurno(turnoId) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('turnos')
-    .update({ cerrado: true, cerrado_at: new Date().toISOString() })
-    .eq('id', turnoId)
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-// ── INGRESOS ──────────────────────────────────────────────
-
-export async function crearIngreso({ barId, turnoId, usuarioId, medioPago, montoBruto, config, nota }) {
-  const sb = getClient();
-  const pct = getRetencionPct(config, medioPago);
-  const calc = calcularRetencion(montoBruto, pct);
-
-  const { data, error } = await sb
-    .from('ingresos')
-    .insert([{
-      bar_id:          barId,
-      turno_id:        turnoId,
-      usuario_id:      usuarioId,
-      medio_pago:      medioPago,
-      monto_bruto:     calc.monto_bruto,
-      retencion_pct:   calc.retencion_pct,
-      retencion_monto: calc.retencion_monto,
-      monto_neto:      calc.monto_neto,
-      nota:            nota || '',
-      fecha:           new Date().toISOString(),
-    }])
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-export async function crearIngresosBulk(ingresos) {
-  const sb = getClient();
-  const { data, error } = await sb.from('ingresos').insert(ingresos).select();
-  if (error) throw error;
-  return data;
-}
-
-export async function getIngresosDia(barId, fechaStr) {
-  const sb = getClient();
-  const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const { data, error } = await sb
-    .from('ingresos').select('*, turnos(numero)')
-    .eq('bar_id', barId)
-    .gte('fecha', inicio).lte('fecha', fin)
-    .order('fecha', { ascending: true });
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getIngresosTurno(turnoId) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('ingresos').select('*')
-    .eq('turno_id', turnoId)
-    .order('fecha', { ascending: true });
-  if (error) throw error;
-  return data || [];
-}
-
-// ── EGRESOS ───────────────────────────────────────────────
-
-export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, detalle, fecha }) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('egresos')
-    .insert([{
-      bar_id:     barId,
-      turno_id:   turnoId,
-      usuario_id: usuarioId,
-      tipo,
-      monto,
-      detalle:    detalle || '',
-      fecha:      fecha || new Date().toISOString(),
-    }])
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-export async function getEgresosDia(barId, fechaStr) {
-  const sb = getClient();
-  const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const { data, error } = await sb
-    .from('egresos').select('*, turnos(numero)')
-    .eq('bar_id', barId)
-    .gte('fecha', inicio).lte('fecha', fin)
-    .order('fecha', { ascending: true });
-  if (error) throw error;
-  return data || [];
-}
-
-// ── RESUMEN DIA ───────────────────────────────────────────
-
-export function calcularResumenDia(ingresos, egresos) {
-  const porMedio = {};
-
-  for (const ing of ingresos) {
-    if (!porMedio[ing.medio_pago]) {
-      porMedio[ing.medio_pago] = { bruto: 0, retencion: 0, neto: 0, count: 0 };
+  useEffect(() => {
+    if (usuario) {
+      getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
+      // Restaurar lista guardada
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setLista(JSON.parse(saved));
+      } catch {}
     }
-    porMedio[ing.medio_pago].bruto     += ing.monto_bruto;
-    porMedio[ing.medio_pago].retencion += ing.retencion_monto;
-    porMedio[ing.medio_pago].neto      += ing.monto_neto;
-    porMedio[ing.medio_pago].count++;
+  }, [usuario]);
+
+  // Guardar lista en localStorage cuando cambia
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lista)); } catch {}
+  }, [lista]);
+
+  const montoBruto = parseFloat(monto) || 0;
+  const pct        = config ? getRetencionPct(config, medio) : 0;
+  const preview    = montoBruto > 0 ? calcularRetencion(montoBruto, pct) : null;
+
+  const totalBruto     = lista.filter(i => !i.anulada).reduce((s, i) => s + i.monto_bruto, 0);
+  const totalRetencion = lista.filter(i => !i.anulada).reduce((s, i) => s + i.retencion_monto, 0);
+  const totalNeto      = lista.filter(i => !i.anulada).reduce((s, i) => s + i.monto_neto, 0);
+  const anuladas       = lista.filter(i => i.anulada);
+  const activas        = lista.filter(i => !i.anulada);
+
+  function agregarALista() {
+    if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
+    const m    = MEDIOS_PAGO.find(mp => mp.key === medio);
+    const calc = calcularRetencion(montoBruto, pct);
+    const item = {
+      ...calc,
+      medio_pago:  medio,
+      medio_label: m?.label,
+      medio_color: m?.color,
+      nota,
+      anulada:     false,
+      _id:         Date.now(),
+    };
+    setLista(l => [...l, item]);
+    setMonto(''); setNota('');
   }
 
-  const totalBruto     = ingresos.reduce((s, i) => s + i.monto_bruto, 0);
-  const totalRetencion = ingresos.reduce((s, i) => s + i.retencion_monto, 0);
-  const totalNeto      = ingresos.reduce((s, i) => s + i.monto_neto, 0);
-  const totalEgresos   = egresos.reduce((s, e) => s + e.monto, 0);
-  const resultado      = totalNeto - totalEgresos;
+  function pedirAnulacion(item) {
+    setAnulando(item);
+    setMotivoAnulacion('');
+  }
 
-  return { porMedio, totalBruto, totalRetencion, totalNeto, totalEgresos, resultado };
-}
+  async function confirmarAnulacion() {
+    if (!motivoAnulacion.trim()) return show('⚠ Ingresá un motivo');
+    try {
+      const sb = getClient();
+      // Guardar en Supabase como anulada si ya tiene id de DB
+      if (anulando.db_id) {
+        await sb.from('ingresos')
+          .update({ anulada: true, motivo_anulacion: motivoAnulacion })
+          .eq('id', anulando.db_id);
+      } else {
+        // Guardar como anulada directamente
+        await sb.from('ingresos').insert([{
+          bar_id:           usuario.bar_id,
+          turno_id:         null,
+          usuario_id:       usuario.id,
+          medio_pago:       anulando.medio_pago,
+          monto_bruto:      anulando.monto_bruto,
+          retencion_pct:    anulando.retencion_pct,
+          retencion_monto:  anulando.retencion_monto,
+          monto_neto:       anulando.monto_neto,
+          nota:             anulando.nota || '',
+          fecha:            new Date().toISOString(),
+          anulada:          true,
+          motivo_anulacion: motivoAnulacion,
+        }]);
+      }
+      setLista(l => l.map(i => i._id === anulando._id ? { ...i, anulada: true, motivo_anulacion: motivoAnulacion } : i));
+      setAnulando(null);
+      show('✓ Venta anulada y registrada');
+    } catch {
+      show('✗ Error al registrar anulación');
+    }
+  }
 
-// ── RESUMEN MES ───────────────────────────────────────────
+  async function cerrarTurnoHandler() {
+    if (activas.length === 0) return show('⚠ No hay ventas para cerrar');
+    setCerrando(true);
+    try {
+      const t = await abrirTurno(usuario.bar_id, usuario.id, todayStr(), turno);
+      const rows = activas.map(item => ({
+        bar_id:          usuario.bar_id,
+        turno_id:        t.id,
+        usuario_id:      usuario.id,
+        medio_pago:      item.medio_pago,
+        monto_bruto:     item.monto_bruto,
+        retencion_pct:   item.retencion_pct,
+        retencion_monto: item.retencion_monto,
+        monto_neto:      item.monto_neto,
+        nota:            item.nota || '',
+        fecha:           new Date().toISOString(),
+        anulada:         false,
+        motivo_anulacion: '',
+      }));
+      await crearIngresosBulk(rows);
+      await cerrarTurno(t.id);
+      localStorage.removeItem(STORAGE_KEY);
+      setLista([]);
+      show(`✓ Turno cerrado · ${activas.length} ventas · ${fmt(totalBruto)} bruto`);
+    } catch {
+      show('✗ Error al cerrar turno');
+    } finally {
+      setCerrando(false);
+    }
+  }
 
-export async function getResumenMes(barId, año, mes) {
-  const sb = getClient();
-  const ref    = new Date(año, mes - 1, 1);
-  const inicio = startOfMonth(ref).toISOString();
-  const fin    = endOfMonth(ref).toISOString();
+  if (!config) return <Spinner />;
 
-  const [{ data: ingresos }, { data: egresos }] = await Promise.all([
-    sb.from('ingresos').select('*').eq('bar_id', barId).gte('fecha', inicio).lte('fecha', fin),
-    sb.from('egresos').select('*').eq('bar_id', barId).gte('fecha', inicio).lte('fecha', fin),
-  ]);
+  return (
+    <Screen>
+      <Toast msg={toast} visible={visible} />
 
-  return calcularResumenDia(ingresos || [], egresos || []);
-}
+      {/* Modal anulación */}
+      {anulando && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-8 px-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-xl">
+            <div>
+              <div className="text-base font-bold text-t1">Anular venta</div>
+              <div className="text-sm text-t3 mt-1">
+                {anulando.medio_label} · {fmt(anulando.monto_bruto)}
+              </div>
+            </div>
+            <div>
+              <FieldLabel>Motivo de anulación</FieldLabel>
+              <textarea
+                value={motivoAnulacion}
+                onChange={e => setMotivoAnulacion(e.target.value)}
+                placeholder="Ej: error de carga, cliente canceló..."
+                rows={3}
+                className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm border border-transparent focus:outline-none focus:border-red/40 placeholder:text-t4 transition resize-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setAnulando(null)}
+                className="flex-1 h-11 rounded-xl bg-offset text-t2 text-sm font-medium">
+                Cancelar
+              </button>
+              <button onClick={confirmarAnulacion}
+                className="flex-1 h-11 rounded-xl bg-redsoft border border-red/20 text-redtext text-sm font-semibold">
+                Confirmar anulación
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-export async function getMovimientosMes(barId, año, mes) {
-  const sb = getClient();
-  const ref    = new Date(año, mes - 1, 1);
-  const inicio = startOfMonth(ref).toISOString();
-  const fin    = endOfMonth(ref).toISOString();
+      {/* Turno */}
+      <Card>
+        <div className="p-4">
+          <FieldLabel>Turno</FieldLabel>
+          <ChipGroup
+            options={TURNOS.map(t => ({ value: t.key, label: `${t.icon} ${t.label}` }))}
+            value={turno} onChange={setTurno}
+          />
+        </div>
+      </Card>
 
-  const [{ data: ingresos }, { data: egresos }] = await Promise.all([
-    sb.from('ingresos').select('*').eq('bar_id', barId).gte('fecha', inicio).lte('fecha', fin).order('fecha'),
-    sb.from('egresos').select('*').eq('bar_id', barId).gte('fecha', inicio).lte('fecha', fin).order('fecha'),
-  ]);
+      {/* Formulario */}
+      <Card>
+        <CardHeader title="Nueva venta" subtitle="Se agrega a la lista del turno" />
+        <div className="p-4 flex flex-col gap-4">
+          <div>
+            <FieldLabel>Medio de pago</FieldLabel>
+            <ChipGroup
+              options={MEDIOS_PAGO.map(m => ({ value: m.key, label: m.label, color: m.color }))}
+              value={medio} onChange={setMedio}
+            />
+          </div>
+          <div>
+            <FieldLabel>Monto bruto</FieldLabel>
+            <MontoInput value={monto} onChange={setMonto}
+              color={medio ? MEDIOS_PAGO.find(m => m.key === medio)?.color : null} />
+          </div>
+          {preview && (
+            <div className="bg-offset rounded-xl border border-divider p-3 flex flex-col gap-0">
+              <DivRow label="Monto bruto" value={fmt(preview.monto_bruto)} />
+              {preview.retencion_pct > 0 && (
+                <DivRow label={`Retención (${preview.retencion_pct}%)`}
+                  value={`−${fmt(preview.retencion_monto)}`} valueClass="text-redtext" />
+              )}
+              <DivRow label="Monto neto" value={fmt(preview.monto_neto)} valueClass="text-greentext" bold />
+            </div>
+          )}
+          <div>
+            <FieldLabel>Nota (opcional)</FieldLabel>
+            <input value={nota} onChange={e => setNota(e.target.value)}
+              placeholder="Mesa 5, delivery, etc..."
+              className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm border border-transparent focus:outline-none focus:border-primary/40 placeholder:text-t4" />
+          </div>
+          <button onClick={agregarALista}
+            className="w-full h-11 rounded-xl bg-primary/10 border border-primary/20 text-primary font-semibold text-sm active:scale-[0.98] transition-all">
+            + Agregar a lista
+          </button>
+        </div>
+      </Card>
 
-  return { ingresos: ingresos || [], egresos: egresos || [] };
-}
+      {/* Lista activa */}
+      {activas.length > 0 && (
+        <Card>
+          <CardHeader title={`Lista · ${activas.length} ventas`}
+            subtitle={`${fmt(totalBruto)} bruto`} />
+          <div className="p-4 flex flex-col gap-2">
+            {activas.map(item => (
+              <div key={item._id}
+                className="flex items-center gap-3 p-3 rounded-xl bg-offset border border-divider">
+                <div className="w-1 h-8 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: item.medio_color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-t1">{item.medio_label}</div>
+                  {item.nota && <div className="text-xs text-t3 truncate">{item.nota}</div>}
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold tabular-nums text-t1">{fmt(item.monto_bruto)}</div>
+                  {item.retencion_monto > 0 && (
+                    <div className="text-xs text-redtext tabular-nums">−{fmt(item.retencion_monto)}</div>
+                  )}
+                </div>
+                <button onClick={() => pedirAnulacion(item)}
+                  className="w-8 h-8 rounded-lg bg-redsoft flex items-center justify-center text-redtext text-sm flex-shrink-0">
+                  ✕
+                </button>
+              </div>
+            ))}
 
-// ── FORMATEO ─────────────────────────────────────────────
+            <div className="mt-1 bg-offset rounded-xl border border-divider p-3">
+              <DivRow label="Total bruto"       value={fmt(totalBruto)} />
+              <DivRow label="Total retenciones" value={`−${fmt(totalRetencion)}`} valueClass="text-redtext" />
+              <DivRow label="Total neto"        value={fmt(totalNeto)} valueClass="text-greentext" bold />
+            </div>
 
-export function fmt(n) {
-  if (n == null) return '$\u00a00';
-  return '$\u00a0' + Math.round(n).toLocaleString('es-AR');
-}
+            <BtnPrimary
+              label={cerrando ? 'Cerrando...' : `✓ Cerrar turno · ${activas.length} ventas`}
+              onClick={cerrarTurnoHandler} loading={cerrando} className="mt-1"
+            />
+            <BtnSecondary label="Limpiar todo" onClick={() => { setLista([]); localStorage.removeItem(STORAGE_KEY); }} />
+          </div>
+        </Card>
+      )}
 
-export function fmtPct(n) {
-  return (n || 0).toFixed(1) + '%';
-}
+      {/* Anuladas del turno */}
+      {anuladas.length > 0 && (
+        <Card>
+          <CardHeader title={`Anuladas · ${anuladas.length}`} />
+          <div className="p-4 flex flex-col gap-2">
+            {anuladas.map(item => (
+              <div key={item._id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft/50 border border-red/10 opacity-60">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-t2 line-through">{item.medio_label} · {fmt(item.monto_bruto)}</div>
+                  <div className="text-xs text-redtext mt-0.5">{item.motivo_anulacion}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
-export function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+      {lista.length === 0 && (
+        <div className="text-center py-8 text-t3 text-sm">
+          Agregá ventas a la lista y cerrá el turno al terminar.
+        </div>
+      )}
+    </Screen>
+  );
 }
