@@ -7,7 +7,7 @@ import {
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngreso, fmt, todayStr
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
-import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
+import { MEDIOS_PAGO, TURNOS } from './constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
   BtnPrimary, BtnSecondary, Toast, useToast, Spinner,
