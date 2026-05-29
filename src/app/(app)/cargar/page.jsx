@@ -18,7 +18,7 @@ import {
   FieldLabel, DivRow
 } from '../../../components/ui';
 
-const STORAGE_KEY = 'cajasmart_lista_turno';
+const STORAGE_KEY = 'troco_lista_turno';
 
 export default function CargarPage() {
   const { usuario } = useAuth();
@@ -178,7 +178,7 @@ export default function CargarPage() {
       if (config?.wa_cierre_turno && config?.whatsapp_numero) {
         const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Sin turno';
         const msg = [
-          `*CajaSmart - Cierre de ${turnoLabel}*`, ``,
+          `*Troco - Cierre de ${turnoLabel}*`, ``,
           `Ventas brutas:  ${fmt(totalBruto)}`,
           `Retenciones:    -${fmt(totalRetencion)}`,
           `Ventas netas:   ${fmt(totalNeto)}`, ``,
