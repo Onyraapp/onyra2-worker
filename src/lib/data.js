@@ -372,6 +372,17 @@ export async function updateBar(barId, updates) {
     .select().single();
   if (error) throw error;
   return data;
-
+export async function getCajaInicialDia(barId, fechaStr) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('turnos')
+    .select('caja_inicial')
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return data?.caja_inicial || 0;
+}
 }
 
