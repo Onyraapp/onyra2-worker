@@ -233,7 +233,7 @@ export default function CargarPage() {
     
 
       <Card>
-        <CardHeader title="Nueva venta" subtitle="Se agrega a la lista del turno" />
+        <CardHeader title="Nueva venta" subtitle={`${TURNOS.find(t => t.key === turno)?.icon} ${TURNOS.find(t => t.key === turno)?.label} · Se agrega a la lista`} />
         <div className="p-4 flex flex-col gap-4">
           <div>
             <FieldLabel>Medio de pago</FieldLabel>
