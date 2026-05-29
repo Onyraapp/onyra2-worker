@@ -1,195 +1,305 @@
-// src/app/(app)/resumen/page.jsx
+// src/app/(app)/cargar/page.jsx
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { format, getDaysInMonth } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import {
-  getMovimientosMes, getIngresosDia, getEgresosDia,
-  calcularResumenDia, fmt, todayStr
+  getConfiguracion, calcularRetencion, getRetencionPct,
+  abrirTurno, cerrarTurno, crearIngresosBulk, crearIngreso, fmt, todayStr
 } from '../../../lib/data';
-import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
+import { getClient } from '../../../lib/supabase';
+import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
 import {
-  Screen, Card, CardHeader, KpiCard, ResultadoCard,
-  TablaRetencion, BreakdownBar, EmptyState, Spinner,
-  DivRow, Badge
+  Screen, Card, CardHeader, MontoInput, ChipGroup,
+  BtnPrimary, BtnSecondary, Toast, useToast, Spinner,
+  FieldLabel, DivRow
 } from '../../../components/ui';
 
-export default function ResumenPage() {
+const STORAGE_KEY = 'cajabar_lista_turno';
+
+export default function CargarPage() {
   const { usuario } = useAuth();
-  const now     = new Date();
-  const [año]   = useState(now.getFullYear());
-  const [mes]   = useState(now.getMonth() + 1);
-  const [diaSeleccionado, setDia] = useState(null);
+  const { toast, visible, show } = useToast();
 
-  const [movsMes, setMovsMes]       = useState(null);
-  const [movsDia, setMovsDia]       = useState(null);
-  const [loadingMes, setLoadingMes] = useState(true);
-  const [loadingDia, setLoadingDia] = useState(false);
+  const [config,   setConfig]   = useState(null);
+  const [turno,    setTurno]    = useState('1');
+  const [medio,    setMedio]    = useState('efectivo');
+  const [monto,    setMonto]    = useState('');
+  const [nota,     setNota]     = useState('');
+  const [lista,    setLista]    = useState([]);
+  const [cerrando, setCerrando] = useState(false);
 
-  // Cargar mes completo
+  // Modal de anulación
+  const [anulando,      setAnulando]      = useState(null); // item a anular
+  const [motivoAnulacion, setMotivoAnulacion] = useState('');
+
   useEffect(() => {
-    if (!usuario) return;
-    setLoadingMes(true);
-    getMovimientosMes(usuario.bar_id, año, mes)
-      .then(setMovsMes)
-      .finally(() => setLoadingMes(false));
-  }, [usuario, año, mes]);
+    if (usuario) {
+      getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
+      // Restaurar lista guardada
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setLista(JSON.parse(saved));
+      } catch {}
+    }
+  }, [usuario]);
 
-  // Cargar día seleccionado
+  // Guardar lista en localStorage cuando cambia
   useEffect(() => {
-    if (!diaSeleccionado || !usuario) return;
-    setLoadingDia(true);
-    Promise.all([
-      getIngresosDia(usuario.bar_id, diaSeleccionado),
-      getEgresosDia(usuario.bar_id, diaSeleccionado),
-    ]).then(([ing, egr]) => setMovsDia({ ingresos: ing, egresos: egr }))
-      .finally(() => setLoadingDia(false));
-  }, [diaSeleccionado, usuario]);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lista)); } catch {}
+  }, [lista]);
 
-  const resMes = movsMes ? calcularResumenDia(movsMes.ingresos, movsMes.egresos) : null;
-  const resDia = movsDia ? calcularResumenDia(movsDia.ingresos, movsDia.egresos) : null;
+  const montoBruto = parseFloat(monto) || 0;
+  const pct        = config ? getRetencionPct(config, medio) : 0;
+  const preview    = montoBruto > 0 ? calcularRetencion(montoBruto, pct) : null;
 
-  // Agrupar movimientos del mes por día
-  const diasConMovimientos = movsMes ? (() => {
-    const map = {};
-    [...movsMes.ingresos, ...movsMes.egresos].forEach(m => {
-      const d = m.fecha.slice(0, 10);
-      if (!map[d]) map[d] = { ingresos: [], egresos: [] };
-      if (m.medio_pago) map[d].ingresos.push(m);
-      else map[d].egresos.push(m);
-    });
-    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
-  })() : [];
+  const totalBruto     = lista.filter(i => !i.anulada).reduce((s, i) => s + i.monto_bruto, 0);
+  const totalRetencion = lista.filter(i => !i.anulada).reduce((s, i) => s + i.retencion_monto, 0);
+  const totalNeto      = lista.filter(i => !i.anulada).reduce((s, i) => s + i.monto_neto, 0);
+  const anuladas       = lista.filter(i => i.anulada);
+  const activas        = lista.filter(i => !i.anulada);
 
-  const mesLabel = format(new Date(año, mes-1, 1), 'MMMM yyyy', { locale: es });
-  const DAY_NAMES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  function agregarALista() {
+    if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
+    const m    = MEDIOS_PAGO.find(mp => mp.key === medio);
+    const calc = calcularRetencion(montoBruto, pct);
+    const item = {
+      ...calc,
+      medio_pago:  medio,
+      medio_label: m?.label,
+      medio_color: m?.color,
+      nota,
+      anulada:     false,
+      _id:         Date.now(),
+    };
+    setLista(l => [...l, item]);
+    setMonto(''); setNota('');
+  }
+
+  function pedirAnulacion(item) {
+    setAnulando(item);
+    setMotivoAnulacion('');
+  }
+
+  async function confirmarAnulacion() {
+    if (!motivoAnulacion.trim()) return show('⚠ Ingresá un motivo');
+    try {
+      const sb = getClient();
+      // Guardar en Supabase como anulada si ya tiene id de DB
+      if (anulando.db_id) {
+        await sb.from('ingresos')
+          .update({ anulada: true, motivo_anulacion: motivoAnulacion })
+          .eq('id', anulando.db_id);
+      } else {
+        // Guardar como anulada directamente
+        await sb.from('ingresos').insert([{
+          bar_id:           usuario.bar_id,
+          turno_id:         null,
+          usuario_id:       usuario.id,
+          medio_pago:       anulando.medio_pago,
+          monto_bruto:      anulando.monto_bruto,
+          retencion_pct:    anulando.retencion_pct,
+          retencion_monto:  anulando.retencion_monto,
+          monto_neto:       anulando.monto_neto,
+          nota:             anulando.nota || '',
+          fecha:            new Date().toISOString(),
+          anulada:          true,
+          motivo_anulacion: motivoAnulacion,
+        }]);
+      }
+      setLista(l => l.map(i => i._id === anulando._id ? { ...i, anulada: true, motivo_anulacion: motivoAnulacion } : i));
+      setAnulando(null);
+      show('✓ Venta anulada y registrada');
+    } catch {
+      show('✗ Error al registrar anulación');
+    }
+  }
+
+  async function cerrarTurnoHandler() {
+    if (activas.length === 0) return show('⚠ No hay ventas para cerrar');
+    setCerrando(true);
+    try {
+      const t = await abrirTurno(usuario.bar_id, usuario.id, todayStr(), turno);
+      const rows = activas.map(item => ({
+        bar_id:          usuario.bar_id,
+        turno_id:        t.id,
+        usuario_id:      usuario.id,
+        medio_pago:      item.medio_pago,
+        monto_bruto:     item.monto_bruto,
+        retencion_pct:   item.retencion_pct,
+        retencion_monto: item.retencion_monto,
+        monto_neto:      item.monto_neto,
+        nota:            item.nota || '',
+        fecha:           new Date().toISOString(),
+        anulada:         false,
+        motivo_anulacion: '',
+      }));
+      await crearIngresosBulk(rows);
+      await cerrarTurno(t.id);
+      localStorage.removeItem(STORAGE_KEY);
+      setLista([]);
+      show(`✓ Turno cerrado · ${activas.length} ventas · ${fmt(totalBruto)} bruto`);
+    } catch {
+      show('✗ Error al cerrar turno');
+    } finally {
+      setCerrando(false);
+    }
+  }
+
+  if (!config) return <Spinner />;
 
   return (
     <Screen>
-      {loadingMes ? <Spinner /> : (<>
+      <Toast msg={toast} visible={visible} />
 
-        {/* Header mes */}
-        <div className="text-center">
-          <div className="text-lg font-black text-t1 tracking-tight capitalize">{mesLabel}</div>
-          <div className="text-xs text-t3 mt-0.5">Mes en curso</div>
-        </div>
-
-        {/* KPIs mes */}
-        <div className="flex gap-3">
-          <KpiCard label="Ventas brutas" value={resMes?.totalBruto || 0} color="green" />
-          <KpiCard label="Retenciones" value={resMes?.totalRetencion || 0} color="red" />
-        </div>
-        <div className="flex gap-3">
-          <KpiCard label="Ventas netas" value={resMes?.totalNeto || 0} />
-          <KpiCard label="Gastos" value={resMes?.totalEgresos || 0} color="amber" />
-        </div>
-
-        <ResultadoCard valor={resMes?.resultado || 0} label="Resultado del mes" />
-
-        {/* Desglose por medio */}
-        {resMes && Object.keys(resMes.porMedio).length > 0 && (
-          <Card>
-            <CardHeader title="Ventas por medio de pago" />
-            <div className="p-4">
-              <TablaRetencion rows={
-                MEDIOS_PAGO.filter(m => resMes.porMedio[m.key]).map(m => ({
-                  label: m.label, color: m.color,
-                  bruto: resMes.porMedio[m.key].bruto,
-                  retencion: resMes.porMedio[m.key].retencion,
-                  neto: resMes.porMedio[m.key].neto,
-                }))
-              } />
+      {/* Modal anulación */}
+      {anulando && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-8 px-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-xl">
+            <div>
+              <div className="text-base font-bold text-t1">Anular venta</div>
+              <div className="text-sm text-t3 mt-1">
+                {anulando.medio_label} · {fmt(anulando.monto_bruto)}
+              </div>
             </div>
-          </Card>
-        )}
+            <div>
+              <FieldLabel>Motivo de anulación</FieldLabel>
+              <textarea
+                value={motivoAnulacion}
+                onChange={e => setMotivoAnulacion(e.target.value)}
+                placeholder="Ej: error de carga, cliente canceló..."
+                rows={3}
+                className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm border border-transparent focus:outline-none focus:border-red/40 placeholder:text-t4 transition resize-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setAnulando(null)}
+                className="flex-1 h-11 rounded-xl bg-offset text-t2 text-sm font-medium">
+                Cancelar
+              </button>
+              <button onClick={confirmarAnulacion}
+                className="flex-1 h-11 rounded-xl bg-redsoft border border-red/20 text-redtext text-sm font-semibold">
+                Confirmar anulación
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        {/* Lista de días del mes */}
+      {/* Turno */}
+      <Card>
+        <div className="p-4">
+          <FieldLabel>Turno</FieldLabel>
+          <ChipGroup
+            options={TURNOS.map(t => ({ value: t.key, label: `${t.icon} ${t.label}` }))}
+            value={turno} onChange={setTurno}
+          />
+        </div>
+      </Card>
+
+      {/* Formulario */}
+      <Card>
+        <CardHeader title="Nueva venta" subtitle="Se agrega a la lista del turno" />
+        <div className="p-4 flex flex-col gap-4">
+          <div>
+            <FieldLabel>Medio de pago</FieldLabel>
+            <ChipGroup
+              options={MEDIOS_PAGO.map(m => ({ value: m.key, label: m.label, color: m.color }))}
+              value={medio} onChange={setMedio}
+            />
+          </div>
+          <div>
+            <FieldLabel>Monto bruto</FieldLabel>
+            <MontoInput value={monto} onChange={setMonto}
+              color={medio ? MEDIOS_PAGO.find(m => m.key === medio)?.color : null} />
+          </div>
+          {preview && (
+            <div className="bg-offset rounded-xl border border-divider p-3 flex flex-col gap-0">
+              <DivRow label="Monto bruto" value={fmt(preview.monto_bruto)} />
+              {preview.retencion_pct > 0 && (
+                <DivRow label={`Retención (${preview.retencion_pct}%)`}
+                  value={`−${fmt(preview.retencion_monto)}`} valueClass="text-redtext" />
+              )}
+              <DivRow label="Monto neto" value={fmt(preview.monto_neto)} valueClass="text-greentext" bold />
+            </div>
+          )}
+          <div>
+            <FieldLabel>Nota (opcional)</FieldLabel>
+            <input value={nota} onChange={e => setNota(e.target.value)}
+              placeholder="Mesa 5, delivery, etc..."
+              className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm border border-transparent focus:outline-none focus:border-primary/40 placeholder:text-t4" />
+          </div>
+          <button onClick={agregarALista}
+            className="w-full h-11 rounded-xl bg-primary/10 border border-primary/20 text-primary font-semibold text-sm active:scale-[0.98] transition-all">
+            + Agregar a lista
+          </button>
+        </div>
+      </Card>
+
+      {/* Lista activa */}
+      {activas.length > 0 && (
         <Card>
-          <CardHeader title="Por día" subtitle="Tocá un día para ver el detalle" />
-          <div className="p-4">
-            {diasConMovimientos.length === 0
-              ? <EmptyState message="Sin movimientos este mes" />
-              : diasConMovimientos.map(([dia, movs]) => {
-                  const r = calcularResumenDia(movs.ingresos, movs.egresos);
-                  const d = new Date(dia + 'T12:00:00');
-                  const pos = r.resultado >= 0;
-                  const isSelected = diaSeleccionado === dia;
-                  return (
-                    <div key={dia}>
-                      <button
-                        onClick={() => setDia(isSelected ? null : dia)}
-                        className={`w-full flex items-center gap-3 py-3 border-b border-white/[0.06]
-                          last:border-0 text-left ${isSelected ? 'opacity-100' : 'opacity-90'}`}>
-                        <div className={`w-0.5 h-9 rounded-full flex-shrink-0
-                          ${pos ? 'bg-green' : 'bg-red'}`} />
-                        <div className="flex-1">
-                          <div className="text-sm font-semibold text-t1">
-                            {DAY_NAMES[d.getDay()]} {d.getDate()}
-                          </div>
-                          <div className="text-xs text-t3 mt-0.5">
-                            {movs.ingresos.length} ventas · {movs.egresos.length} gastos
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className={`text-sm font-extrabold tabular-nums
-                            ${pos ? 'text-greentext' : 'text-redtext'}`}>
-                            {r.resultado < 0 && '−'}{fmt(Math.abs(r.resultado))}
-                          </div>
-                          <div className="text-xs text-t3 tabular-nums">{fmt(r.totalBruto)} bruto</div>
-                        </div>
-                        <span className="text-t3 text-sm">{isSelected ? '▲' : '▶'}</span>
-                      </button>
+          <CardHeader title={`Lista · ${activas.length} ventas`}
+            subtitle={`${fmt(totalBruto)} bruto`} />
+          <div className="p-4 flex flex-col gap-2">
+            {activas.map(item => (
+              <div key={item._id}
+                className="flex items-center gap-3 p-3 rounded-xl bg-offset border border-divider">
+                <div className="w-1 h-8 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: item.medio_color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-t1">{item.medio_label}</div>
+                  {item.nota && <div className="text-xs text-t3 truncate">{item.nota}</div>}
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold tabular-nums text-t1">{fmt(item.monto_bruto)}</div>
+                  {item.retencion_monto > 0 && (
+                    <div className="text-xs text-redtext tabular-nums">−{fmt(item.retencion_monto)}</div>
+                  )}
+                </div>
+                <button onClick={() => pedirAnulacion(item)}
+                  className="w-8 h-8 rounded-lg bg-redsoft flex items-center justify-center text-redtext text-sm flex-shrink-0">
+                  ✕
+                </button>
+              </div>
+            ))}
 
-                      {/* Detalle del día expandido */}
-                      {isSelected && (
-                        <div className="mb-3 bg-offset rounded-xl border border-white/10 p-4 flex flex-col gap-3">
-                          {loadingDia ? <Spinner /> : resDia && (<>
-                            <div className="flex gap-2">
-                              <div className="flex-1 text-center">
-                                <div className="text-[10px] text-t3 uppercase tracking-wider">Bruto</div>
-                                <div className="text-sm font-bold text-t1 tabular-nums">{fmt(resDia.totalBruto)}</div>
-                              </div>
-                              <div className="flex-1 text-center">
-                                <div className="text-[10px] text-t3 uppercase tracking-wider">Retención</div>
-                                <div className="text-sm font-bold text-redtext tabular-nums">−{fmt(resDia.totalRetencion)}</div>
-                              </div>
-                              <div className="flex-1 text-center">
-                                <div className="text-[10px] text-t3 uppercase tracking-wider">Neto</div>
-                                <div className="text-sm font-bold text-greentext tabular-nums">{fmt(resDia.totalNeto)}</div>
-                              </div>
-                              <div className="flex-1 text-center">
-                                <div className="text-[10px] text-t3 uppercase tracking-wider">Gastos</div>
-                                <div className="text-sm font-bold text-ambertext tabular-nums">−{fmt(resDia.totalEgresos)}</div>
-                              </div>
-                            </div>
-                            {/* Por medio de pago */}
-                            {Object.keys(resDia.porMedio).length > 0 && (
-                              <div className="flex flex-col gap-1.5 pt-2 border-t border-white/[0.08]">
-                                {MEDIOS_PAGO.filter(m => resDia.porMedio[m.key]).map(m => (
-                                  <div key={m.key} className="flex justify-between text-xs">
-                                    <span className="text-t2 flex items-center gap-1.5">
-                                      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: m.color }} />
-                                      {m.label}
-                                    </span>
-                                    <span className="text-t1 tabular-nums font-medium">
-                                      {fmt(resDia.porMedio[m.key].neto)} neto
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </>)}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-            }
+            <div className="mt-1 bg-offset rounded-xl border border-divider p-3">
+              <DivRow label="Total bruto"       value={fmt(totalBruto)} />
+              <DivRow label="Total retenciones" value={`−${fmt(totalRetencion)}`} valueClass="text-redtext" />
+              <DivRow label="Total neto"        value={fmt(totalNeto)} valueClass="text-greentext" bold />
+            </div>
+
+            <BtnPrimary
+              label={cerrando ? 'Cerrando...' : `✓ Cerrar turno · ${activas.length} ventas`}
+              onClick={cerrarTurnoHandler} loading={cerrando} className="mt-1"
+            />
+            <BtnSecondary label="Limpiar todo" onClick={() => { setLista([]); localStorage.removeItem(STORAGE_KEY); }} />
           </div>
         </Card>
+      )}
 
-      </>)}
+      {/* Anuladas del turno */}
+      {anuladas.length > 0 && (
+        <Card>
+          <CardHeader title={`Anuladas · ${anuladas.length}`} />
+          <div className="p-4 flex flex-col gap-2">
+            {anuladas.map(item => (
+              <div key={item._id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft/50 border border-red/10 opacity-60">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-t2 line-through">{item.medio_label} · {fmt(item.monto_bruto)}</div>
+                  <div className="text-xs text-redtext mt-0.5">{item.motivo_anulacion}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {lista.length === 0 && (
+        <div className="text-center py-8 text-t3 text-sm">
+          Agregá ventas a la lista y cerrá el turno al terminar.
+        </div>
+      )}
     </Screen>
   );
 }
