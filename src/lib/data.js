@@ -361,5 +361,4 @@ export async function getCajeros(barId) {
   if (error) throw error;
   return data || [];
 }
-}
 
