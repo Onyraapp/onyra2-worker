@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
-import {
-  getConfiguracion, updateConfiguracion, signOut
-} from '../../../lib/data';
+import { getConfiguracion, updateConfiguracion, signOut } from '../../../lib/data';
 import { MEDIOS_PAGO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, BtnPrimary, BtnDanger,
@@ -13,14 +11,16 @@ import {
 } from '../../../components/ui';
 
 export default function ConfiguracionPage() {
-  const { usuario, recargar } = useAuth();
+  const { usuario } = useAuth();
   const router = useRouter();
   const { toast, visible, show } = useToast();
 
   const [config,   setConfig]   = useState(null);
   const [retMap,   setRetMap]   = useState({});
+  const [waNumero, setWaNumero] = useState('');
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
+  const [savingWa, setSavingWa] = useState(false);
 
   useEffect(() => {
     if (!usuario) return;
@@ -28,10 +28,9 @@ export default function ConfiguracionPage() {
     getConfiguracion(usuario.bar_id).then(c => {
       setConfig(c);
       const map = {};
-      MEDIOS_PAGO.forEach(m => {
-        map[m.key] = String(c[`retencion_${m.key}`] ?? m.defaultRet);
-      });
+      MEDIOS_PAGO.forEach(m => { map[m.key] = String(c[`retencion_${m.key}`] ?? m.defaultRet); });
       setRetMap(map);
+      setWaNumero(c.whatsapp_numero || '');
     }).finally(() => setLoading(false));
   }, [usuario]);
 
@@ -39,16 +38,20 @@ export default function ConfiguracionPage() {
     setSaving(true);
     try {
       const updates = {};
-      MEDIOS_PAGO.forEach(m => {
-        updates[`retencion_${m.key}`] = parseFloat(retMap[m.key]) || 0;
-      });
+      MEDIOS_PAGO.forEach(m => { updates[`retencion_${m.key}`] = parseFloat(retMap[m.key]) || 0; });
       await updateConfiguracion(usuario.bar_id, updates);
-      show('✓ Configuración guardada');
-    } catch {
-      show('✗ Error al guardar');
-    } finally {
-      setSaving(false);
-    }
+      show('✓ Retenciones guardadas');
+    } catch { show('✗ Error al guardar'); }
+    finally { setSaving(false); }
+  }
+
+  async function guardarWa() {
+    setSavingWa(true);
+    try {
+      await updateConfiguracion(usuario.bar_id, { whatsapp_numero: waNumero });
+      show('✓ Número guardado');
+    } catch { show('✗ Error al guardar'); }
+    finally { setSavingWa(false); }
   }
 
   async function handleSignOut() {
@@ -62,7 +65,6 @@ export default function ConfiguracionPage() {
     <Screen>
       <Toast msg={toast} visible={visible} />
 
-      {/* Bar info */}
       <Card>
         <CardHeader title="Tu bar" />
         <div className="p-4">
@@ -72,10 +74,8 @@ export default function ConfiguracionPage() {
         </div>
       </Card>
 
-      {/* Retenciones */}
       <Card>
-        <CardHeader title="Retenciones por medio de pago"
-          subtitle="% que se descuenta del monto bruto" />
+        <CardHeader title="Retenciones por medio de pago" subtitle="% que se descuenta del monto bruto" />
         <div className="p-4 flex flex-col gap-4">
           {MEDIOS_PAGO.map(m => (
             <div key={m.key} className="flex items-center gap-3">
@@ -84,14 +84,9 @@ export default function ConfiguracionPage() {
                 <div className="text-sm font-medium text-t1">{m.label}</div>
               </div>
               <div className="flex items-center gap-1.5">
-                <input
-                  type="number"
-                  value={retMap[m.key] || ''}
-                  onChange={e => setRetMap(r => ({ ...r, [m.key]: e.target.value }))}
+                <input type="number" value={retMap[m.key] || ''} onChange={e => setRetMap(r => ({ ...r, [m.key]: e.target.value }))}
                   min="0" max="100" step="0.1"
-                  className="w-16 bg-offset border border-white/10 rounded-lg px-2 py-2 text-t1 text-sm
-                    text-center focus:outline-none focus:border-primary/50 tabular-nums"
-                />
+                  className="w-16 bg-offset border border-white/10 rounded-lg px-2 py-2 text-t1 text-sm text-center focus:outline-none focus:border-primary/50 tabular-nums" />
                 <span className="text-t3 text-sm">%</span>
               </div>
             </div>
@@ -100,25 +95,33 @@ export default function ConfiguracionPage() {
         </div>
       </Card>
 
-      {/* Usuarios */}
       <Card>
-        <CardHeader title="Usuarios" subtitle="Administrá los accesos a tu bar" />
+        <CardHeader title="WhatsApp Cierre diario" subtitle="Número que recibe el resumen" />
+        <div className="p-4 flex flex-col gap-3">
+          <div>
+            <FieldLabel>Número de WhatsApp</FieldLabel>
+            <input value={waNumero} onChange={e => setWaNumero(e.target.value)}
+              placeholder="Ej: 5491123456789"
+              className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm border border-transparent focus:outline-none focus:border-primary/40 placeholder:text-t4" />
+            <div className="text-xs text-t3 mt-1">Código de país sin + (ej: 549 para Argentina)</div>
+          </div>
+          <BtnPrimary label={savingWa ? 'Guardando...' : 'Guardar número'} onClick={guardarWa} loading={savingWa} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Usuarios" />
         <div className="p-4">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-offset border border-white/10">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-offset border border-divider">
             <div>
               <div className="text-sm font-semibold text-t1">{usuario?.nombre}</div>
               <div className="text-xs text-t3">{usuario?.email} · Admin</div>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider
-              bg-primary/10 border border-primary/20 text-primary">Admin</span>
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-primary">Admin</span>
           </div>
-          <p className="text-xs text-t3 mt-3 text-center">
-            Para agregar cajeros, contactá soporte.
-          </p>
         </div>
       </Card>
 
-      {/* Cerrar sesión */}
       <BtnDanger label="Cerrar sesión" onClick={handleSignOut} />
     </Screen>
   );
