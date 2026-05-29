@@ -36,7 +36,7 @@ function AppShell({ children }) {
             <div className="w-8 h-8 rounded-[10px] bg-green/15 border border-green/30
               flex items-center justify-center text-sm font-black text-greentext">⇡</div>
             <div>
-              <div className="font-black text-t1 tracking-tight text-sm leading-tight">CajaBar</div>
+              <div className="font-black text-t1 tracking-tight text-sm leading-tight">CajaSmart</div>
               <div className="text-[10px] text-t3 leading-tight truncate max-w-[120px]">
                 {usuario.bares?.nombre}
               </div>
