@@ -24,7 +24,15 @@ function AppShell({ children }) {
   }, [usuario, cargando]);
 
   if (cargando || !usuario) return <FullScreenSpinner />;
+// Verificar plan
+const ahora = new Date();
+const trialHasta = usuario.bares?.trial_hasta ? new Date(usuario.bares.trial_hasta) : null;
+const planVencido = !usuario.bares?.plan_activo || (usuario.bares?.plan === 'trial' && trialHasta && ahora > trialHasta);
 
+if (planVencido && pathname !== '/plan-vencido') {
+  router.push('/plan-vencido');
+  return <FullScreenSpinner />;
+}
   const active = NAV.find(n => pathname.startsWith(n.href))?.href;
 
   return (
