@@ -1,6 +1,6 @@
 // src/lib/data.js
 import { getClient } from './supabase';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfDay as sod } from 'date-fns';
+import { startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns';
 import { CONFIG_KEYS } from './constants';
 
 // ── AUTH ─────────────────────────────────────────────────
