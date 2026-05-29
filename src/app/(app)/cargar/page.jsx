@@ -24,17 +24,17 @@ export default function CargarPage() {
   const router = useRouter();
   const { toast, visible, show } = useToast();
 
-  const [config,       setConfig]       = useState(null);
-  const [turno,        setTurno]        = useState(null);
-  const [medio,        setMedio]        = useState('efectivo');
-  const [monto,        setMonto]        = useState('');
-  const [nota,         setNota]         = useState('');
-  const [lista,        setLista]        = useState([]);
-  const [cerrando,     setCerrando]     = useState(false);
-  const [cerrandoDia,  setCerrandoDia]  = useState(false);
-  const [diaCerrado,   setDiaCerrado]   = useState(false);
-  const [cajaInicial,  setCajaInicial]  = useState('');
-  const [anulando,     setAnulando]     = useState(null);
+  const [config,          setConfig]          = useState(null);
+  const [turno,           setTurno]           = useState(null);
+  const [medio,           setMedio]           = useState('efectivo');
+  const [monto,           setMonto]           = useState('');
+  const [nota,            setNota]            = useState('');
+  const [lista,           setLista]           = useState([]);
+  const [cerrando,        setCerrando]        = useState(false);
+  const [diaCerrado,      setDiaCerrado]      = useState(false);
+  const [cajaInicial,     setCajaInicial]     = useState('');
+  const [mostrarApertura, setMostrarApertura] = useState(false);
+  const [anulando,        setAnulando]        = useState(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
 
   useEffect(() => {
@@ -47,8 +47,8 @@ export default function CargarPage() {
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
       if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
       else if (cerrados.includes('1')) setTurno('2');
-      else setTurno('1');
-    }).catch(() => setTurno('1'));
+      else { setTurno('1'); setMostrarApertura(true); }
+    }).catch(() => { setTurno('1'); setMostrarApertura(true); });
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
     }).catch(() => {});
@@ -118,7 +118,6 @@ export default function CargarPage() {
       if (turno === '1') setTurno('2');
       else if (turno === '2') setTurno('sin_turno');
 
-      // Notificar por WhatsApp si está configurado
       if (config?.wa_cierre_turno && config?.whatsapp_numero) {
         const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Sin turno';
         const msg = [
@@ -135,40 +134,6 @@ export default function CargarPage() {
       setTimeout(() => router.push('/resumen'), 1500);
     } catch { show('✗ Error al cerrar turno'); }
     finally { setCerrando(false); }
-  }
-
-  async function cierreDiario() {
-    setCerrandoDia(true);
-    try {
-      const [ing, egr, cfg] = await Promise.all([
-        getIngresosDia(usuario.bar_id, todayStr()),
-        getEgresosDia(usuario.bar_id, todayStr()),
-        getConfiguracion(usuario.bar_id),
-      ]);
-      const res = calcularResumenDia(ing, egr);
-      const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
-      const pos = res.resultado >= 0;
-      const msg = [
-        `*CajaSmart - Cierre del ${fechaLabel}*`, ``,
-        `Ventas brutas:  ${fmt(res.totalBruto)}`,
-        `Retenciones:    -${fmt(res.totalRetencion)}`,
-        `Ventas netas:   ${fmt(res.totalNeto)}`,
-        `Gastos:         -${fmt(res.totalEgresos)}`, ``,
-        `Resultado: *${res.resultado >= 0 ? '' : '-'}${fmt(Math.abs(res.resultado))}*`, ``,
-        `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
-      ].join('\n');
-      const numero = cfg?.whatsapp_numero?.trim();
-      const url = numero
-        ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
-        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank');
-      await crearCierreDiario(usuario.bar_id, usuario.id, todayStr());
-      setDiaCerrado(true);
-      show('✓ Día cerrado · WhatsApp enviado');
-    } catch (e) {
-      if (e?.code === '23505') { setDiaCerrado(true); show('El día ya estaba cerrado'); }
-      else show('✗ Error al cerrar el día');
-    } finally { setCerrandoDia(false); }
   }
 
   if (!config || turno === null) return <Spinner />;
@@ -189,6 +154,33 @@ export default function CargarPage() {
     <Screen>
       <Toast msg={toast} visible={visible} />
 
+      {/* Modal apertura de caja */}
+      {mostrarApertura && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-8 px-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-xl">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🏪</div>
+              <div className="text-lg font-bold text-t1">Apertura del día</div>
+              <div className="text-sm text-t3 mt-1 capitalize">
+                {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · Turno 1 ☀️
+              </div>
+            </div>
+            <div>
+              <FieldLabel>Monto de apertura de caja</FieldLabel>
+              <div className="flex items-center bg-offset rounded-xl px-4 border border-transparent focus-within:border-primary/40 transition">
+                <span className="text-2xl font-light text-t3 mr-1">$</span>
+                <input type="number" inputMode="decimal" value={cajaInicial}
+                  onChange={e => setCajaInicial(e.target.value)} placeholder="0"
+                  className="flex-1 bg-transparent py-4 text-3xl font-bold tracking-tight placeholder:text-t4 focus:outline-none tabular-nums text-t1"
+                  autoFocus />
+              </div>
+            </div>
+            <BtnPrimary label="Abrir caja" onClick={() => setMostrarApertura(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Modal anulación */}
       {anulando && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-8 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-xl">
@@ -212,25 +204,12 @@ export default function CargarPage() {
 
       <Card>
         <div className="p-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2">
             <FieldLabel>Turno</FieldLabel>
           </div>
           <ChipGroup options={TURNOS.map(t => ({ value: t.key, label: `${t.icon} ${t.label}` }))} value={turno} onChange={setTurno} />
         </div>
       </Card>
-
-        <Card>
-          <div className="p-4">
-            <FieldLabel>Caja inicial</FieldLabel>
-            <div className="flex items-center bg-offset rounded-xl px-4 border border-transparent focus-within:border-primary/40 transition">
-              <span className="text-xl font-light text-t3 mr-1">$</span>
-              <input type="number" inputMode="decimal" value={cajaInicial}
-                onChange={e => setCajaInicial(e.target.value)} placeholder="0"
-                className="flex-1 bg-transparent py-3 text-xl font-bold tracking-tight placeholder:text-t4 focus:outline-none tabular-nums text-t1" />
-            </div>
-          </div>
-        </Card>
-    
 
       <Card>
         <CardHeader title="Nueva venta" subtitle={`${TURNOS.find(t => t.key === turno)?.icon} ${TURNOS.find(t => t.key === turno)?.label} · Se agrega a la lista`} />
