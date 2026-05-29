@@ -1,7 +1,7 @@
 import './globals.css';
 export const metadata = {
-  title: 'CajaBar',
-  description: 'Control de caja para bares',
+  title: 'CajaSmart',
+description: 'Control de caja inteligente',
   manifest: '/manifest.json',
   themeColor: '#F5F5F7',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'CajaBar' },
