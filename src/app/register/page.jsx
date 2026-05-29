@@ -73,10 +73,9 @@ export default function RegisterPage() {
           <input type="checkbox" id="acepto" checked={acepto} onChange={e => setAcepto(e.target.checked)}
             className="mt-0.5 w-4 h-4 rounded accent-primary flex-shrink-0" />
           <label htmlFor="acepto" className="text-xs text-t3 leading-relaxed">
-            Acepto los{' '}
-            <a href="/terminos" className="text-primary underline">Términos y Condiciones</a>,{' '}
-            la <a href="/privacidad" className="text-primary underline">Política de Privacidad</a>{' '}
-         y{' '}
+           Acepto los{' '}
+          <a href="/terminos" className="text-primary underline">Términos y Condiciones</a>
+          {' '}y{' '}
           <a href="/privacidad" className="text-primary underline">Política de Privacidad</a>
           {'.'}
         </label>
