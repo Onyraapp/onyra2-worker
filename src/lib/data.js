@@ -363,6 +363,7 @@ export async function getCajeros(barId) {
 }
   if (error) throw error;
   return data || [];
+}
   export async function updateBar(barId, updates) {
   const sb = getClient();
   const { data, error } = await sb
@@ -372,6 +373,6 @@ export async function getCajeros(barId) {
     .select().single();
   if (error) throw error;
   return data;
-}
+
 }
 
