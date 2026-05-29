@@ -90,7 +90,7 @@ export default function CargarPage() {
         medio_pago: anulando.medio_pago, monto_bruto: anulando.monto_bruto,
         retencion_pct: anulando.retencion_pct, retencion_monto: anulando.retencion_monto,
         monto_neto: anulando.monto_neto, nota: anulando.nota || '',
-        fecha: new Date().toISOString(), anulada: true, motivo_anulacion: motivoAnulacion,
+        fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(),, anulada: true, motivo_anulacion: motivoAnulacion,
       }]);
       setLista(l => l.map(i => i._id === anulando._id ? { ...i, anulada: true, motivo_anulacion: motivoAnulacion } : i));
       setAnulando(null);
