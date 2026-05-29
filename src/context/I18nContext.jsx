@@ -1,6 +1,6 @@
-// src/context/I18nContext.jsx
+'use client';
 import { createContext, useState, useEffect, useCallback } from 'react';
-import { translations, countryToLocale, defaultLocale, supportedLocales } from '@/lib/i18n/translations';
+import { translations, countryToLocale, defaultLocale, supportedLocales } from '../lib/i18n/translations';
 
 export const I18nContext = createContext(null);
 
@@ -33,18 +33,15 @@ export function I18nProvider({ children }) {
       const stored = typeof window !== 'undefined'
         ? localStorage.getItem(STORAGE_KEY)
         : null;
-
       if (stored && supportedLocales.includes(stored)) {
         setLocaleState(stored);
         setLoading(false);
         return;
       }
-
       const detected = await detectLocaleByIP();
       setLocaleState(detected);
       setLoading(false);
     }
-
     init();
   }, []);
 
@@ -80,11 +77,8 @@ export function I18nProvider({ children }) {
     const localeMap = { es: 'es-AR', pt: 'pt-BR', en: 'en-US' };
     try {
       return new Intl.DateTimeFormat(localeMap[locale] ?? 'es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
       }).format(new Date(date));
     } catch {
       return String(date);
@@ -92,9 +86,7 @@ export function I18nProvider({ children }) {
   }, [locale]);
 
   return (
-    <I18nContext.Provider
-      value={{ locale, setLocale, t, formatCurrency, formatDate, loading, supportedLocales }}
-    >
+    <I18nContext.Provider value={{ locale, setLocale, t, formatCurrency, formatDate, loading, supportedLocales }}>
       {children}
     </I18nContext.Provider>
   );
