@@ -185,7 +185,7 @@ export async function getIngresosDia(barId, fechaStr) {
   const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
   const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
   const { data, error } = await sb
-    .from('ingresos').select('*, turnos(numero)')
+    .from('ingresos').select('*')
     .eq('bar_id', barId)
     .gte('fecha', inicio).lte('fecha', fin)
     .order('fecha', { ascending: true });
