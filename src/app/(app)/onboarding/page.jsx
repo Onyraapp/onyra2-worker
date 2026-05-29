@@ -23,7 +23,7 @@ export default function OnboardingPage() {
           <div className="w-16 h-16 rounded-[20px] bg-primary flex items-center justify-center shadow-md mx-auto mb-4">
             <span className="text-white text-2xl font-bold">C</span>
           </div>
-          <div className="text-2xl font-bold text-t1 tracking-tight">¡Bienvenido a CajaSmart!</div>
+          <div className="text-2xl font-bold text-t1 tracking-tight">¡Bienvenido a Troco!</div>
           <div className="text-sm text-t3 mt-1">Hola {usuario?.nombre}, tu negocio está listo.</div>
         </div>
 
