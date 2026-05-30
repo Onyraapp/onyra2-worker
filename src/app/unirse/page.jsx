@@ -1,10 +1,10 @@
 'use client';
 export const dynamic = 'force-dynamic';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getClient } from '../../lib/supabase';
 
-export default function UnirseANegocio() {
+function UnirseANegocioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const codigo = searchParams.get('codigo');
@@ -39,21 +39,18 @@ export default function UnirseANegocio() {
     setError('');
     try {
       const sb = getClient();
-      // 1. Obtener invitación
       const { data: inv } = await sb
         .from('invitaciones')
         .select('*, bares(*)')
         .eq('codigo', codigo)
         .single();
 
-      // 2. Crear usuario en auth
       const { data: authData, error: authError } = await sb.auth.signUp({
         email: form.email,
         password: form.password,
       });
       if (authError) throw authError;
 
-      // 3. Crear usuario cajero pendiente
       const { error: userError } = await sb.from('usuarios').insert([{
         id: authData.user.id,
         bar_id: inv.bar_id,
@@ -64,7 +61,6 @@ export default function UnirseANegocio() {
       }]);
       if (userError) throw userError;
 
-      // 4. Marcar invitación como usada
       await sb.from('invitaciones').update({ usado: true }).eq('codigo', codigo);
 
       router.push('/espera');
@@ -142,6 +138,14 @@ export default function UnirseANegocio() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function UnirseANegocio() {
+  return (
+    <Suspense fallback={null}>
+      <UnirseANegocioContent />
+    </Suspense>
   );
 }
 // v2
