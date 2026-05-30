@@ -28,7 +28,7 @@ export default function SplashScreen() {
       }}>
        <img src="/logo.svg" alt="Troco" style={{ width: 200, height: 200 }} />
         <span style={{
-          color: '#7FFFD4', fontSize: 28, fontWeight: 800,
+          color: '#7FFFD4', fontSize: 42, fontWeight: 800,
           letterSpacing: '-0.5px', fontFamily: 'Space Grotesk, sans-serif',
         }}>
           troco
