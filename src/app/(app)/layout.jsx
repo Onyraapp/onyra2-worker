@@ -80,14 +80,20 @@ if (planVencido && pathname !== '/plan-vencido') {
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto
-        bg-surface border-t border-white/[0.08] pb-safe flex">
+        bg-surface border-t border-white/[0.08] pb-safe flex items-center justify-around px-4 py-3">
         {NAV.map(n => (
           <Link key={n.href} href={n.href}
-            className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors
+            className="flex flex-col items-center gap-1.5">
+            <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center transition-all
+              ${active === n.href
+                ? 'bg-[#1A7A8A] shadow-md scale-105'
+                : 'bg-[#0F4C5C]'}`}>
+              <span className="text-white text-xl leading-none font-bold">{n.icon}</span>
+            </div>
+            <span className={`text-[10px] font-semibold tracking-wide
               ${active === n.href ? 'text-primary' : 'text-t3'}`}>
-            <span className={`text-xl leading-none font-bold transition-transform
-              ${active === n.href ? 'scale-110' : 'scale-100'}`}>{n.icon}</span>
-            <span className="text-[11px] font-semibold tracking-wide">{n.label}</span>
+              {n.label}
+            </span>
           </Link>
         ))}
       </nav>
