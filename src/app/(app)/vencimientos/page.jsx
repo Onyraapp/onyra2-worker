@@ -31,7 +31,8 @@ export default function VencimientosPage() {
 
   async function guardar() {
     if (!form.detalle || !form.importe || !form.fecha) return;
-    setGuardando(true);
+    setGuardando(true);console.log('bar_id:', usuario.bar_id);
+console.log('form:', form);
     const sb = getClient();
     await sb.from('vencimientos').insert([{
       bar_id: usuario.bar_id,
