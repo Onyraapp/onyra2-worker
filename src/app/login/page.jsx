@@ -30,13 +30,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
       <div className="flex flex-col items-center mb-10">
         <div className="w-16 h-16 rounded-[20px] bg-[#0F4C5C] flex items-center justify-center mb-3">
-          <svg width="36" height="36" viewBox="190 40 300 300" xmlns="http://www.w3.org/2000/svg">
+          <svg width="36" height="36" viewBox="220 70 240 240" xmlns="http://www.w3.org/2000/svg">
   <rect x="190" y="40" width="300" height="300" rx="66" fill="#0F4C5C"/>
-  <rect x="255" y="100" width="170" height="13" rx="6.5" fill="#FFFFFF"/>
-  <rect x="265" y="140" width="130" height="13" rx="6.5" fill="#7FFFD4"/>
-  <rect x="260" y="180" width="150" height="13" rx="6.5" fill="#FFFFFF"/>
-  <rect x="255" y="220" width="170" height="13" rx="6.5" fill="#7FFFD4"/>
-  <rect x="270" y="260" width="110" height="13" rx="6.5" fill="#FFFFFF" opacity="0.35"/>
+  <rect x="225" y="110" width="230" height="15" rx="7" fill="#FFFFFF"/>
+  <rect x="238" y="148" width="175" height="15" rx="7" fill="#7FFFD4"/>
+  <rect x="231" y="186" width="205" height="15" rx="7" fill="#FFFFFF"/>
+  <rect x="225" y="224" width="230" height="15" rx="7" fill="#7FFFD4"/>
+  <rect x="248" y="258" width="145" height="12" rx="6" fill="#FFFFFF" opacity="0.35"/>
 </svg>
         </div>
         <span className="text-2xl font-bold text-t1 tracking-tight lowercase">troco</span>
