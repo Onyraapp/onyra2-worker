@@ -170,7 +170,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-2 bg-surface rounded-2xl shadow-card p-3">
+      <div className="flex items-center gap-2 bg-[#0F4C5C] rounded-2xl shadow-card p-3">
         <button onClick={() => setFecha(d => subDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
           className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold">‹</button>
         <div className="flex-1 flex flex-col items-center gap-1">
