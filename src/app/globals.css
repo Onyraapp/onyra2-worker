@@ -4,7 +4,7 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overscroll-behavior: none; background: #FFFFFF; }
-bbody { font-family: 'Space Grotesk', -apple-system, 'SF Pro Display', 'SF Pro Text', Inter, system-ui, sans-serif; ...
+body { font-family: 'Space Grotesk', -apple-system, 'SF Pro Display', 'SF Pro Text', Inter, system-ui, sans-serif; ...
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
 input[type=number]::-webkit-inner-spin-button,
