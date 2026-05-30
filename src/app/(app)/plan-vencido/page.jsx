@@ -16,7 +16,7 @@ export default function PlanVencidoPage() {
           </div>
         </div>
         <div className="w-full flex flex-col gap-3">
-          <a href="https://buy.stripe.com/price_1TcnEM2fy49WJZAKPtrHvsxF"
+         <a href='https://buy.stripe.com/price_1TcnFY2fy49WJZAKZyoSmm4S'
             target="_blank"
             className="bg-surface rounded-2xl shadow-card p-5 border-2 border-primary text-left block">
             <div className="text-[1
