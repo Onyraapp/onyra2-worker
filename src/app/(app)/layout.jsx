@@ -11,7 +11,7 @@ const NAV = [
   { href: '/cargar',    label: 'Cargar',   icon: '+' },
   { href: '/egresos',   label: 'Gastos',   icon: '−' },
   { href: '/resumen',   label: 'Resumen',  icon: '▤' },
-  { href: '/mensual',   label: 'Mes',      icon: '∑' },
+  { href: '/vencimientos', label: 'Vence',  icon: '⏰' },
 ];
 
 function AppShell({ children }) {
