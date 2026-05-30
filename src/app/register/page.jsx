@@ -31,31 +31,30 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   async function handleRegister(e) {
-  e.preventDefault();
-  if (!acepto) { setError('Tenés que aceptar los términos'); return; }
-  setLoading(true);
-  setError('');
-  try {
-    const { registrarBar } = await import('../../lib/data');
-    await registrarBar({
-      nombreBar: form.businessName,
-      nombre: form.businessName,
-      email: form.email,
-      password: form.password,
-    });
-    router.push('/');
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
+    e.preventDefault();
+    if (!acepto) { setError('Tenés que aceptar los términos'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const { registrarBar } = await import('../../lib/data');
+      await registrarBar({
+        nombreBar: form.businessName,
+        nombre: form.businessName,
+        email: form.email,
+        password: form.password,
+      });
+      router.push('/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 py-8">
       <div className="flex flex-col items-center mb-8">
-       <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" />
-        </div>
+        <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" />
         <span className="text-2xl font-bold text-t1 tracking-tight lowercase">troco</span>
         <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">registrá tu negocio</span>
       </div>
