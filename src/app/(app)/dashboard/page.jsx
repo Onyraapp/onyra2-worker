@@ -174,7 +174,7 @@ export default function DashboardPage() {
         <button onClick={() => setFecha(d => subDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
           className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold">‹</button>
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-sm font-semibold text-t1 capitalize">{fechaDisplay}</span>
+          <span className="text-sm font-semibold text-white capitalize">{fechaDisplay}</span>
           <div className="flex gap-1.5 flex-wrap justify-center">
             {esHoy && <Badge label="Hoy" variant="success" />}
             {esHoy && turnoActivo && <Badge label={turnoActivo} variant="primary" />}
