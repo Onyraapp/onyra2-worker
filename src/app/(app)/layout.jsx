@@ -42,7 +42,9 @@ if (planVencido && pathname !== '/plan-vencido') {
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-[10px] bg-green/15 border border-green/30
-              flex items-center justify-center text-sm font-black text-greentext">⇡</div>
+             flex items-center justify-center overflow-hidden">
+  <img src="/logo.svg" alt="Troco" className="w-full h-full object-contain" />
+</div>
             <div>
              <div className="font-black text-t1 tracking-tight text-sm leading-tight">Troco</div>
               <div className="text-[10px] text-t3 leading-tight truncate max-w-[120px]">
