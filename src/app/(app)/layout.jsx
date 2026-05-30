@@ -33,7 +33,28 @@ if (planVencido && pathname !== '/plan-vencido') {
   router.push('/plan-vencido');
   return <FullScreenSpinner />;
 }
-  const active = NAV.find(n => pathname.startsWith(n.href))?.href;
+ const active = NAV.find(n => pathname.startsWith(n.href))?.href;
+
+  const [alertasVenc, setAlertasVenc] = useState([]);
+  const [modalAlerta, setModalAlerta] = useState(false);
+
+  useEffect(() => {
+    async function checkVencimientos() {
+      const sb = getClient();
+      const hoy = new Date().toISOString().slice(0, 10);
+      const manana = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+      const { data } = await sb
+        .from('vencimientos')
+        .select('*')
+        .eq('bar_id', usuario.bar_id)
+        .in('fecha', [hoy, manana]);
+      if (data && data.length > 0) {
+        setAlertasVenc(data);
+        setModalAlerta(true);
+      }
+    }
+    checkVencimientos();
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg flex flex-col max-w-lg mx-auto">
