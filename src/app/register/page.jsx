@@ -31,25 +31,25 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   async function handleRegister(e) {
-    e.preventDefault();
-    if (!acepto) { setError('Tenés que aceptar los términos'); return; }
-    setLoading(true);
-    setError('');
-    try {
-      const supabase = getClient();
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: { data: { business_name: form.businessName } },
-      });
-      if (signUpError) throw signUpError;
-      router.push('/');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  e.preventDefault();
+  if (!acepto) { setError('Tenés que aceptar los términos'); return; }
+  setLoading(true);
+  setError('');
+  try {
+    const { registrarBar } = await import('../../lib/data');
+    await registrarBar({
+      nombreBar: form.businessName,
+      nombre: form.businessName,
+      email: form.email,
+      password: form.password,
+    });
+    router.push('/');
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 py-8">
