@@ -1,0 +1,14 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo redondeado -->
+  <rect width="512" height="512" rx="128" fill="#12454a"/>
+  
+  <!-- Líneas de fondo -->
+  <line x1="120" y1="140" x2="392" y2="140" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  <line x1="120" y1="220" x2="392" y2="220" stroke="#75f5c8" stroke-width="16" stroke-linecap="round"/>
+  <line x1="120" y1="300" x2="392" y2="300" stroke="#75f5c8" stroke-width="16" stroke-linecap="round"/>
+  <line x1="120" y1="380" x2="392" y2="380" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  
+  <!-- Signo de pesos central -->
+  <text x="50%" y="54%" font-family="Arial, sans-serif" font-weight="bold" font-size="280" 
+        fill="white" text-anchor="middle" dominant-baseline="middle">$</text>
+</svg>
