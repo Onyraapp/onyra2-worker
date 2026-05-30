@@ -7,7 +7,7 @@ export default function PlanVencidoPage() {
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
-        <img src="/logo.svg" alt="Troco" className="w-16 h-16" />
+        <img src="/logo.svg" alt="Troco" className="w-30 h-30" />
         <div>
           <div className="text-2xl font-bold text-t1 tracking-tight">Tu período de prueba terminó</div>
           <div className="text-sm text-t3 mt-2">Gracias por probar Troco. Para seguir usando la app elegí un plan.</div>
