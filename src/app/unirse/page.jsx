@@ -148,4 +148,3 @@ export default function UnirseANegocio() {
     </Suspense>
   );
 }
-// v2
