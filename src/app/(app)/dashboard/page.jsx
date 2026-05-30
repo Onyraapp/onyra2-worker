@@ -145,7 +145,7 @@ export default function DashboardPage() {
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
             <div className="text-center">
               <div className="text-3xl mb-2">📋</div>
-              <div className="text-lg font-bold text-t1">Cierre del día</div>
+              <div className="text-lg font-bold text-white">Cierre del día</div>
               <div className="text-sm text-t3 mt-1 capitalize">{resumenCierre.fechaLabel}</div>
             </div>
             <div className="bg-offset rounded-2xl p-4">
