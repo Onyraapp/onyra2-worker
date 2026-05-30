@@ -86,8 +86,8 @@ if (planVencido && pathname !== '/plan-vencido') {
             className="flex flex-col items-center gap-1.5">
             <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center transition-all
               ${active === n.href
-                ? 'bg-[#1A7A8A] shadow-md scale-105'
-                : 'bg-[#0F4C5C]'}`}>
+  ? 'bg-[#1A7A8A] shadow-md scale-105'
+  : 'bg-[#0F4C5C]'}`}>
               <span className="text-white text-xl leading-none font-bold">{n.icon}</span>
             </div>
             <span className={`text-[10px] font-semibold tracking-wide
