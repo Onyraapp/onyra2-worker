@@ -186,9 +186,9 @@ export function ChipGroup({ options, value, onChange, className = '' }) {
 }
 
 export function Badge({ label, variant = 'primary' }) {
-  const styles = {
-    primary: 'bg-primary/10 text-primary',
-    success: 'bg-greensoft text-greentext',
+const styles = {
+    primary: 'bg-white/20 text-white',
+    success: 'bg-white/20 text-white',
     danger:  'bg-redsoft text-redtext',
     warning: 'bg-ambersoft text-ambertext',
   };
