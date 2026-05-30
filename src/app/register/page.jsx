@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getClient } from '../../lib/supabase';
+import { useI18n } from '../../hooks/useI18n';
 
 const fields = [
   {
@@ -23,6 +24,7 @@ const fields = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [form, set] = useState({ businessName: '', email: '', password: '' });
   const [acepto, setAcepto] = useState(false);
   const [error, setError] = useState('');
@@ -50,13 +52,20 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4">
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <span className="text-white text-2xl font-bold">T</span>
-          <span className="text-2xl font-bold text-t1 tracking-tight">Troco</span>
+    <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 py-8">
+      <div className="flex flex-col items-center mb-8">
+        <div className="w-14 h-14 rounded-[18px] bg-[#0F4C5C] flex items-center justify-center mb-3">
+          <svg width="32" height="32" viewBox="220 70 240 240" xmlns="http://www.w3.org/2000/svg">
+            <rect x="190" y="40" width="300" height="300" rx="66" fill="#0F4C5C"/>
+            <rect x="225" y="110" width="230" height="15" rx="7" fill="#FFFFFF"/>
+            <rect x="238" y="148" width="175" height="15" rx="7" fill="#7FFFD4"/>
+            <rect x="231" y="186" width="205" height="15" rx="7" fill="#FFFFFF"/>
+            <rect x="225" y="224" width="230" height="15" rx="7" fill="#7FFFD4"/>
+            <rect x="248" y="258" width="145" height="12" rx="6" fill="#FFFFFF" opacity="0.35"/>
+          </svg>
         </div>
-        <span className="text-sm text-t3 mt-1">Registrá tu negocio</span>
+        <span className="text-2xl font-bold text-t1 tracking-tight lowercase">troco</span>
+        <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">registrá tu negocio</span>
       </div>
 
       <form onSubmit={handleRegister} className="w-full max-w-sm flex flex-col gap-3">
@@ -103,10 +112,15 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-accent text-white py-3 rounded-2xl font-semibold text-[15px] mt-2 disabled:opacity-50"
+          className="w-full h-12 rounded-xl bg-[#0F4C5C] font-semibold text-white text-[15px] disabled:opacity-50 uppercase tracking-wide"
         >
-          {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+          {loading ? '...' : 'Crear cuenta'}
         </button>
+
+        <p className="text-center text-sm text-t3 lowercase pb-4">
+          ¿Ya tenés cuenta?{' '}
+          <a href="/login" className="text-primary font-medium">Iniciá sesión</a>
+        </p>
       </form>
     </div>
   );
