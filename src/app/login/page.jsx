@@ -24,7 +24,7 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  }
+   }
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
