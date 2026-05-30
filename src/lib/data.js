@@ -41,7 +41,7 @@ export async function registrarBar({ nombreBar, nombre, email, password }) {
   if (authError) throw authError;
 
   // 2. Crear bar
- const trialHasta = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+ const trialHasta = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
 const { data: bar, error: barError } = await sb
   .from('bares')
   .insert([{ nombre: nombreBar, email, plan: 'trial', trial_hasta: trialHasta, plan_activo: true }])
