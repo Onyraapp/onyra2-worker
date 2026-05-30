@@ -1,5 +1,6 @@
 import './globals.css';
 import { Providers } from '../components/ui/Providers';
+import SplashScreen from '../components/ui/SplashScreen';
 
 export const metadata = {
   title: 'Troco',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-bg text-t1 antialiased">
         <Providers>
+          <SplashScreen />
           {children}
         </Providers>
       </body>
