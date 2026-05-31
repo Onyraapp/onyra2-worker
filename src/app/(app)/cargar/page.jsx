@@ -287,11 +287,16 @@ export default function CargarPage() {
                   autoFocus />
               </div>
             </div>
-            <BtnPrimary label="Abrir caja" onClick={() => {
-              setMostrarApertura(false);
-              setAperturaLista(true);
-              if (!cajaInicial) setCajaInicial('0');
-            }} />
+           <BtnPrimary label="Abrir caja" onClick={async () => {
+  setMostrarApertura(false);
+  setAperturaLista(true);
+  if (!cajaInicial) setCajaInicial('0');
+  if (online) {
+    try {
+      await abrirTurno(usuario.bar_id, usuario.id, todayStr(), '1', parseFloat(cajaInicial) || 0);
+    } catch {}
+  }
+}} />
           </div>
         </div>
       )}
