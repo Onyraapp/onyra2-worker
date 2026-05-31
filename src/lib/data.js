@@ -180,6 +180,40 @@ export async function crearIngresosBulk(ingresos) {
   if (error) throw error;
   return data;
 }
+export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBruto, retencionPct, retencionMonto, montoNeto, nota }) {
+  const sb = getClient();
+  const { data, error } = await sb.from('ingresos').insert([{
+    bar_id: barId,
+    turno_id: null,
+    usuario_id: usuarioId,
+    medio_pago: medioPago,
+    monto_bruto: montoBruto,
+    retencion_pct: retencionPct,
+    retencion_monto: retencionMonto,
+    monto_neto: montoNeto,
+    nota: nota || '',
+    fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(),
+    pendiente: true,
+    anulada: false,
+    motivo_anulacion: '',
+  }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function cerrarTurnoConPendientes({ barId, usuarioId, fecha, turno, cajaInicial }) {
+  const sb = getClient();
+  const t = await abrirTurno(barId, usuarioId, fecha, turno, cajaInicial);
+  const { error } = await sb
+    .from('ingresos')
+    .update({ turno_id: t.id, pendiente: false })
+    .eq('bar_id', barId)
+    .eq('pendiente', true)
+    .is('turno_id', null);
+  if (error) throw error;
+  await cerrarTurno(t.id);
+  return t;
+}
 
 export async function getIngresosDia(barId, fechaStr) {
   const sb = getClient();
