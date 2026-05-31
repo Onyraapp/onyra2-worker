@@ -56,7 +56,11 @@ export default function DashboardPage() {
     } finally { setLoading(false); }
   }, [usuario, fecha]);
 
-  useEffect(() => { cargar(); }, [cargar]);
+  useEffect(() => {
+  cargar();
+  const interval = setInterval(cargar, 10000);
+  return () => clearInterval(interval);
+}, [cargar]);
 
   const res = calcularResumenDia(ingresos, egresos);
   const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
