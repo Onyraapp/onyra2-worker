@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { crearEgreso, getConfiguracion, fmt } from '../../../lib/data';
-import { TIPOS_EGRESO, TURNOS } from '../../../lib/constants';
+import { TIPOS_EGRESO, TURNOS, MEDIOS_PAGO_EGRESO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
   FieldLabel, BtnPrimary, Toast, useToast, Textarea
@@ -12,12 +12,13 @@ import {
 export default function EgresosPage() {
   const { usuario } = useAuth();
   const { toast, visible, show } = useToast();
-  const [config,  setConfig]  = useState(null);
-  const [tipo,    setTipo]    = useState('proveedores');
-  const [turno,   setTurno]   = useState('sin_turno');
-  const [monto,   setMonto]   = useState('');
-  const [detalle, setDetalle] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [config,    setConfig]    = useState(null);
+  const [tipo,      setTipo]      = useState('proveedores');
+  const [turno,     setTurno]     = useState('sin_turno');
+  const [medioPago, setMedioPago] = useState('efectivo');
+  const [monto,     setMonto]     = useState('');
+  const [detalle,   setDetalle]   = useState('');
+  const [loading,   setLoading]   = useState(false);
 
   useEffect(() => {
     if (usuario) getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
@@ -30,7 +31,7 @@ export default function EgresosPage() {
     try {
       await crearEgreso({
         barId: usuario.bar_id, turnoId: null, usuarioId: usuario.id,
-        tipo, monto: m, detalle,
+        tipo, monto: m, detalle, medio_pago: medioPago,
       });
       setMonto(''); setDetalle('');
       show('✓ Gasto registrado');
@@ -38,10 +39,12 @@ export default function EgresosPage() {
         const montoMinimo = config?.wa_alerta_gasto_monto || 10000;
         if (m >= montoMinimo) {
           const tipoLabel = TIPOS_EGRESO.find(t => t.key === tipo)?.label || tipo;
+          const medioLabel = MEDIOS_PAGO_EGRESO.find(t => t.key === medioPago)?.label || medioPago;
           const msg = [
             `*Troco - Alerta de gasto*`, ``,
             `Se registró un gasto de *${fmt(m)}*`,
             `Tipo: ${tipoLabel}`,
+            `Medio de pago: ${medioLabel}`,
             detalle ? `Detalle: ${detalle}` : '',
           ].filter(Boolean).join('\n');
           window.open(`https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -63,6 +66,10 @@ export default function EgresosPage() {
           <div>
             <FieldLabel>Tipo de gasto</FieldLabel>
             <ChipGroup options={TIPOS_EGRESO.map(t => ({ value: t.key, label: t.label }))} value={tipo} onChange={setTipo} />
+          </div>
+          <div>
+            <FieldLabel>Forma de pago</FieldLabel>
+            <ChipGroup options={MEDIOS_PAGO_EGRESO.map(t => ({ value: t.key, label: t.label }))} value={medioPago} onChange={setMedioPago} />
           </div>
           <div>
             <FieldLabel>Turno</FieldLabel>
