@@ -350,16 +350,16 @@ export function todayStr() {
 
 export async function getTurnosCerradosHoy(barId) {
   const sb = getClient();
-  const inicio = startOfDay(new Date()).toISOString();
-  const fin    = endOfDay(new Date()).toISOString();
+  const fechaHoy = todayStr();
+  const fechaAyer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   const { data } = await sb
     .from('turnos')
-    .select('numero')
+    .select('numero, fecha')
     .eq('bar_id', barId)
     .eq('cerrado', true)
-    .gte('created_at', inicio)
-    .lte('created_at', fin);
+    .in('fecha', [fechaHoy, fechaAyer]);
   return (data || []).map(t => t.numero);
+
 }
   export async function getCierreDiario(barId, fechaStr) {
   const sb = getClient();
