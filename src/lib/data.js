@@ -415,15 +415,17 @@ export async function updateBar(barId, updates) {
   }
 export async function getCajaInicialDia(barId, fechaStr) {
   const sb = getClient();
+  const inicio = new Date(fechaStr + 'T00:00:00-03:00').toISOString();
+  const fin    = new Date(fechaStr + 'T23:59:59-03:00').toISOString();
   const { data } = await sb
     .from('turnos')
     .select('caja_inicial')
     .eq('bar_id', barId)
-    .eq('fecha', fechaStr)
+    .gte('created_at', inicio)
+    .lte('created_at', fin)
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle();
   return data?.caja_inicial || 0;
 }
-
 
