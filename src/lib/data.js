@@ -206,7 +206,7 @@ export async function getIngresosTurno(turnoId) {
 
 // ── EGRESOS ───────────────────────────────────────────────
 
-export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, detalle, fecha }) {
+export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, detalle, fecha, medio_pago }) {
   const sb = getClient();
   const { data, error } = await sb
     .from('egresos')
@@ -218,7 +218,10 @@ export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, deta
       monto,
       detalle:    detalle || '',
       fecha:      fecha || new Date().toISOString(),
+      medio_pago: medio_pago || 'efectivo',
+      
     }])
+    
     .select().single();
   if (error) throw error;
   return data;
