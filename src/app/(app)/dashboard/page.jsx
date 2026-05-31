@@ -10,12 +10,15 @@ import {
   getConfiguracion, getCierreDiario, crearCierreDiario,
   getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr
 } from '../../../lib/data';
+import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, KpiCard,
   BreakdownBar, EmptyState, Spinner,
   BtnPrimary, Badge, DivRow, Toast, useToast
 } from '../../../components/ui';
+
+const VENC_ALERTA_KEY = 'troco_venc_alerta';
 
 export default function DashboardPage() {
   const { usuario } = useAuth();
@@ -34,6 +37,32 @@ export default function DashboardPage() {
 
   const esHoy = fecha === todayStr();
   const isAdmin = usuario?.rol === 'admin';
+
+  // Alerta de vencimientos del día para el admin — solo primera vez del día
+  useEffect(() => {
+    if (!usuario || !isAdmin) return;
+    async function checkVencimientosHoy() {
+      try {
+        const yaEnviado = localStorage.getItem(VENC_ALERTA_KEY) === todayStr();
+        if (yaEnviado) return;
+        const sb = getClient();
+        const hoy = todayStr();
+        const { data: vencs } = await sb
+          .from('vencimientos')
+          .select('*')
+          .eq('bar_id', usuario.bar_id)
+          .eq('fecha', hoy);
+        if (!vencs || vencs.length === 0) return;
+        const cfg = await getConfiguracion(usuario.bar_id);
+        if (!cfg?.whatsapp_numero) return;
+        const lineas = vencs.map(v => `⚠ ${v.detalle}: ${fmt(v.importe)}`).join('\n');
+        const msg = `*Troco - Vencimientos de hoy*\n\n${lineas}`;
+        window.open(`https://wa.me/${cfg.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
+        localStorage.setItem(VENC_ALERTA_KEY, hoy);
+      } catch {}
+    }
+    checkVencimientosHoy();
+  }, [usuario]);
 
   const cargar = useCallback(async () => {
     if (!usuario) return;
@@ -97,6 +126,19 @@ export default function DashboardPage() {
       const r = calcularResumenDia(ing, egr);
       const fechaLabel = format(new Date(fechaCierre + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
 
+      // Buscar vencimientos del día siguiente
+      const sb = getClient();
+      const manana = addDays(new Date(fechaCierre + 'T12:00:00'), 1).toISOString().slice(0, 10);
+      const { data: vencsManana } = await sb
+        .from('vencimientos')
+        .select('*')
+        .eq('bar_id', usuario.bar_id)
+        .eq('fecha', manana);
+
+      const lineasVenc = vencsManana && vencsManana.length > 0
+        ? '\n\n*⚠ Vencimientos mañana:*\n' + vencsManana.map(v => `• ${v.detalle}: ${fmt(v.importe)}`).join('\n')
+        : '';
+
       const msg = [
         `*Troco - Cierre del ${fechaLabel}*`, ``,
         `Caja inicial:   ${fmt(caja)}`,
@@ -106,7 +148,7 @@ export default function DashboardPage() {
         `Gastos:         -${fmt(r.totalEgresos)}`, ``,
         `Resultado: *${r.resultado >= 0 ? '' : '-'}${fmt(Math.abs(r.resultado))}*`, ``,
         `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
-      ].join('\n');
+      ].join('\n') + lineasVenc;
 
       const numero = cfg?.whatsapp_numero?.trim();
       const url = numero
