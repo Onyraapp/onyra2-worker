@@ -19,6 +19,7 @@ import {
 } from '../../../components/ui';
 
 const STORAGE_KEY = 'troco_lista_turno';
+const CAJA_KEY = 'troco_caja_abierta';
 
 export default function CargarPage() {
   const { usuario } = useAuth();
@@ -46,6 +47,15 @@ export default function CargarPage() {
 
   useEffect(() => {
     if (!usuario) return;
+
+    // Limpiar apertura del día anterior
+    try {
+      const fechaGuardada = localStorage.getItem(CAJA_KEY);
+      if (fechaGuardada && fechaGuardada !== todayStr()) {
+        localStorage.removeItem(CAJA_KEY);
+      }
+    } catch {}
+
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -56,10 +66,15 @@ export default function CargarPage() {
       if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
       else if (cerrados.includes('1')) setTurno('2');
       else {
-  setTurno('1');
-  const yaAbierta = localStorage.getItem('troco_caja_abierta') === todayStr();
-  if (usuario?.rol !== 'admin' && !yaAbierta) setMostrarApertura(true);
-}
+        setTurno('1');
+        try {
+          const yaAbierta = localStorage.getItem(CAJA_KEY) === todayStr();
+          if (usuario?.rol !== 'admin' && !yaAbierta) setMostrarApertura(true);
+          if (yaAbierta) setAperturaLista(true);
+        } catch {
+          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+        }
+      }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
@@ -298,6 +313,7 @@ export default function CargarPage() {
               setMostrarApertura(false);
               setAperturaLista(true);
               if (!cajaInicial) setCajaInicial('0');
+              try { localStorage.setItem(CAJA_KEY, fechaApertura); } catch {}
               if (online) {
                 try {
                   await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, '1', parseFloat(cajaInicial) || 0);
