@@ -305,7 +305,10 @@ export function fmtPct(n) {
 }
 
 export function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  const local = new Date(now.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 10);
 }
 
 export async function getTurnosCerradosHoy(barId) {
