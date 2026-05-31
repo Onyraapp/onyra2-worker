@@ -2,6 +2,15 @@ module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontSize: {
+        'xs':   ['14.4px', { lineHeight: '19.2px' }],
+        'sm':   ['16.8px', { lineHeight: '25.2px' }],
+        'base': ['19.2px', { lineHeight: '28.8px' }],
+        'lg':   ['21.6px', { lineHeight: '28.8px' }],
+        'xl':   ['24px',   { lineHeight: '31.2px' }],
+        '2xl':  ['28.8px', { lineHeight: '36px'   }],
+        '3xl':  ['36px',   { lineHeight: '43.2px' }],
+      },
       colors: {
         bg:       '#FFFFFF',
         surface:  '#FFFFFF',
