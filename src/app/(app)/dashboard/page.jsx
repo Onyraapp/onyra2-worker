@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
   cargar();
-  const interval = setInterval(cargar, 10000);
+  const interval = setInterval(cargar, 5000);
   return () => clearInterval(interval);
 }, [cargar]);
 
