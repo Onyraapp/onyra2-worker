@@ -171,14 +171,23 @@ function getEgrTurno(t) {
     const t = TIPOS_EGRESO.find(te => te.key === tipo);
     const pct = totalEgr > 0 ? ((monto / totalEgr) * 100).toFixed(0) : 0;
     return (
-      <div key={tipo} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
-        <span className="text-sm text-t2">{t?.label || tipo}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-t3">{pct}%</span>
-          <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmt(monto)}</span>
-        </div>
+  <div key={tipo} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
+    <div className="flex flex-col gap-0.5">
+      <span className="text-sm text-t2">{t?.label || tipo}</span>
+      <div className="flex gap-1 flex-wrap">
+        {egrT.filter(e => e.tipo === tipo).map(e => (
+          <span key={e.id} className="text-[10px] text-t3 bg-offset px-1.5 py-0.5 rounded-full">
+            {e.medio_pago === 'transferencia' ? 'Transf.' : 'Efectivo'}
+          </span>
+        ))}
       </div>
-    );
+    </div>
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-t3">{pct}%</span>
+      <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmt(monto)}</span>
+    </div>
+  </div>
+);
   });
 })()}
                           </div>
