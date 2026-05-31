@@ -42,6 +42,7 @@ export default function CargarPage() {
   const [anulando,        setAnulando]        = useState(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
   const [agregando,       setAgregando]       = useState(false);
+  const [fechaTurno,      setFechaTurno]      = useState(todayStr());
 
   useEffect(() => {
     if (!usuario) return;
@@ -54,7 +55,7 @@ export default function CargarPage() {
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
       if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
       else if (cerrados.includes('1')) setTurno('2');
-     else { setTurno('1'); if (usuario?.rol !== 'admin') setMostrarApertura(true); }
+      else { setTurno('1'); if (usuario?.rol !== 'admin') setMostrarApertura(true); }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
@@ -173,7 +174,7 @@ export default function CargarPage() {
       }));
       agregarACola({
         bar_id: usuario.bar_id, usuario_id: usuario.id,
-        fecha: todayStr(), turno, caja_inicial: parseFloat(cajaInicial) || 0, rows,
+        fecha: fechaTurno, turno, caja_inicial: parseFloat(cajaInicial) || 0, rows,
       });
       setColaPendiente(getCola());
       localStorage.removeItem(STORAGE_KEY);
@@ -190,7 +191,7 @@ export default function CargarPage() {
       await cerrarTurnoConPendientes({
         barId: usuario.bar_id,
         usuarioId: usuario.id,
-        fecha: todayStr(),
+        fecha: fechaTurno,
         turno,
         cajaInicial: parseFloat(cajaInicial) || 0,
       });
@@ -287,16 +288,18 @@ export default function CargarPage() {
                   autoFocus />
               </div>
             </div>
-           <BtnPrimary label="Abrir caja" onClick={async () => {
-  setMostrarApertura(false);
-  setAperturaLista(true);
-  if (!cajaInicial) setCajaInicial('0');
-  if (online) {
-    try {
-      await abrirTurno(usuario.bar_id, usuario.id, todayStr(), '1', parseFloat(cajaInicial) || 0);
-    } catch {}
-  }
-}} />
+            <BtnPrimary label="Abrir caja" onClick={async () => {
+              const fechaApertura = todayStr();
+              setFechaTurno(fechaApertura);
+              setMostrarApertura(false);
+              setAperturaLista(true);
+              if (!cajaInicial) setCajaInicial('0');
+              if (online) {
+                try {
+                  await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, '1', parseFloat(cajaInicial) || 0);
+                } catch {}
+              }
+            }} />
           </div>
         </div>
       )}
