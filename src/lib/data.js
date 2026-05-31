@@ -345,14 +345,15 @@ export async function crearCierreDiario(barId, usuarioId, fechaStr) {
   return data;
   }
   export async function registrarCajero({ barId, nombre, email, password }) {
-  const sb = getClient();
-  const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
-  if (authError) throw authError;
-  const { error: userError } = await sb
-    .from('usuarios')
-    .insert([{ id: authData.user.id, bar_id: barId, nombre, email, rol: 'cajero' }]);
-  if (userError) throw userError;
-  return authData.user;
+  const res = await fetch('/api/crear-cajero', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ barId, nombre, email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al crear cajero');
+  return data;
+
 }
 
 export async function getCajeros(barId) {
