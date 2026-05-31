@@ -1,5 +1,4 @@
 // src/lib/constants.js
-
 export const MEDIOS_PAGO = [
   { key: 'efectivo',      label: 'Efectivo',          color: '#2D6B8C', defaultRet: 0  },
   { key: 'tarjeta',       label: 'Tarjeta',            color: '#1A4F6A', defaultRet: 27 },
@@ -9,7 +8,14 @@ export const MEDIOS_PAGO = [
   { key: 'rappi',         label: 'Delivery Rappi',     color: '#fb923c', defaultRet: 25 },
 ];
 
-{ key: 'otros', label: 'Otros' },
+export const TIPOS_EGRESO = [
+  { key: 'proveedores',  label: 'Proveedores' },
+  { key: 'alquiler',     label: 'Alquiler' },
+  { key: 'servicios',    label: 'Luz / Gas / Agua' },
+  { key: 'sueldos',      label: 'Sueldos' },
+  { key: 'mantenimiento', label: 'Mantenimiento' },
+  { key: 'retiros',      label: 'Retiros' },
+  { key: 'otros',        label: 'Otros' },
 ];
 
 export const MEDIOS_PAGO_EGRESO = [
@@ -18,9 +24,9 @@ export const MEDIOS_PAGO_EGRESO = [
 ];
 
 export const TURNOS = [
-  { key: '1',         label: 'Turno 1', icon: '☀️' },
-  { key: '2',         label: 'Turno 2', icon: '🌙' },
-  { key: 'sin_turno', label: 'Sin turno', icon: '—' },
+  { key: '1',         label: 'Turno 1',   icon: '☀️' },
+  { key: '2',         label: 'Turno 2',   icon: '🌙' },
+  { key: 'sin_turno', label: 'Sin turno', icon: '—'  },
 ];
 
 export const CONFIG_KEYS = {
