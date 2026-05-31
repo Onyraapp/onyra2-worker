@@ -54,7 +54,7 @@ export default function CargarPage() {
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
       if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
       else if (cerrados.includes('1')) setTurno('2');
-      else { setTurno('1'); setMostrarApertura(true); }
+     else { setTurno('1'); if (usuario?.rol !== 'admin') setMostrarApertura(true); }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
