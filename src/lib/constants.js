@@ -9,13 +9,12 @@ export const MEDIOS_PAGO = [
   { key: 'rappi',         label: 'Delivery Rappi',     color: '#fb923c', defaultRet: 25 },
 ];
 
-export const TIPOS_EGRESO = [
-  { key: 'proveedores',       label: 'Proveedores' },
-  { key: 'alquiler',          label: 'Alquiler' },
-  { key: 'servicios',         label: 'Luz / Gas / Agua' },
-  { key: 'sueldos',           label: 'Sueldos' },
-  { key: 'mantenimiento', label: 'Mantenimiento' },
-  { key: 'retiros', label: 'Retiros' },
+{ key: 'otros', label: 'Otros' },
+];
+
+export const MEDIOS_PAGO_EGRESO = [
+  { key: 'efectivo',      label: 'Efectivo' },
+  { key: 'transferencia', label: 'Transferencia' },
 ];
 
 export const TURNOS = [
