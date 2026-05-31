@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [resumenCierre, setResumenCierre] = useState(null);
 
   const esHoy = fecha === todayStr();
+  const isAdmin = usuario?.rol === 'admin';
 
   const cargar = useCallback(async () => {
     if (!usuario) return;
@@ -57,19 +58,17 @@ export default function DashboardPage() {
   }, [usuario, fecha]);
 
   useEffect(() => {
-  cargar();
-  const interval = setInterval(cargar, 20000);
-  return () => clearInterval(interval);
-}, [cargar]);
+    cargar();
+    const interval = setInterval(cargar, 15000);
+    return () => clearInterval(interval);
+  }, [cargar]);
 
   const res = calcularResumenDia(ingresos, egresos);
   const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
   const ingresosAnulados = ingresos.filter(i => i.anulada);
 
-  const egresosFiltrados = usuario?.rol === 'admin'
-    ? egresos
-    : egresos.filter(e => e.tipo !== 'retiros');
+  const egresosFiltrados = isAdmin ? egresos : egresos.filter(e => e.tipo !== 'retiros');
   const resFiltrado = calcularResumenDia(ingresos, egresosFiltrados);
 
   const retRows = MEDIOS_PAGO
@@ -88,14 +87,15 @@ export default function DashboardPage() {
     if (diaCerrado) return;
     setCerrandoDia(true);
     try {
+      const fechaCierre = fecha;
       const [ing, egr, cfg, caja] = await Promise.all([
-        getIngresosDia(usuario.bar_id, todayStr()),
-        getEgresosDia(usuario.bar_id, todayStr()),
+        getIngresosDia(usuario.bar_id, fechaCierre),
+        getEgresosDia(usuario.bar_id, fechaCierre),
         getConfiguracion(usuario.bar_id),
-        getCajaInicialDia(usuario.bar_id, todayStr()),
+        getCajaInicialDia(usuario.bar_id, fechaCierre),
       ]);
       const r = calcularResumenDia(ing, egr);
-      const fechaLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+      const fechaLabel = format(new Date(fechaCierre + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
 
       const msg = [
         `*Troco - Cierre del ${fechaLabel}*`, ``,
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
         : `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-      setResumenCierre({ r, caja, ing, fechaLabel, url });
+      setResumenCierre({ r, caja, ing, fechaLabel, url, fechaCierre });
       setModalCierre(true);
     } catch { show('✗ Error al generar el cierre'); }
     finally { setCerrandoDia(false); }
@@ -121,18 +121,18 @@ export default function DashboardPage() {
 
   async function confirmarCierre() {
     try {
-      await crearCierreDiario(usuario.bar_id, usuario.id, todayStr());
+      await crearCierreDiario(usuario.bar_id, usuario.id, resumenCierre.fechaCierre);
       window.open(resumenCierre.url, '_blank');
       setDiaCerrado(true);
       setModalCierre(false);
       show('✓ Día cerrado');
-      setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
+      if (isAdmin) setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
     } catch (e) {
       if (e?.code === '23505') {
         window.open(resumenCierre.url, '_blank');
         setDiaCerrado(true);
         setModalCierre(false);
-        setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
+        if (isAdmin) setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
       } else {
         show('✗ Error al confirmar el cierre');
       }
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
             <div className="text-center">
               <div className="text-3xl mb-2">📋</div>
-              <div className="text-lg font-bold text-white">Cierre del día</div>
+              <div className="text-lg font-bold text-t1">Cierre del día</div>
               <div className="text-sm text-t3 mt-1 capitalize">{resumenCierre.fechaLabel}</div>
             </div>
             <div className="bg-offset rounded-2xl p-4">
@@ -175,8 +175,10 @@ export default function DashboardPage() {
       )}
 
       <div className="flex items-center gap-2 bg-[#0F4C5C] rounded-2xl shadow-card p-3">
-        <button onClick={() => setFecha(d => subDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold">‹</button>
+        <button
+          onClick={() => setFecha(d => subDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
+          disabled={!isAdmin}
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:bg-white/10 text-xl font-bold disabled:opacity-30">‹</button>
         <div className="flex-1 flex flex-col items-center gap-1">
           <span className="text-sm font-semibold text-white capitalize">{fechaDisplay}</span>
           <div className="flex gap-1.5 flex-wrap justify-center">
@@ -185,9 +187,10 @@ export default function DashboardPage() {
             {diaCerrado && <Badge label="Cerrado" variant="danger" />}
           </div>
         </div>
-        <button onClick={() => setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
-          disabled={esHoy}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-offset text-xl font-bold disabled:opacity-30">›</button>
+        <button
+          onClick={() => setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10))}
+          disabled={esHoy || !isAdmin}
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:bg-white/10 text-xl font-bold disabled:opacity-30">›</button>
       </div>
 
       {loading ? <Spinner /> : (<>
@@ -231,7 +234,7 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {usuario?.rol === 'admin' && ingresosAnulados.length > 0 && (
+        {isAdmin && ingresosAnulados.length > 0 && (
           <Card>
             <CardHeader title="Anulaciones del día"
               subtitle={`${ingresosAnulados.length} registros`} />
@@ -310,7 +313,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={abrirCierreDiario}
-            disabled={cerrandoDia || diaCerrado || !esHoy}
+            disabled={cerrandoDia || diaCerrado}
             className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40
               ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-primary text-white'}`}>
             {cerrandoDia ? '...' : diaCerrado ? '✓ Cerrado' : '📲 Cierre diario'}
