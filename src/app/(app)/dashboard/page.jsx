@@ -162,21 +162,20 @@ export default function DashboardPage() {
   }
 
   async function confirmarCierre() {
-    try {
-      await crearCierreDiario(usuario.bar_id, usuario.id, resumenCierre.fechaCierre);
-      window.open(resumenCierre.url, '_blank');
+  try {
+    await crearCierreDiario(usuario.bar_id, usuario.id, resumenCierre.fechaCierre);
+    setDiaCerrado(true);
+    setModalCierre(false);
+    show('✓ Día cerrado');
+    if (isAdmin) setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
+  } catch (e) {
+    if (e?.code === '23505') {
       setDiaCerrado(true);
       setModalCierre(false);
-      show('✓ Día cerrado');
       if (isAdmin) setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
-    } catch (e) {
-      if (e?.code === '23505') {
-        window.open(resumenCierre.url, '_blank');
-        setDiaCerrado(true);
-        setModalCierre(false);
-        if (isAdmin) setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
-      } else {
-        show('✗ Error al confirmar el cierre');
+    } else {
+      show('✗ Error al confirmar el cierre');
+    
       }
     }
   }
