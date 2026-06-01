@@ -345,9 +345,13 @@ export function todayStr() {
   const now = new Date();
   const offset = now.getTimezoneOffset();
   const local = new Date(now.getTime() - offset * 60000);
+  // Si son menos de las 4am, consideramos que seguimos en el día anterior
+  if (local.getHours() < 4) {
+    const ayer = new Date(local.getTime() - 24 * 60 * 60 * 1000);
+    return ayer.toISOString().slice(0, 10);
+  }
   return local.toISOString().slice(0, 10);
 }
-
 export async function getTurnosCerradosHoy(barId) {
   const sb = getClient();
   const { data } = await sb
