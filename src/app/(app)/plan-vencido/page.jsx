@@ -71,4 +71,36 @@ export default function PlanVencidoPage() {
           ))}
         </div>
 
-        <a href={"https://wa.me/55998202670?text=Hola%2C%2
+        <a href={"https://wa.me/55998202670?text=Hola%2C%20quiero%20contratar%20Troco%20para%20" + encodeURIComponent(usuario?.bares?.nombre || '')}
+          target="_blank"
+          className="w-full h-12 rounded-xl bg-primary text-white font-semibold text-[15px] flex items-center justify-center shadow-sm">
+          Contratar por WhatsApp
+        </a>
+        <div className="text-xs text-t3">También podés escribirnos a troco@gmail.com</div>
+      </div>
+
+      {/* Modal Pix */}
+      {pixModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-8 px-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🟢</div>
+              <div className="text-lg font-bold text-t1">Pagar con Pix</div>
+              <div className="text-sm text-t3 mt-1">{pixModal.nombre} · {pixModal.pixLabel}</div>
+            </div>
+            <div className="bg-offset rounded-xl p-3 text-xs text-t2 break-all font-mono">
+              {pixModal.pixCode}
+            </div>
+            <button onClick={() => copiarPix(pixModal.pixCode)}
+              className="w-full h-12 rounded-xl bg-[#32BCAD] text-white font-semibold text-[15px]">
+              {copiado ? '✓ Copiado!' : 'Copiar código Pix'}
+            </button>
+            <button onClick={() => setPixModal(null)} className="w-full h-10 text-t3 text-sm">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
