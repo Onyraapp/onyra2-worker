@@ -42,7 +42,7 @@ export default function OnboardingPage() {
                 <div className="text-xs text-t3 mt-0.5">{paso.desc}</div>
               </div>
             </div>
-          ))}
+           ))}
         </div>
 
         <div className="flex flex-col gap-2">
