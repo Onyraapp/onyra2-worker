@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getClient } from '../../lib/supabase';
 import { useI18n } from '../../hooks/useI18n';
 
 const fields = [
@@ -54,7 +53,8 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 py-8">
       <div className="flex flex-col items-center mb-8">
-        <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" /><span translate="no" className="font-neonize text-2xl text-t1 tracking-tight lowercase">troco</span>
+        <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" />
+        <span translate="no" className="font-neonize text-2xl text-t1 tracking-tight lowercase">troco</span>
         <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">registrá tu negocio</span>
       </div>
 
