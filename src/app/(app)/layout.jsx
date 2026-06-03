@@ -103,7 +103,7 @@ function AppShell({ children }) {
               <img src="/logo.svg" alt="Troco" className="w-full h-full object-contain" />
             </div>
             <div>
-              <div className="font-black text-t1 tracking-tight text-sm leading-tight">Troco</div>
+              <div className="font-neonize text-t1 tracking-tight text-sm leading-tight">Troco</div>
               <div className="text-[10px] text-t3 leading-tight truncate max-w-[120px]">
                 {usuario.bares?.nombre}
               </div>
