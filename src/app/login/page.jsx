@@ -45,7 +45,7 @@ export default function LoginPage() {
             <input type="password" value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••" required
               className="w-full bg-transparent text-t1 text-[15px] focus:outline-none placeholder:text-t4" />
-          </div>
+           </div>
         </div>
         {error && <p className="text-sm text-redtext text-center">{error}</p>}
         <button type="submit" disabled={loading}
