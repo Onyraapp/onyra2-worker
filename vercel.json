@@ -1,1 +1,14 @@
-{ "framework": "nextjs" }
+{
+  "framework": "nextjs",
+  "headers": [
+    {
+      "source": "/fonts/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
+}
