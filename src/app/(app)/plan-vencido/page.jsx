@@ -19,7 +19,7 @@ const PLANES = [
     nombre: 'Troco Multilocal',
     precio: 'USD 14.99',
     desc: '5 locales · Admin central + 10 Cajeros',
-    stripe: 'https://buy.stripe.com/price_1TcnFY2fy49WJZAKZyoSmm4S',
+    stripe: 'https://buy.stripe.com/bJebIU18I87v0Kz5Mjg7e01',
     mp: 'https://mpago.la/2jVj2Fa',
     pixCode: '00020126580014BR.GOV.BCB.PIX01365f6b583f-12a2-41fe-b7dd-dc66f7448cbf520400005303986540586.005802BR5913Gustavo Llusa6009SAO PAULO621405102uEpyFJIdt6304AD6D',
     pixLabel: 'R$ 86,00',
