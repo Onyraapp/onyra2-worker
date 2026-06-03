@@ -8,7 +8,7 @@ const PLANES = [
     nombre: 'Troco Pro',
     precio: 'USD 6.99',
     desc: '1 local · 1 Admin + 3 Cajeros · Todas las funciones',
-    stripe: 'https://buy.stripe.com/price_1TcnEM2fy49WJZAKPtrHvsxF',
+    stripe: 'https://buy.stripe.com/14A5kw2cM0F3fFt4Ifg7e00',
     mp: 'https://mpago.la/13G3xwt',
     pixCode: '00020126580014BR.GOV.BCB.PIX01365f6b583f-12a2-41fe-b7dd-dc66f7448cbf520400005303986540540.005802BR5913Gustavo Llusa6009SAO PAULO62140510a0w6UpTsAg63040044',
     pixLabel: 'R$ 40,00',
