@@ -32,11 +32,33 @@ export async function POST(request) {
     const plan = priceId === 'price_1TcnFY2fy49WJZAKZyoSmm4S' ? 'multilocal' : 'pro';
 
     if (email) {
-      const { data: bar } = await supabase
-        .from('bares')
-        .select('id')
-        .eq('email', email)
-        .single();
+  // Buscar primero en bares, luego en usuarios
+  let barId = null;
+  const { data: bar } = await supabase
+    .from('bares')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle();
+  if (bar) {
+    barId = bar.id;
+  } else {
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('bar_id')
+      .eq('email', email)
+      .maybeSingle();
+    if (usuario) barId = usuario.bar_id;
+  }
+  const bar2 = barId ? { id: barId } : null;
+  if (bar2) {
+    const vence = new Date();
+    vence.setMonth(vence.getMonth() + 1);
+    await supabase
+      .from('bares')
+      .update({ plan_activo: true, plan, trial_hasta: vence.toISOString() })
+      .eq('id', bar2.id);
+  }
+}
 
       if (bar) {
         const vence = new Date();
