@@ -85,17 +85,8 @@ function UnirseANegocioContent() {
   );
 
   return (
-    <div className="w-14 h-14 rounded-[18px] bg-[#0F4C5C] flex items-center justify-center mb-3">
-  <svg width="32" height="32" viewBox="220 70 240 240" xmlns="http://www.w3.org/2000/svg">
-    <rect x="190" y="40" width="300" height="300" rx="66" fill="#0F4C5C"/>
-    <rect x="225" y="110" width="230" height="15" rx="7" fill="#FFFFFF"/>
-    <rect x="238" y="148" width="175" height="15" rx="7" fill="#7FFFD4"/>
-    <rect x="231" y="186" width="205" height="15" rx="7" fill="#FFFFFF"/>
-    <rect x="225" y="224" width="230" height="15" rx="7" fill="#7FFFD4"/>
-    <rect x="248" y="258" width="145" height="12" rx="6" fill="#FFFFFF" opacity="0.35"/>
-  </svg>
-</div>
-<span className="text-2xl font-bold text-t1 lowercase">troco</span>
+  <img src="/logo.svg" alt="Troco" className="w-20 h-20 mb-3" />
+<span translate="no" className="font-neonize text-2xl text-t1 lowercase">troco</span>
         <span className="text-2xl font-bold text-t1 lowercase">troco</span>
         <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">unirte a un negocio</span>
       </div>
