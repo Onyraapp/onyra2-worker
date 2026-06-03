@@ -81,7 +81,7 @@ export default function PlanVencidoPage() {
 
       {/* Modal Pix */}
       {pixModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-8 px-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
             <div className="text-center">
               <div className="text-3xl mb-2">🟢</div>
