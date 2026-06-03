@@ -32,7 +32,7 @@ export default function LoginPage() {
         <div className="w-16 h-16 rounded-[20px] bg-[#0F4C5C] flex items-center justify-center mb-3">
           <img src="/logo.svg" alt="Troco" className="w-24 h-24" />
         </div>
-        <span className="text-2xl font-bold text-t1 tracking-tight lowercase">troco</span>
+        <img src="/logo.svg" alt="Troco" className="w-20 h-20" />
         <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">{t('appTagline')}</span>
       </div>
       <form onSubmit={handleLogin} className="w-full max-w-sm flex flex-col gap-3">
