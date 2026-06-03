@@ -2,6 +2,9 @@ module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        neonize: ['Neonize', 'sans-serif'],
+      },
       fontSize: {
         'xs':   ['14.4px', { lineHeight: '19.2px' }],
         'sm':   ['16.8px', { lineHeight: '25.2px' }],
