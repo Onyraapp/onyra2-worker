@@ -20,9 +20,9 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-sm flex flex-col gap-6">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-[20px] bg-primary flex items-center justify-center shadow-md mx-auto mb-4">
-            <span className="text-white text-2xl font-bold">C</span>
-          </div>
+          <div className="w-16 h-16 rounded-[20px] flex items-center justify-center shadow-md mx-auto mb-4">
+  <img src="/logo.svg" alt="Troco" className="w-full h-full" />
+</div>
           <div className="text-2xl font-bold text-t1 tracking-tight">¡Bienvenido a <span translate="no" className="font-neonize">Troco</span>!</div>
           <div className="text-sm text-t3 mt-1">Hola {usuario?.nombre}, tu negocio está listo.</div>
         </div>
