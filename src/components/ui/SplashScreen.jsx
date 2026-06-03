@@ -26,10 +26,10 @@ export default function SplashScreen() {
         animation: 'splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
       }}>
-       <img src="/logo.svg" alt="Troco" style={{ width: 200, height: 200 }} />
-        <span style={{
+        <img src="/logo.svg" alt="Troco" style={{ width: 200, height: 200 }} />
+        <span translate="no" style={{
           color: '#7FFFD4', fontSize: 42, fontWeight: 800,
-         letterSpacing: '-0.5px', fontFamily: 'Neonize, sans-serif',
+          letterSpacing: '-0.5px', fontFamily: 'Neonize, sans-serif',
         }}>
           troco
         </span>
