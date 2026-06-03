@@ -1,12 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @font-face {
   font-family: 'Neonize';
   src: url('/fonts/neonize.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overscroll-behavior: none; background: #FFFFFF; }
