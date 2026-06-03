@@ -24,11 +24,14 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-   }
+  }
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
-      div className="flex flex-col items-center mb-10">
+      <div className="flex flex-col items-center mb-10">
+        <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" />
+        <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">{t('appTagline')}</span>
+      </div>
       <form onSubmit={handleLogin} className="w-full max-w-sm flex flex-col gap-3">
         <div className="bg-surface rounded-2xl shadow-card overflow-hidden">
           <div className="px-4 py-3 border-b border-divider">
