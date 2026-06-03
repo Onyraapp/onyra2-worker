@@ -85,9 +85,10 @@ function UnirseANegocioContent() {
   );
 
   return (
-  <img src="/logo.svg" alt="Troco" className="w-20 h-20 mb-3" />
-<span translate="no" className="font-neonize text-2xl text-t1 lowercase">troco</span>
-        <span className="text-2xl font-bold text-t1 lowercase">troco</span>
+    <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 py-8">
+      <div className="flex flex-col items-center mb-8">
+        <img src="/logo.svg" alt="Troco" className="w-20 h-20 mb-3" />
+        <span translate="no" className="font-neonize text-2xl text-t1 lowercase">troco</span>
         <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">unirte a un negocio</span>
       </div>
 
