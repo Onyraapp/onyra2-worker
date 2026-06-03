@@ -54,8 +54,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 py-8">
       <div className="flex flex-col items-center mb-8">
-        <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" />
-        <span className="text-2xl font-bold text-t1 tracking-tight lowercase">troco</span>
+        <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" /><span translate="no" className="font-neonize text-2xl text-t1 tracking-tight lowercase">troco</span>
         <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">registrá tu negocio</span>
       </div>
 
