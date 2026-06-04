@@ -103,7 +103,7 @@ function AppShell({ children }) {
             <span className="text-xs text-t3">{usuario.nombre}</span>
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border
               ${usuario.rol === 'admin'
-                ? 'bg-primary/10 border-primary/20 text-primary'
+                
                 : 'bg-amber/10 border-amber/20 text-ambertext'}`}>
               {usuario.rol}
             </span>
