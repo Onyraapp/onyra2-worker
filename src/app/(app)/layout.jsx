@@ -100,18 +100,17 @@ function AppShell({ children }) {
       <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-white/[0.08]">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-  <div className="w-8 h-8 rounded-[10px] bg-green/15 border border-green/30 flex items-center justify-center overflow-hidden">
-    <img src="/logo.svg" alt="Troco" className="w-full h-full object-contain" />
-  </div>
-  <div className="flex flex-col justify-center">
-  <div className="font-neonize text-t1 tracking-tight text-sm leading-none" translate="no">Troco</div>
-  <div className="text-[10px] text-t3 leading-none truncate max-w-[120px] mt-0.5">
-    {usuario.bares?.nombre}
-  </div>
-</div>
-</div>
+            <div className="w-8 h-8 rounded-[10px] bg-green/15 border border-green/30 flex items-center justify-center overflow-hidden">
+              <img src="/logo.svg" alt="Troco" className="w-full h-full object-contain" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <div className="font-neonize text-t1 tracking-tight text-sm leading-none mt-1" translate="no">Troco</div>
+              <div className="text-[10px] text-t3 leading-none truncate max-w-[120px] mt-1">
+                {usuario.bares?.nombre}
+              </div>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
-            
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border
               ${usuario.rol === 'admin'
                 ? 'bg-primary/10 border-primary/20 text-primary'
