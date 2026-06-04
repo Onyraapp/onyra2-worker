@@ -103,12 +103,12 @@ function AppShell({ children }) {
   <div className="w-8 h-8 rounded-[10px] bg-green/15 border border-green/30 flex items-center justify-center overflow-hidden">
     <img src="/logo.svg" alt="Troco" className="w-full h-full object-contain" />
   </div>
-  <div>
-    <div className="font-neonize text-t1 tracking-tight text-sm leading-tight" translate="no">Troco</div>
-    <div className="text-[10px] text-t3 leading-tight truncate max-w-[120px]">
-      {usuario.bares?.nombre}
-    </div>
+  <<div className="flex flex-col justify-center">
+  <div className="font-neonize text-t1 tracking-tight text-sm leading-none" translate="no">Troco</div>
+  <div className="text-[10px] text-t3 leading-none truncate max-w-[120px] mt-0.5">
+    {usuario.bares?.nombre}
   </div>
+</div>
 </div>
           <div className="flex items-center gap-2">
             
