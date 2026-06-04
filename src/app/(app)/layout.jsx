@@ -108,7 +108,7 @@ function AppShell({ children }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-t3">{usuario.nombre}</span>
+            
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border
               ${usuario.rol === 'admin'
                 ? 'bg-primary/10 border-primary/20 text-primary'
