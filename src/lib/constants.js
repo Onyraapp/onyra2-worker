@@ -36,4 +36,5 @@ export const CONFIG_KEYS = {
   transferencia: 'retencion_transferencia',
   pedidosya:     'retencion_pedidosya',
   rappi:         'retencion_rappi',
+  delivery:      'retencion_delivery',
 };
