@@ -4,8 +4,7 @@ export const MEDIOS_PAGO = [
   { key: 'tarjeta',       label: 'Tarjeta',            color: '#1A4F6A', defaultRet: 27 },
   { key: 'qr',            label: 'QR / Mercado Pago',  color: '#4A90A4', defaultRet: 2  },
   { key: 'transferencia', label: 'Transferencia',      color: '#6BAFC0', defaultRet: 0  },
-  { key: 'pedidosya',     label: 'Delivery PedidosYa', color: '#f87171', defaultRet: 30 },
-  { key: 'rappi',         label: 'Delivery Rappi',     color: '#fb923c', defaultRet: 25 },
+  { key: 'delivery',      label: 'Delivery',           color: '#f87171', defaultRet: 25 },
 ];
 
 export const TIPOS_EGRESO = [
