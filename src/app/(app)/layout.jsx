@@ -134,7 +134,7 @@ function AppShell({ children }) {
       </header>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto pb-24">{children}</main>
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24">{children}</main>
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto
