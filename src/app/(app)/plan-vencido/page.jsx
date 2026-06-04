@@ -79,6 +79,27 @@ export default function PlanVencidoPage() {
         <div className="text-xs text-t3">También podés escribirnos a troco@gmail.com</div>
       </div>
 
-      {/* Modal Pix */}
       {pixModal && (
-        <div className="fixed inset-0 bg-black/50 z-5
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-24 px-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🟢</div>
+              <div className="text-lg font-bold text-t1">Pagar con Pix</div>
+              <div className="text-sm text-t3 mt-1">{pixModal.nombre} · {pixModal.pixLabel}</div>
+            </div>
+            <div className="bg-offset rounded-xl p-3 text-xs text-t2 break-all font-mono">
+              {pixModal.pixCode}
+            </div>
+            <button onClick={() => copiarPix(pixModal.pixCode)}
+              className="w-full h-12 rounded-xl bg-[#32BCAD] text-white font-semibold text-[15px]">
+              {copiado ? '✓ Copiado!' : 'Copiar código Pix'}
+            </button>
+            <button onClick={() => setPixModal(null)} className="w-full h-10 text-t3 text-sm">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
