@@ -20,7 +20,10 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" as="style" />
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link rel="preload" href="/neonize-2.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/logo.svg" as="image" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="bg-bg text-t1 antialiased">
