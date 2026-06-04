@@ -12,7 +12,7 @@ const NAV = [
   { href: '/cargar',       label: 'Cargar',   icon: '+' },
   { href: '/egresos',      label: 'Gastos',   icon: '−' },
   { href: '/resumen',      label: 'Resumen',  icon: '▤' },
-  { href: '/vencimientos', label: 'Expira',    icon: '⏰' },
+  { href: '/vencimientos', label: 'Expira',   icon: '⏰' },
 ];
 
 function AppShell({ children }) {
@@ -60,6 +60,7 @@ function AppShell({ children }) {
 
   return (
     <div className="min-h-screen bg-bg flex flex-col max-w-lg mx-auto overflow-x-hidden">
+
       {/* Alerta vencimientos */}
       {modalAlerta && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center pb-24 px-4">
@@ -98,12 +99,19 @@ function AppShell({ children }) {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-white/[0.08]">
         <div className="px-4 py-3 flex items-center justify-between">
-          
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-[10px] bg-green/15 border border-green/30 flex items-center justify-center overflow-hidden">
+              <img src="/logo.svg" alt="Troco" className="w-full h-full object-contain" />
+            </div>
+            <div className="text-[10px] text-t3 leading-tight truncate max-w-[120px]">
+              {usuario.bares?.nombre}
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-t3">{usuario.nombre}</span>
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border
               ${usuario.rol === 'admin'
-                
+                ? 'bg-primary/10 border-primary/20 text-primary'
                 : 'bg-amber/10 border-amber/20 text-ambertext'}`}>
               {usuario.rol}
             </span>
@@ -142,6 +150,7 @@ function AppShell({ children }) {
           </Link>
         ))}
       </nav>
+
     </div>
   );
 }
