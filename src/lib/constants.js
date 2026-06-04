@@ -15,6 +15,7 @@ export const TIPOS_EGRESO = [
   { key: 'sueldos',      label: 'Sueldos' },
   { key: 'mantenimiento', label: 'Mantenimiento' },
   { key: 'retiros',      label: 'Retiros' },
+  { key: 'impuestos',    label: 'Impuestos y Tasas' },
   { key: 'otros',        label: 'Otros' },
 ];
 
