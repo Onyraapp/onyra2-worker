@@ -1,8 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request) {
-  const body = await request.json();
-  const { type, data } = body;
+  const body = await request.text();
+  
+  // Verificar firma de MP
+  const xSignature = request.headers.get('x-signature');
+  const xRequestId = request.headers.get('x-request-id');
+  const urlParams = new URL(request.url).searchParams;
+  const dataId = urlParams.get('data.id');
+
+  if (xSignature) {
+    const parts = xSignature.split(',');
+    const ts = parts.find(p => p.startsWith('ts='))?.slice(3);
+    const v1 = parts.find(p => p.startsWith('v1='))?.slice(3);
+    const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+    const crypto = await import('crypto');
+    const hmac = crypto.createHmac('sha256', process.env.MP_WEBHOOK_SECRET).update(manifest).digest('hex');
+    if (hmac !== v1) {
+      return new Response('Invalid signature', { status: 400 });
+    }
+  }
+
+  const payload = JSON.parse(body);
+  const { type, data } = payload;
 
   if (type !== 'payment') {
     return new Response('ok', { status: 200 });
