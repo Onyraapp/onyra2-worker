@@ -98,17 +98,7 @@ function AppShell({ children }) {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-white/[0.08]">
         <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-[10px] bg-green/15 border border-green/30 flex items-center justify-center overflow-hidden">
-              <img src="/logo.svg" alt="Troco" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <div className="font-neonize text-t1 tracking-tight text-sm leading-tight">Troco</div>
-              <div className="text-[10px] text-t3 leading-tight truncate max-w-[120px]">
-                {usuario.bares?.nombre}
-              </div>
-            </div>
-          </div>
+          
           <div className="flex items-center gap-2">
             <span className="text-xs text-t3">{usuario.nombre}</span>
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border
