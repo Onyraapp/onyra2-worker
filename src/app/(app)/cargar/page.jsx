@@ -65,19 +65,18 @@ export default function CargarPage() {
     setColaPendiente(getCola());
 
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-if (cerrados.includes('1') && cerrados.includes('2')) {
-  setTurno('sin_turno');
-  getTurnoAbierto(usuario.bar_id, todayStr(), 'sin_turno').then(turnoExistente => {
-    if (turnoExistente) {
-      setAperturaLista(true);
-      try { localStorage.setItem(CAJA_KEY, todayStr() + '_sin_turno'); } catch {}
-    } else {
-      if (usuario?.rol !== 'admin') setMostrarApertura(true);
-    }
-  }).catch(() => {
-    if (usuario?.rol !== 'admin') setMostrarApertura(true);
-  });
-}
+      if (cerrados.includes('1') && cerrados.includes('2')) {
+        setTurno('sin_turno');
+        getTurnoAbierto(usuario.bar_id, todayStr(), 'sin_turno').then(turnoExistente => {
+          if (turnoExistente) {
+            setAperturaLista(true);
+            try { localStorage.setItem(CAJA_KEY, todayStr() + '_sin_turno'); } catch {}
+          } else {
+            if (usuario?.rol !== 'admin') setMostrarApertura(true);
+          }
+        }).catch(() => {
+          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+        });
       } else if (cerrados.includes('1')) {
         setTurno('2');
         getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
@@ -250,7 +249,7 @@ if (cerrados.includes('1') && cerrados.includes('2')) {
       else if (turno === '2') setTurno('sin_turno');
 
       if (config?.wa_cierre_turno && config?.whatsapp_numero) {
-        const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Sin turno';
+        const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Turno único';
         const msg = [
           `*Troco - Cierre de ${turnoLabel}*`, ``,
           `Ventas brutas:  ${fmt(totalBruto)}`,
@@ -319,16 +318,16 @@ if (cerrados.includes('1') && cerrados.includes('2')) {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-xl">
             <div className="text-center">
-              <div className="text-3xl mb-2">{turno === '1' ? '🏪' : '🌙'}</div>
+              <div className="text-3xl mb-2">{turno === '2' ? '🌙' : '🏪'}</div>
               <div className="text-lg font-bold text-t1">
-                {turno === '1' ? 'Apertura de caja' : 'Recepción de caja'}
+                {turno === '1' ? 'Apertura de caja' : turno === '2' ? 'Recepción de caja' : 'Apertura de caja'}
               </div>
               <div className="text-sm text-t3 mt-1 capitalize">
-                {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : 'Turno 2 🌙'}
+                {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : turno === '2' ? 'Turno 2 🌙' : 'Turno único ⭐'}
               </div>
             </div>
             <div>
-              <FieldLabel>{turno === '1' ? 'Monto de apertura de caja' : 'Monto recibido del turno anterior'}</FieldLabel>
+              <FieldLabel>{turno === '2' ? 'Monto recibido del turno anterior' : 'Monto de apertura de caja'}</FieldLabel>
               <div className="flex items-center bg-offset rounded-xl px-4 border border-transparent focus-within:border-primary/40 transition">
                 <span className="text-2xl font-light text-t3 mr-1">$</span>
                 <input type="number" inputMode="decimal" value={cajaInicial}
@@ -337,7 +336,7 @@ if (cerrados.includes('1') && cerrados.includes('2')) {
                   autoFocus />
               </div>
             </div>
-            <BtnPrimary label={turno === '1' ? 'Abrir caja' : 'Recibir caja'} onClick={async () => {
+            <BtnPrimary label={turno === '2' ? 'Recibir caja' : 'Abrir caja'} onClick={async () => {
               const fechaApertura = todayStr();
               setFechaTurno(fechaApertura);
               setMostrarApertura(false);
