@@ -26,7 +26,7 @@ export const MEDIOS_PAGO_EGRESO = [
 export const TURNOS = [
   { key: '1',         label: 'Turno 1',   icon: '☀️' },
   { key: '2',         label: 'Turno 2',   icon: '🌙' },
-  { key: 'sin_turno', label: 'Sin turno', icon: '—'  },
+{ key: 'sin_turno', label: 'Turno único', icon: '☀️' },
 ];
 
 export const CONFIG_KEYS = {
