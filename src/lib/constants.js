@@ -26,7 +26,12 @@ export const MEDIOS_PAGO_EGRESO = [
 export const TURNOS = [
   { key: '1',         label: 'Turno 1',   icon: '☀️' },
   { key: '2',         label: 'Turno 2',   icon: '🌙' },
-{ key: 'sin_turno', label: 'Turno único', icon: '☀️' },
+<div className="text-lg font-bold text-t1">
+  {turno === '1' ? 'Apertura de caja' : turno === '2' ? 'Recepción de caja' : 'Apertura de caja'}
+</div>
+<div className="text-sm text-t3 mt-1 capitalize">
+  {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : turno === '2' ? 'Turno 2 🌙' : 'Turno único ☀️'}
+</div>
 ];
 
 export const CONFIG_KEYS = {
