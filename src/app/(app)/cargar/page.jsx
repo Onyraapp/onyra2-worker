@@ -67,13 +67,17 @@ export default function CargarPage() {
       else if (cerrados.includes('1')) setTurno('2');
       else {
         setTurno('1');
-        try {
-          const yaAbierta = localStorage.getItem(CAJA_KEY) === todayStr();
-          if (usuario?.rol !== 'admin' && !yaAbierta) setMostrarApertura(true);
-          if (yaAbierta) setAperturaLista(true);
-        } catch {
-          if (usuario?.rol !== 'admin') setMostrarApertura(true);
-        }
+try {
+  const turnoExistente = await getTurnoAbierto(usuario.bar_id, todayStr(), '1');
+  if (turnoExistente) {
+    setAperturaLista(true);
+    try { localStorage.setItem(CAJA_KEY, todayStr()); } catch {}
+  } else {
+    if (usuario?.rol !== 'admin') setMostrarApertura(true);
+  }
+} catch {
+  if (usuario?.rol !== 'admin') setMostrarApertura(true);
+}
       }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
