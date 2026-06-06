@@ -35,20 +35,16 @@ export async function getUsuarioActual() {
 
 export async function registrarBar({ nombreBar, nombre, email, password }) {
   const sb = getClient();
-
-  // 1. Crear usuario en Supabase Auth
   const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
   if (authError) throw authError;
 
-  // 2. Crear bar
- const trialHasta = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
-const { data: bar, error: barError } = await sb
-  .from('bares')
-  .insert([{ nombre: nombreBar, email, plan: 'trial', trial_hasta: trialHasta, plan_activo: true }])
-  .select().single();
+  const trialHasta = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: bar, error: barError } = await sb
+    .from('bares')
+    .insert([{ nombre: nombreBar, email, plan: 'trial', trial_hasta: trialHasta, plan_activo: true }])
+    .select().single();
   if (barError) throw barError;
 
-  // 3. Crear usuario admin
   const { error: userError } = await sb
     .from('usuarios')
     .insert([{ id: authData.user.id, bar_id: bar.id, nombre, email, rol: 'admin' }]);
@@ -125,7 +121,6 @@ export async function getTurnoAbierto(barId, fecha, numero) {
 
 export async function abrirTurno(barId, usuarioId, fecha, numero, cajaInicial = 0) {
   const sb = getClient();
-  // Si ya existe uno abierto, lo devolvemos
   const existente = await getTurnoAbierto(barId, fecha, numero);
   if (existente) return existente;
 
@@ -180,6 +175,7 @@ export async function crearIngresosBulk(ingresos) {
   if (error) throw error;
   return data;
 }
+
 export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBruto, retencionPct, retencionMonto, montoNeto, nota }) {
   const sb = getClient();
   const { data, error } = await sb.from('ingresos').insert([{
@@ -253,9 +249,7 @@ export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, deta
       detalle:    detalle || '',
       fecha:      fecha || new Date().toISOString(),
       medio_pago: medio_pago || 'efectivo',
-      
     }])
-    
     .select().single();
   if (error) throw error;
   return data;
@@ -345,13 +339,13 @@ export function todayStr() {
   const now = new Date();
   const offset = now.getTimezoneOffset();
   const local = new Date(now.getTime() - offset * 60000);
-  // Si son menos de las 4am, consideramos que seguimos en el día anterior
   if (local.getHours() < 4) {
     const ayer = new Date(local.getTime() - 24 * 60 * 60 * 1000);
     return ayer.toISOString().slice(0, 10);
   }
   return local.toISOString().slice(0, 10);
 }
+
 export async function getTurnosCerradosHoy(barId) {
   const sb = getClient();
   const { data } = await sb
@@ -361,9 +355,9 @@ export async function getTurnosCerradosHoy(barId) {
     .eq('cerrado', true)
     .eq('fecha', todayStr());
   return (data || []).map(t => t.numero);
-
 }
-  export async function getCierreDiario(barId, fechaStr) {
+
+export async function getCierreDiario(barId, fechaStr) {
   const sb = getClient();
   const { data } = await sb
     .from('cierres_diarios')
@@ -382,8 +376,9 @@ export async function crearCierreDiario(barId, usuarioId, fechaStr) {
     .select().single();
   if (error) throw error;
   return data;
-  }
-  export async function registrarCajero({ barId, nombre, email, password }) {
+}
+
+export async function registrarCajero({ barId, nombre, email, password }) {
   const res = await fetch('/api/crear-cajero', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -392,7 +387,6 @@ export async function crearCierreDiario(barId, usuarioId, fechaStr) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Error al crear cajero');
   return data;
-
 }
 
 export async function getCajeros(barId) {
@@ -404,7 +398,6 @@ export async function getCajeros(barId) {
     .order('nombre');
   if (error) throw error;
   return data || [];
-
 }
 
 export async function updateBar(barId, updates) {
@@ -416,7 +409,8 @@ export async function updateBar(barId, updates) {
     .select().single();
   if (error) throw error;
   return data;
-  }
+}
+
 export async function getCajaInicialDia(barId, fechaStr) {
   const sb = getClient();
   const { data } = await sb
