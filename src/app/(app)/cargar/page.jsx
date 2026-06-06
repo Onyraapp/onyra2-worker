@@ -249,7 +249,8 @@ export default function CargarPage() {
       setLista([]);
       setTurnosCerrados(prev => [...prev, turno]);
       if (turno === '1') { setTurno('2'); setAperturaLista(false); setMostrarApertura(true); }
-      else if (turno === '2') setTurno('sin_turno');
+else if (turno === '2') { setTurno('sin_turno'); setAperturaLista(false); setMostrarApertura(true); }
+else if (turno === 'sin_turno') { setAperturaLista(false); setMostrarApertura(false); }
 
       if (config?.wa_cierre_turno && config?.whatsapp_numero) {
         const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Turno único';
