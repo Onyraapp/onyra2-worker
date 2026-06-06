@@ -65,8 +65,18 @@ export default function CargarPage() {
     setColaPendiente(getCola());
 
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-      if (cerrados.includes('1') && cerrados.includes('2')) {
+if (cerrados.includes('1') && cerrados.includes('2')) {
   setTurno('sin_turno');
+  getTurnoAbierto(usuario.bar_id, todayStr(), 'sin_turno').then(turnoExistente => {
+    if (turnoExistente) {
+      setAperturaLista(true);
+      try { localStorage.setItem(CAJA_KEY, todayStr() + '_sin_turno'); } catch {}
+    } else {
+      if (usuario?.rol !== 'admin') setMostrarApertura(true);
+    }
+  }).catch(() => {
+    if (usuario?.rol !== 'admin') setMostrarApertura(true);
+  });
 }
       } else if (cerrados.includes('1')) {
         setTurno('2');
