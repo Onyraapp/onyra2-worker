@@ -8,7 +8,7 @@ import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
   cerrarTurnoConPendientes, fmt, todayStr,
-  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto
+  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
@@ -58,10 +58,22 @@ export default function CargarPage() {
 
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
 
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setLista(JSON.parse(saved));
-    } catch {}
+    // Cargar ventas del día desde Supabase
+    getIngresosDia(usuario.bar_id, todayStr()).then(data => {
+      const mapeadas = data.map(i => ({
+        ...i,
+        medio_label: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.label,
+        medio_color: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.color,
+        supabase_id: i.id,
+        _id: i.id,
+      }));
+      setLista(mapeadas);
+    }).catch(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setLista(JSON.parse(saved));
+      } catch {}
+    });
 
     setColaPendiente(getCola());
 
@@ -135,10 +147,6 @@ export default function CargarPage() {
     }
   }
 
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lista)); } catch {}
-  }, [lista]);
-
   const montoBruto = parseFloat(monto) || 0;
   const pct        = config ? getRetencionPct(config, medio) : 0;
   const preview    = montoBruto > 0 ? calcularRetencion(montoBruto, pct) : null;
@@ -170,7 +178,7 @@ export default function CargarPage() {
           montoNeto: calc.monto_neto,
           nota,
         });
-        setLista(l => [...l, { ...item, supabase_id: saved.id }]);
+        setLista(l => [...l, { ...item, supabase_id: saved.id, _id: saved.id }]);
         show('✓ Venta guardada');
       } catch {
         setLista(l => [...l, item]);
@@ -249,8 +257,7 @@ export default function CargarPage() {
       setLista([]);
       setTurnosCerrados(prev => [...prev, turno]);
       if (turno === '1') { setTurno('2'); setAperturaLista(false); setMostrarApertura(true); }
-else if (turno === '2') { setTurno('sin_turno'); setAperturaLista(false); setMostrarApertura(true); }
-else if (turno === 'sin_turno') { setAperturaLista(false); setMostrarApertura(false); }
+      else if (turno === '2') setTurno('sin_turno');
 
       if (config?.wa_cierre_turno && config?.whatsapp_numero) {
         const turnoLabel = turno === '1' ? 'Turno 1' : turno === '2' ? 'Turno 2' : 'Turno único';
@@ -430,14 +437,15 @@ else if (turno === 'sin_turno') { setAperturaLista(false); setMostrarApertura(fa
           <CardHeader title={`Lista · ${activas.length} ventas`} subtitle={`${fmt(totalBruto)} bruto`} />
           <div className="p-4 flex flex-col gap-2">
             {activas.map(item => (
-              <div key={item._id} className="flex items-center gap-3 p-3 rounded-xl bg-offset border border-divider">
-                <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: item.medio_color }} />
+              <div key={item._id} className="flex items-start gap-3 p-3 rounded-xl bg-offset border border-divider">
+                <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0" style={{ backgroundColor: item.medio_color }} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-t1">{item.medio_label}</div>
                   {item.nota && <div className="text-xs text-t3 truncate">{item.nota}</div>}
+                  <div className="text-xs text-t3 mt-0.5">{item.fecha?.slice(11,16)}</div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold tabular-nums text-t1">{fmt(item.monto_bruto)}</div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-sm font-bold tabular-nums text-greentext">{fmt(item.monto_bruto)}</div>
                   {item.retencion_monto > 0 && <div className="text-xs text-redtext tabular-nums">−{fmt(item.retencion_monto)}</div>}
                 </div>
                 <button onClick={() => pedirAnulacion(item)} className="w-8 h-8 rounded-lg bg-redsoft flex items-center justify-center text-redtext text-sm flex-shrink-0">✕</button>
@@ -463,6 +471,7 @@ else if (turno === 'sin_turno') { setAperturaLista(false); setMostrarApertura(fa
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-t2 line-through">{item.medio_label} · {fmt(item.monto_bruto)}</div>
                   <div className="text-xs text-redtext mt-0.5">{item.motivo_anulacion}</div>
+                  <div className="text-xs text-t3 mt-0.5">{item.fecha?.slice(11,16)}</div>
                 </div>
               </div>
             ))}
