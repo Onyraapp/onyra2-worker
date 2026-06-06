@@ -424,9 +424,7 @@ export async function getCajaInicialDia(barId, fechaStr) {
     .from('turnos')
     .select('caja_inicial')
     .eq('bar_id', barId)
-    .eq('fecha', fechaStr)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  return data?.caja_inicial || 0;
+    .eq('fecha', fechaStr);
+  if (!data || data.length === 0) return 0;
+  return data.reduce((s, t) => s + (t.caja_inicial || 0), 0);
 }
