@@ -50,7 +50,7 @@ export default function CargarPage() {
 
     try {
       const fechaGuardada = localStorage.getItem(CAJA_KEY);
-      if (fechaGuardada && fechaGuardada !== todayStr()) {
+      if (fechaGuardada && !fechaGuardada.startsWith(todayStr())) {
         localStorage.removeItem(CAJA_KEY);
       }
     } catch {}
@@ -64,35 +64,35 @@ export default function CargarPage() {
 
     setColaPendiente(getCola());
 
-   getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-  if (cerrados.includes('1') && cerrados.includes('2')) {
-    setTurno('sin_turno');
-  } else if (cerrados.includes('1')) {
-    setTurno('2');
-    getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
-      if (turnoExistente) {
-        setAperturaLista(true);
-        try { localStorage.setItem(CAJA_KEY, todayStr() + '_2'); } catch {}
+    getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
+      if (cerrados.includes('1') && cerrados.includes('2')) {
+        setTurno('sin_turno');
+      } else if (cerrados.includes('1')) {
+        setTurno('2');
+        getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
+          if (turnoExistente) {
+            setAperturaLista(true);
+            try { localStorage.setItem(CAJA_KEY, todayStr() + '_2'); } catch {}
+          } else {
+            if (usuario?.rol !== 'admin') setMostrarApertura(true);
+          }
+        }).catch(() => {
+          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+        });
       } else {
-        if (usuario?.rol !== 'admin') setMostrarApertura(true);
+        setTurno('1');
+        getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
+          if (turnoExistente) {
+            setAperturaLista(true);
+            try { localStorage.setItem(CAJA_KEY, todayStr() + '_1'); } catch {}
+          } else {
+            if (usuario?.rol !== 'admin') setMostrarApertura(true);
+          }
+        }).catch(() => {
+          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+        });
       }
-    }).catch(() => {
-      if (usuario?.rol !== 'admin') setMostrarApertura(true);
-    });
-  } else {
-    setTurno('1');
-    getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
-      if (turnoExistente) {
-        setAperturaLista(true);
-        try { localStorage.setItem(CAJA_KEY, todayStr() + '_1'); } catch {}
-      } else {
-        if (usuario?.rol !== 'admin') setMostrarApertura(true);
-      }
-    }).catch(() => {
-      if (usuario?.rol !== 'admin') setMostrarApertura(true);
-    });
-  }
-}).catch(() => { setTurno('1'); setMostrarApertura(true); });
+    }).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
@@ -235,7 +235,7 @@ export default function CargarPage() {
 
       localStorage.removeItem(STORAGE_KEY);
       setLista([]);
-      if (turno === '1') { setTurno('2'); setAperturaLista(false); }
+      if (turno === '1') { setTurno('2'); setAperturaLista(false); setMostrarApertura(true); }
       else if (turno === '2') setTurno('sin_turno');
 
       if (config?.wa_cierre_turno && config?.whatsapp_numero) {
@@ -308,15 +308,16 @@ export default function CargarPage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-xl">
             <div className="text-center">
+              <div className="text-3xl mb-2">{turno === '1' ? '🏪' : '🌙'}</div>
               <div className="text-lg font-bold text-t1">
-  {turno === '1' ? 'Apertura de caja' : 'Recepción de caja'}
-</div>
-<div className="text-sm text-t3 mt-1 capitalize">
-  {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : 'Turno 2 🌙'}
-</div>
+                {turno === '1' ? 'Apertura de caja' : 'Recepción de caja'}
+              </div>
+              <div className="text-sm text-t3 mt-1 capitalize">
+                {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : 'Turno 2 🌙'}
+              </div>
             </div>
             <div>
-              <FieldLabel>Monto de apertura de caja</FieldLabel>
+              <FieldLabel>{turno === '1' ? 'Monto de apertura de caja' : 'Monto recibido del turno anterior'}</FieldLabel>
               <div className="flex items-center bg-offset rounded-xl px-4 border border-transparent focus-within:border-primary/40 transition">
                 <span className="text-2xl font-light text-t3 mr-1">$</span>
                 <input type="number" inputMode="decimal" value={cajaInicial}
@@ -325,16 +326,16 @@ export default function CargarPage() {
                   autoFocus />
               </div>
             </div>
-            <BtnPrimary label="Abrir caja" onClick={async () => {
+            <BtnPrimary label={turno === '1' ? 'Abrir caja' : 'Recibir caja'} onClick={async () => {
               const fechaApertura = todayStr();
               setFechaTurno(fechaApertura);
               setMostrarApertura(false);
               setAperturaLista(true);
               if (!cajaInicial) setCajaInicial('0');
-              try { localStorage.setItem(CAJA_KEY, fechaApertura); } catch {}
+              try { localStorage.setItem(CAJA_KEY, fechaApertura + '_' + turno); } catch {}
               if (online) {
                 try {
-                  await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, '1', parseFloat(cajaInicial) || 0);
+                  await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, turno, parseFloat(cajaInicial) || 0);
                 } catch {}
               }
             }} />
