@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-import { crearEgreso, getConfiguracion, getEgresosDia, fmt, todayStr } from '../../../lib/data';
+import { crearEgreso, getConfiguracion, getEgresosDia, fmt, todayStr, getTurnosCerradosHoy } from '../../../lib/data';
 import { TIPOS_EGRESO, TURNOS, MEDIOS_PAGO_EGRESO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
@@ -32,6 +32,11 @@ export default function EgresosPage() {
     if (!usuario) return;
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
     cargarEgresos();
+    getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
+      if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
+      else if (cerrados.includes('1')) setTurno('2');
+      else setTurno('1');
+    }).catch(() => {});
   }, [usuario]);
 
   async function cargarEgresos() {
@@ -116,7 +121,6 @@ export default function EgresosPage() {
     <Screen>
       <Toast msg={toast} visible={visible} />
 
-      {/* Modal editar */}
       {editando && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
