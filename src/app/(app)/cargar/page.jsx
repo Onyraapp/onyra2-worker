@@ -66,7 +66,8 @@ export default function CargarPage() {
 
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
       if (cerrados.includes('1') && cerrados.includes('2')) {
-        setTurno('sin_turno');
+  setTurno('sin_turno');
+}
       } else if (cerrados.includes('1')) {
         setTurno('2');
         getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
