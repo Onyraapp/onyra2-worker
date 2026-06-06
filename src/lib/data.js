@@ -188,7 +188,14 @@ export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBr
     retencion_monto: retencionMonto,
     monto_neto: montoNeto,
     nota: nota || '',
-    fecha: new Date(new Date().getTime() - 3 * 60 * 60 * 1000).toISOString(),
+    fecha: (() => {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  if (local.getHours() < 4) {
+    return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  }
+  return now.toISOString();
+})(),
     pendiente: true,
     anulada: false,
     motivo_anulacion: '',
