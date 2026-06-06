@@ -64,25 +64,35 @@ export default function CargarPage() {
 
     setColaPendiente(getCola());
 
-    getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-      if (cerrados.includes('1') && cerrados.includes('2')) {
-        setTurno('sin_turno');
-      } else if (cerrados.includes('1')) {
-        setTurno('2');
+   getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
+  if (cerrados.includes('1') && cerrados.includes('2')) {
+    setTurno('sin_turno');
+  } else if (cerrados.includes('1')) {
+    setTurno('2');
+    getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
+      if (turnoExistente) {
+        setAperturaLista(true);
+        try { localStorage.setItem(CAJA_KEY, todayStr() + '_2'); } catch {}
       } else {
-        setTurno('1');
-        getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
-          if (turnoExistente) {
-            setAperturaLista(true);
-            try { localStorage.setItem(CAJA_KEY, todayStr()); } catch {}
-          } else {
-            if (usuario?.rol !== 'admin') setMostrarApertura(true);
-          }
-        }).catch(() => {
-          if (usuario?.rol !== 'admin') setMostrarApertura(true);
-        });
+        if (usuario?.rol !== 'admin') setMostrarApertura(true);
       }
-    }).catch(() => { setTurno('1'); setMostrarApertura(true); });
+    }).catch(() => {
+      if (usuario?.rol !== 'admin') setMostrarApertura(true);
+    });
+  } else {
+    setTurno('1');
+    getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
+      if (turnoExistente) {
+        setAperturaLista(true);
+        try { localStorage.setItem(CAJA_KEY, todayStr() + '_1'); } catch {}
+      } else {
+        if (usuario?.rol !== 'admin') setMostrarApertura(true);
+      }
+    }).catch(() => {
+      if (usuario?.rol !== 'admin') setMostrarApertura(true);
+    });
+  }
+}).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
