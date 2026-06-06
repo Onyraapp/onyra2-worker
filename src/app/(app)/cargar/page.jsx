@@ -8,7 +8,7 @@ import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
   cerrarTurnoConPendientes, fmt, todayStr,
-  getTurnosCerradosHoy, getCierreDiario
+  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
@@ -48,7 +48,6 @@ export default function CargarPage() {
   useEffect(() => {
     if (!usuario) return;
 
-    // Limpiar apertura del día anterior
     try {
       const fechaGuardada = localStorage.getItem(CAJA_KEY);
       if (fechaGuardada && fechaGuardada !== todayStr()) {
@@ -57,29 +56,34 @@ export default function CargarPage() {
     } catch {}
 
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
+
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) setLista(JSON.parse(saved));
     } catch {}
+
     setColaPendiente(getCola());
+
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-      if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
-      else if (cerrados.includes('1')) setTurno('2');
-      else {
+      if (cerrados.includes('1') && cerrados.includes('2')) {
+        setTurno('sin_turno');
+      } else if (cerrados.includes('1')) {
+        setTurno('2');
+      } else {
         setTurno('1');
-try {
-  const turnoExistente = await getTurnoAbierto(usuario.bar_id, todayStr(), '1');
-  if (turnoExistente) {
-    setAperturaLista(true);
-    try { localStorage.setItem(CAJA_KEY, todayStr()); } catch {}
-  } else {
-    if (usuario?.rol !== 'admin') setMostrarApertura(true);
-  }
-} catch {
-  if (usuario?.rol !== 'admin') setMostrarApertura(true);
-}
+        getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
+          if (turnoExistente) {
+            setAperturaLista(true);
+            try { localStorage.setItem(CAJA_KEY, todayStr()); } catch {}
+          } else {
+            if (usuario?.rol !== 'admin') setMostrarApertura(true);
+          }
+        }).catch(() => {
+          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+        });
       }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
+
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) setDiaCerrado(true);
     }).catch(() => {});
@@ -290,7 +294,6 @@ try {
         </div>
       )}
 
-      {/* Modal apertura de caja */}
       {mostrarApertura && !aperturaLista && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-xl">
@@ -328,7 +331,6 @@ try {
         </div>
       )}
 
-      {/* Modal anulación */}
       {anulando && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-xl">
