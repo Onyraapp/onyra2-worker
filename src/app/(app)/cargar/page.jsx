@@ -160,7 +160,11 @@ export default function CargarPage() {
   const bloqueado = esCajero && diaCerrado;
 
   async function agregarAVentas() {
-    if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
+  if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
+  try {
+    const sb = getClient();
+    await sb.auth.getSession();
+  } catch {}
     const m    = MEDIOS_PAGO.find(mp => mp.key === medio);
     const calc = calcularRetencion(montoBruto, pct);
     const item = { ...calc, medio_pago: medio, medio_label: m?.label, medio_color: m?.color, nota, anulada: false, _id: Date.now() };
