@@ -369,4 +369,61 @@ export async function getCierreDiario(barId, fechaStr) {
     .from('cierres_diarios')
     .select('*')
     .eq('bar_id', barId)
-    .eq('fecha', fechaS
+    .eq('fecha', fechaStr)
+    .maybeSingle();
+  return data;
+}
+
+export async function crearCierreDiario(barId, usuarioId, fechaStr) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('cierres_diarios')
+    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha: fechaStr }])
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function registrarCajero({ barId, nombre, email, password }) {
+  const res = await fetch('/api/crear-cajero', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ barId, nombre, email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al crear cajero');
+  return data;
+}
+
+export async function getCajeros(barId) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('usuarios')
+    .select('*')
+    .eq('bar_id', barId)
+    .order('nombre');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateBar(barId, updates) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('bares')
+    .update(updates)
+    .eq('id', barId)
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getCajaInicialDia(barId, fechaStr) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('turnos')
+    .select('caja_inicial')
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr);
+  if (!data || data.length === 0) return 0;
+  return data.reduce((s, t) => s + (t.caja_inicial || 0), 0);
+}
