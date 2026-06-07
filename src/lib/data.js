@@ -178,6 +178,12 @@ export async function crearIngresosBulk(ingresos) {
 
 export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBruto, retencionPct, retencionMonto, montoNeto, nota }) {
   const sb = getClient();
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  const fecha = local.getHours() < 4
+    ? new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+    : now.toISOString();
+
   const { data, error } = await sb.from('ingresos').insert([{
     bar_id: barId,
     turno_id: null,
@@ -188,14 +194,7 @@ export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBr
     retencion_monto: retencionMonto,
     monto_neto: montoNeto,
     nota: nota || '',
-    fecha: (() => {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  if (local.getHours() < 4) {
-    return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-  }
-  return now.toISOString();
-})(),
+    fecha,
     pendiente: true,
     anulada: false,
     motivo_anulacion: '',
@@ -218,14 +217,10 @@ export async function cerrarTurnoConPendientes({ barId, usuarioId, fecha, turno,
   return t;
 }
 
-fecha: (() => {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  if (local.getHours() < 4) {
-    return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-  }
-  return now.toISOString();
-})(),
+export async function getIngresosDia(barId, fechaStr) {
+  const sb = getClient();
+  const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
+  const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
   const { data, error } = await sb
     .from('ingresos').select('*')
     .eq('bar_id', barId)
@@ -374,61 +369,4 @@ export async function getCierreDiario(barId, fechaStr) {
     .from('cierres_diarios')
     .select('*')
     .eq('bar_id', barId)
-    .eq('fecha', fechaStr)
-    .maybeSingle();
-  return data;
-}
-
-export async function crearCierreDiario(barId, usuarioId, fechaStr) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('cierres_diarios')
-    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha: fechaStr }])
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-export async function registrarCajero({ barId, nombre, email, password }) {
-  const res = await fetch('/api/crear-cajero', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ barId, nombre, email, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Error al crear cajero');
-  return data;
-}
-
-export async function getCajeros(barId) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('usuarios')
-    .select('*')
-    .eq('bar_id', barId)
-    .order('nombre');
-  if (error) throw error;
-  return data || [];
-}
-
-export async function updateBar(barId, updates) {
-  const sb = getClient();
-  const { data, error } = await sb
-    .from('bares')
-    .update(updates)
-    .eq('id', barId)
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-export async function getCajaInicialDia(barId, fechaStr) {
-  const sb = getClient();
-  const { data } = await sb
-    .from('turnos')
-    .select('caja_inicial')
-    .eq('bar_id', barId)
-    .eq('fecha', fechaStr);
-  if (!data || data.length === 0) return 0;
-  return data.reduce((s, t) => s + (t.caja_inicial || 0), 0);
-}
+    .eq('fecha', fechaS
