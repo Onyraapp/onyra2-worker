@@ -91,7 +91,7 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [cargar]);
 
-  const res = calcularResumenDia(ingresos, egresos);
+ const res = calcularResumenDia(ingresosActivos, egresos);
   const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
   const ingresosAnulados = ingresos.filter(i => i.anulada);
