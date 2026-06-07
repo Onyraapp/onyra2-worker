@@ -91,12 +91,12 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [cargar]);
 
- const res = calcularResumenDia(ingresosActivos, egresos);
-  const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
   const ingresosAnulados = ingresos.filter(i => i.anulada);
   const egresosFiltrados = isAdmin ? egresos : egresos.filter(e => e.tipo !== 'retiros');
-  const resFiltrado = calcularResumenDia(ingresos, egresosFiltrados);
+  const res = calcularResumenDia(ingresosActivos, egresos);
+  const resFiltrado = calcularResumenDia(ingresosActivos, egresosFiltrados);
+  const fechaDisplay = format(new Date(fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
 
   const retRows = MEDIOS_PAGO
     .filter(m => res.porMedio[m.key])
@@ -118,7 +118,8 @@ export default function DashboardPage() {
         getConfiguracion(usuario.bar_id),
         getCajaInicialDia(usuario.bar_id, fechaCierre),
       ]);
-      const r = calcularResumenDia(ing, egr);
+      const ingActivos = ing.filter(i => !i.anulada);
+      const r = calcularResumenDia(ingActivos, egr);
       const fechaLabel = format(new Date(fechaCierre + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: es });
       const sb = getClient();
       const manana = addDays(new Date(fechaCierre + 'T12:00:00'), 1).toISOString().slice(0, 10);
@@ -138,7 +139,7 @@ export default function DashboardPage() {
         `Ventas netas:   ${fmt(r.totalNeto)}`,
         `Gastos:         -${fmt(r.totalEgresos)}`, ``,
         `Resultado: *${r.resultado >= 0 ? '' : '-'}${fmt(Math.abs(r.resultado))}*`, ``,
-        `_${ing.filter(i => !i.anulada).length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
+        `_${ingActivos.length} ventas - ${ing.filter(i => i.anulada).length} anulaciones_`,
       ].join('\n') + lineasVenc;
       const numero = cfg?.whatsapp_numero?.trim();
       const url = numero
@@ -193,8 +194,7 @@ export default function DashboardPage() {
             <div className="text-center text-xs text-t3">
               {resumenCierre.ing.filter(i => !i.anulada).length} ventas · {resumenCierre.ing.filter(i => i.anulada).length} anulaciones
             </div>
-            
-              <BtnPrimary
+            <BtnPrimary
               label="Confirmar y enviar por WhatsApp"
               onClick={() => { window.open(resumenCierre.url, '_blank'); confirmarCierre(); }}
             />
