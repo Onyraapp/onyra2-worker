@@ -480,4 +480,26 @@ export default function CargarPage() {
 
       {anuladas.length > 0 && (
         <Card>
-          <CardHeader title={`Anuladas
+          <CardHeader title={`Anuladas · ${anuladas.length}`} />
+          <div className="p-4 flex flex-col gap-2">
+            {anuladas.map(item => (
+              <div key={item._id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft/50 border border-red/10 opacity-60">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-t2 line-through">{item.medio_label} · {fmt(item.monto_bruto)}</div>
+                  <div className="text-xs text-redtext mt-0.5">{item.motivo_anulacion}</div>
+                  <div className="text-xs text-t3 mt-0.5">{item.fecha?.slice(11,16)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {lista.length === 0 && (
+        <div className="text-center py-8 text-t3 text-sm">
+          Agregá ventas a la lista y cerrá el turno al terminar.
+        </div>
+      )}
+    </Screen>
+  );
+}
