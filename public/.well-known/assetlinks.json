@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "lat.troco.www.app",
+        "sha256_cert_fingerprints": ["6B:5B:71:30:E7:BE:09:E4:DB:87:7F:C9:29:A9:A2:8D:F9:26:0A:3C:CD:77:ED:B5:3B:C4:41:46:D5:65:0B:3B"]
+      }
+    }]
