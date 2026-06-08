@@ -272,7 +272,9 @@ export default function CargarPage() {
           `Ventas netas:   ${fmt(totalNeto)}`, ``,
           `_${activas.length} ventas_`,
         ].join('\n');
-        window.open(`https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
+        const waUrl = `https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`;
+const waWindow = window.open(waUrl, '_blank');
+if (!waWindow) window.location.href = waUrl;
       }
 
       show(`✓ Turno cerrado · ${activas.length} ventas · ${fmt(totalBruto)} bruto`);
