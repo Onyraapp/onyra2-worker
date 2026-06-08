@@ -167,8 +167,7 @@ export default function CargarPage() {
   const totalNeto      = activas.reduce((s, i) => s + i.monto_neto, 0);
 
   const esCajero = usuario?.rol === 'cajero';
-  const bloqueado = esCajero && diaCerrado;
-
+  const bloqueado = diaCerrado;
   async function agregarAVentas() {
     if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
     try {
