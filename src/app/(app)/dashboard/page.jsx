@@ -202,7 +202,7 @@ export default function DashboardPage() {
     setModalCierre(false);
   }}
 />
-            />
+          
             <button onClick={() => setModalCierre(false)} className="w-full h-10 text-t3 text-sm">
               Cancelar
             </button>
