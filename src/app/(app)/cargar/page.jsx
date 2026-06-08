@@ -46,6 +46,8 @@ export default function CargarPage() {
   const [agregando,       setAgregando]       = useState(false);
   const [fechaTurno,      setFechaTurno]      = useState(todayStr());
 
+  const isAdmin = usuario?.rol === 'admin';
+
   useEffect(() => {
     if (!usuario) return;
 
@@ -85,10 +87,10 @@ export default function CargarPage() {
             setAperturaLista(true);
             try { localStorage.setItem(CAJA_KEY, todayStr() + '_sin_turno'); } catch {}
           } else {
-            if (usuario?.rol !== 'admin') setMostrarApertura(true);
+            if (!isAdmin) setMostrarApertura(true);
           }
         }).catch(() => {
-          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+          if (!isAdmin) setMostrarApertura(true);
         });
       } else if (cerrados.includes('1')) {
         setTurno('2');
@@ -97,10 +99,10 @@ export default function CargarPage() {
             setAperturaLista(true);
             try { localStorage.setItem(CAJA_KEY, todayStr() + '_2'); } catch {}
           } else {
-            if (usuario?.rol !== 'admin') setMostrarApertura(true);
+            if (!isAdmin) setMostrarApertura(true);
           }
         }).catch(() => {
-          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+          if (!isAdmin) setMostrarApertura(true);
         });
       } else {
         setTurno('1');
@@ -109,10 +111,10 @@ export default function CargarPage() {
             setAperturaLista(true);
             try { localStorage.setItem(CAJA_KEY, todayStr() + '_1'); } catch {}
           } else {
-            if (usuario?.rol !== 'admin') setMostrarApertura(true);
+            if (!isAdmin) setMostrarApertura(true);
           }
         }).catch(() => {
-          if (usuario?.rol !== 'admin') setMostrarApertura(true);
+          if (!isAdmin) setMostrarApertura(true);
         });
       }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
@@ -122,7 +124,6 @@ export default function CargarPage() {
     }).catch(() => {});
   }, [usuario]);
 
-  // Chequear cierre diario cada 5 segundos
   useEffect(() => {
     if (!usuario) return;
     const interval = setInterval(() => {
@@ -166,8 +167,8 @@ export default function CargarPage() {
   const totalRetencion = activas.reduce((s, i) => s + i.retencion_monto, 0);
   const totalNeto      = activas.reduce((s, i) => s + i.monto_neto, 0);
 
-  const esCajero = usuario?.rol === 'cajero';
   const bloqueado = diaCerrado;
+
   async function agregarAVentas() {
     if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
     try {
@@ -300,7 +301,14 @@ export default function CargarPage() {
         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
           <span className="text-5xl">🔒</span>
           <div className="text-lg font-bold text-t1">Día cerrado</div>
-          <div className="text-sm text-t3">El administrador cerró el día de hoy.</div>
+          <div className="text-sm text-t3">El día fue cerrado por el administrador.</div>
+          {isAdmin && (
+            <button
+              onClick={() => setDiaCerrado(false)}
+              className="mt-4 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold">
+              Reabrir día
+            </button>
+          )}
         </div>
       </Screen>
     );
