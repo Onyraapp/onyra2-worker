@@ -159,7 +159,7 @@ export default function DashboardPage() {
       setDiaCerrado(true);
       setCierreListo(true);
       show('✓ Día cerrado');
-      if (isAdmin) setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
+     setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
     } catch (e) {
       if (e?.code === '23505') {
         setDiaCerrado(true);
