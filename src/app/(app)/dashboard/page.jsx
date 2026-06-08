@@ -195,14 +195,14 @@ export default function DashboardPage() {
               {resumenCierre.ing.filter(i => !i.anulada).length} ventas · {resumenCierre.ing.filter(i => i.anulada).length} anulaciones
             </div>
             <BtnPrimary
-  label="Confirmar y enviar por WhatsApp"
-  onClick={async () => {
-    window.open(resumenCierre.url, '_blank');
-    await confirmarCierre();
-    setModalCierre(false);
-  }}
-/>
-          
+              label="Confirmar y enviar por WhatsApp"
+              onClick={async () => {
+                await confirmarCierre();
+                const waUrl = resumenCierre.url;
+                const waWindow = window.open(waUrl, '_blank');
+                if (!waWindow) window.location.href = waUrl;
+              }}
+            />
             <button onClick={() => setModalCierre(false)} className="w-full h-10 text-t3 text-sm">
               Cancelar
             </button>
