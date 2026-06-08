@@ -203,8 +203,8 @@ export default function DashboardPage() {
                 onClick={confirmarCierre}
               />
             ) : (
-              
-                href={resumenCierre.url}
+              <a
+               href={resumenCierre.url}
   className="w-full h-12 rounded-xl bg-[#25D366] text-white font-semibold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-sm"
 >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
