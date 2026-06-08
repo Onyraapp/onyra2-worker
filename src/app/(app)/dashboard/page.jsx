@@ -194,13 +194,17 @@ export default function DashboardPage() {
             <div className="text-center text-xs text-t3">
               {resumenCierre.ing.filter(i => !i.anulada).length} ventas · {resumenCierre.ing.filter(i => i.anulada).length} anulaciones
             </div>
-            <BtnPrimary
-              label="Confirmar y enviar por WhatsApp"
-              onClick={async () => {
+            
+              href={resumenCierre.url}
+              onClick={async (e) => {
+                e.preventDefault();
                 await confirmarCierre();
-                window.open(resumenCierre.url, '_blank');
+                window.location.href = resumenCierre.url;
               }}
-            />
+              className="w-full h-12 rounded-xl bg-primary text-white font-semibold text-[15px] flex items-center justify-center active:scale-[0.98] transition-all shadow-sm"
+            >
+              Confirmar y enviar por WhatsApp
+            </a>
             <button onClick={() => setModalCierre(false)} className="w-full h-10 text-t3 text-sm">
               Cancelar
             </button>
