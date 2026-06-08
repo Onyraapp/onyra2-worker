@@ -58,7 +58,6 @@ export default function CargarPage() {
 
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
 
-    // Cargar ventas del día desde Supabase
     getIngresosDia(usuario.bar_id, todayStr()).then(data => {
       const mapeadas = data.map(i => ({
         ...i,
@@ -123,6 +122,17 @@ export default function CargarPage() {
     }).catch(() => {});
   }, [usuario]);
 
+  // Chequear cierre diario cada 5 segundos
+  useEffect(() => {
+    if (!usuario) return;
+    const interval = setInterval(() => {
+      getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
+        if (cierre) setDiaCerrado(true);
+      }).catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [usuario]);
+
   useEffect(() => {
     if (online && colaPendiente.length > 0) sincronizarCola();
   }, [online]);
@@ -160,11 +170,11 @@ export default function CargarPage() {
   const bloqueado = esCajero && diaCerrado;
 
   async function agregarAVentas() {
-  if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
-  try {
-    const sb = getClient();
-    await sb.auth.getSession();
-  } catch {}
+    if (!montoBruto || montoBruto <= 0) return show('⚠ Ingresá un monto válido');
+    try {
+      const sb = getClient();
+      await sb.auth.getSession();
+    } catch {}
     const m    = MEDIOS_PAGO.find(mp => mp.key === medio);
     const calc = calcularRetencion(montoBruto, pct);
     const item = { ...calc, medio_pago: medio, medio_label: m?.label, medio_color: m?.color, nota, anulada: false, _id: Date.now() };
@@ -273,8 +283,8 @@ export default function CargarPage() {
           `_${activas.length} ventas_`,
         ].join('\n');
         const waUrl = `https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`;
-const waWindow = window.open(waUrl, '_blank');
-if (!waWindow) window.location.href = waUrl;
+        const waWindow = window.open(waUrl, '_blank');
+        if (!waWindow) window.location.href = waUrl;
       }
 
       show(`✓ Turno cerrado · ${activas.length} ventas · ${fmt(totalBruto)} bruto`);
@@ -470,26 +480,4 @@ if (!waWindow) window.location.href = waUrl;
 
       {anuladas.length > 0 && (
         <Card>
-          <CardHeader title={`Anuladas · ${anuladas.length}`} />
-          <div className="p-4 flex flex-col gap-2">
-            {anuladas.map(item => (
-              <div key={item._id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft/50 border border-red/10 opacity-60">
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-t2 line-through">{item.medio_label} · {fmt(item.monto_bruto)}</div>
-                  <div className="text-xs text-redtext mt-0.5">{item.motivo_anulacion}</div>
-                  <div className="text-xs text-t3 mt-0.5">{item.fecha?.slice(11,16)}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {lista.length === 0 && (
-        <div className="text-center py-8 text-t3 text-sm">
-          Agregá ventas a la lista y cerrá el turno al terminar.
-        </div>
-      )}
-    </Screen>
-  );
-}
+          <CardHeader title={`Anuladas
