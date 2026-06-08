@@ -199,9 +199,14 @@ export default function DashboardPage() {
 
             {!cierreListo ? (
               <BtnPrimary
-                label="Confirmar cierre"
-                onClick={confirmarCierre}
-              />
+  label={cerrandoDia ? '...' : 'Confirmar cierre'}
+  onClick={async () => {
+    setCerrandoDia(true);
+    await confirmarCierre();
+    setCerrandoDia(false);
+  }}
+  loading={cerrandoDia}
+/>
             ) : (
               <a
                href={resumenCierre.url}
