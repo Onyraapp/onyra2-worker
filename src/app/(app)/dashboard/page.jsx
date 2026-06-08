@@ -198,9 +198,7 @@ export default function DashboardPage() {
               label="Confirmar y enviar por WhatsApp"
               onClick={async () => {
                 await confirmarCierre();
-                const waUrl = resumenCierre.url;
-                const waWindow = window.open(waUrl, '_blank');
-                if (!waWindow) window.location.href = waUrl;
+                window.open(resumenCierre.url, '_blank');
               }}
             />
             <button onClick={() => setModalCierre(false)} className="w-full h-10 text-t3 text-sm">
