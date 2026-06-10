@@ -17,9 +17,9 @@ function diasHasta(fecha) {
 
 function semaforo(fecha) {
   const dias = diasHasta(fecha);
-  if (dias < 0)   return { bg: '#fee2e2', border: '#fca5a5', dot: '#ef4444', label: '#dc2626' };
-  if (dias === 0) return { bg: '#fee2e2', border: '#fca5a5', dot: '#ef4444', label: '#dc2626' };
-  if (dias <= 2)  return { bg: '#fdf2f8', border: '#f9a8d4', dot: '#ec4899', label: '#db2777' };
+  if (dias < 0)   return { bg: '#fecaca', border: '#f87171', dot: '#b91c1c', label: '#991b1b' };
+if (dias === 0) return { bg: '#fecaca', border: '#f87171', dot: '#b91c1c', label: '#991b1b' };
+if (dias <= 2)  return { bg: '#fee2e2', border: '#fca5a5', dot: '#ef4444', label: '#dc2626' };
   if (dias <= 6)  return { bg: '#fffbeb', border: '#fcd34d', dot: '#f59e0b', label: '#d97706' };
   return           { bg: '#f0fdf4', border: '#86efac', dot: '#22c55e', label: '#16a34a' };
 }
