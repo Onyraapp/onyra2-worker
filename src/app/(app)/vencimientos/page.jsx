@@ -8,19 +8,20 @@ function fmt(n) {
 }
 
 function diasHasta(fecha) {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const f = new Date(fecha + 'T12:00:00');
-  return Math.ceil((f - hoy) / (1000 * 60 * 60 * 24));
+  const ahora = new Date();
+  const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+  const partes = fecha.split('-');
+  const f = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+  return Math.round((f - hoy) / (1000 * 60 * 60 * 24));
 }
 
 function semaforo(fecha) {
   const dias = diasHasta(fecha);
-  if (dias < 0)   return { bg: 'bg-red-100',   border: 'border-red-300',   dot: 'bg-red-500',   label: 'text-red-600'   };
-  if (dias === 0) return { bg: 'bg-red-100',   border: 'border-red-300',   dot: 'bg-red-500',   label: 'text-red-600'   };
-  if (dias <= 2)  return { bg: 'bg-pink-50',   border: 'border-pink-300',  dot: 'bg-pink-500',  label: 'text-pink-600'  };
-  if (dias <= 6)  return { bg: 'bg-amber-50',  border: 'border-amber-300', dot: 'bg-amber-400', label: 'text-amber-600' };
-  return           { bg: 'bg-green-50',  border: 'border-green-200', dot: 'bg-green-500', label: 'text-green-600' };
+  if (dias < 0)   return { bg: '#fee2e2', border: '#fca5a5', dot: '#ef4444', label: '#dc2626' };
+  if (dias === 0) return { bg: '#fee2e2', border: '#fca5a5', dot: '#ef4444', label: '#dc2626' };
+  if (dias <= 2)  return { bg: '#fdf2f8', border: '#f9a8d4', dot: '#ec4899', label: '#db2777' };
+  if (dias <= 6)  return { bg: '#fffbeb', border: '#fcd34d', dot: '#f59e0b', label: '#d97706' };
+  return           { bg: '#f0fdf4', border: '#86efac', dot: '#22c55e', label: '#16a34a' };
 }
 
 function labelDias(fecha) {
@@ -33,9 +34,11 @@ function labelDias(fecha) {
 
 function labelFecha(fecha) {
   const dias = diasHasta(fecha);
-  if (dias < 0)   return `Vencido`;
+  if (dias < 0)   return 'Vencido';
   if (dias === 0) return '⚠ Hoy';
-  return new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+  const partes = fecha.split('-');
+  const f = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+  return f.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
 }
 
 export default function VencimientosPage() {
@@ -139,18 +142,19 @@ export default function VencimientosPage() {
           {vencimientos.map(v => {
             const s = semaforo(v.fecha);
             return (
-              <div key={v.id} className={`${s.bg} border ${s.border} rounded-2xl px-4 py-3 flex items-center justify-between gap-3`}>
+              <div key={v.id} style={{ backgroundColor: s.bg, borderColor: s.border }}
+                className="border rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${s.dot}`} />
+                  <div style={{ backgroundColor: s.dot }} className="w-3 h-3 rounded-full flex-shrink-0" />
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <div className="text-sm font-semibold text-t1 truncate">{v.detalle}</div>
-                    <div className={`text-xs font-medium ${s.label}`}>{labelFecha(v.fecha)}</div>
+                    <div style={{ color: s.label }} className="text-xs font-medium">{labelFecha(v.fecha)}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="text-right">
                     <div className="text-sm font-bold text-t1">{fmt(v.importe)}</div>
-                    <div className={`text-xs font-semibold ${s.label}`}>{labelDias(v.fecha)}</div>
+                    <div style={{ color: s.label }} className="text-xs font-semibold">{labelDias(v.fecha)}</div>
                   </div>
                   {isAdmin && (
                     <button onClick={() => eliminar(v.id)} className="text-t4 text-lg leading-none">×</button>
