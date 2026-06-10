@@ -279,9 +279,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader title={t.gastos_del_dia} subtitle={`${egresos.length} · ${fmtL(res.totalEgresos)}`} />
             <div className="p-4 flex flex-col gap-3">
-              {TIPOS_EGRESO.filter(t => egresosPorTipo[t.key]).map(t => (
-                <BreakdownBar key={t.key} label={t.label} value={egresosPorTipo[t.key]} total={res.totalEgresos} color="#FF9500" />
-              ))}
+              {TIPOS_EGRESO.filter(tipo => egresosPorTipo[tipo.key]).map(tipo => (
+  <BreakdownBar key={tipo.key} label={tipo.label} value={egresosPorTipo[tipo.key]} total={res.totalEgresos} color="#FF9500" />
+)}
             </div>
           </Card>
         )}
