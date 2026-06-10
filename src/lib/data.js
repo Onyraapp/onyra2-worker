@@ -143,6 +143,17 @@ export async function cerrarTurno(turnoId) {
   return data;
 }
 
+export async function getTurnosDia(barId, fechaStr) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('turnos')
+    .select('*, usuarios(nombre)')
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr)
+    .order('created_at', { ascending: true });
+  return data || [];
+}
+
 // ── INGRESOS ──────────────────────────────────────────────
 
 export async function crearIngreso({ barId, turnoId, usuarioId, medioPago, montoBruto, config, nota }) {
@@ -382,6 +393,22 @@ export async function crearCierreDiario(barId, usuarioId, fechaStr) {
     .select().single();
   if (error) throw error;
   return data;
+}
+
+export async function reabrirDia(barId, fechaStr, causa) {
+  const sb = getClient();
+  const { error } = await sb
+    .from('cierres_diarios')
+    .update({ reapertura_causa: causa })
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr);
+  if (error) throw error;
+  const { error: e2 } = await sb
+    .from('cierres_diarios')
+    .delete()
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr);
+  if (e2) throw e2;
 }
 
 export async function registrarCajero({ barId, nombre, email, password }) {
