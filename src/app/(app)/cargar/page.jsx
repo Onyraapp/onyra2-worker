@@ -7,7 +7,7 @@ import { useOnline, agregarACola, getCola, limpiarCola } from '../../../hooks/us
 import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
-  cerrarTurnoConPendientes, fmt, todayStr,
+  cerrarTurnoConPendientes, fmt, todayStr, reabrirDia,
   getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
@@ -21,30 +21,41 @@ import {
 const STORAGE_KEY = 'troco_lista_turno';
 const CAJA_KEY = 'troco_caja_abierta';
 
+const CAUSAS_REAPERTURA = [
+  'Error de carga',
+  'Olvidé cargar una venta/gasto',
+  'Anulación incorrecta',
+  'Otro',
+];
+
 export default function CargarPage() {
   const { usuario } = useAuth();
   const router = useRouter();
   const online = useOnline();
   const { toast, visible, show } = useToast();
 
-  const [config,          setConfig]          = useState(null);
-  const [turno,           setTurno]           = useState(null);
-  const [turnosCerrados,  setTurnosCerrados]  = useState([]);
-  const [medio,           setMedio]           = useState('efectivo');
-  const [monto,           setMonto]           = useState('');
-  const [nota,            setNota]            = useState('');
-  const [lista,           setLista]           = useState([]);
-  const [cerrando,        setCerrando]        = useState(false);
-  const [diaCerrado,      setDiaCerrado]      = useState(false);
-  const [cajaInicial,     setCajaInicial]     = useState('');
-  const [mostrarApertura, setMostrarApertura] = useState(false);
-  const [aperturaLista,   setAperturaLista]   = useState(false);
-  const [sincronizando,   setSincronizando]   = useState(false);
-  const [colaPendiente,   setColaPendiente]   = useState([]);
-  const [anulando,        setAnulando]        = useState(null);
-  const [motivoAnulacion, setMotivoAnulacion] = useState('');
-  const [agregando,       setAgregando]       = useState(false);
-  const [fechaTurno,      setFechaTurno]      = useState(todayStr());
+  const [config,           setConfig]           = useState(null);
+  const [turno,            setTurno]            = useState(null);
+  const [turnosCerrados,   setTurnosCerrados]   = useState([]);
+  const [medio,            setMedio]            = useState('efectivo');
+  const [monto,            setMonto]            = useState('');
+  const [nota,             setNota]             = useState('');
+  const [lista,            setLista]            = useState([]);
+  const [cerrando,         setCerrando]         = useState(false);
+  const [diaCerrado,       setDiaCerrado]       = useState(false);
+  const [cajaInicial,      setCajaInicial]      = useState('');
+  const [nombreCajero,     setNombreCajero]     = useState('');
+  const [mostrarApertura,  setMostrarApertura]  = useState(false);
+  const [aperturaLista,    setAperturaLista]    = useState(false);
+  const [sincronizando,    setSincronizando]    = useState(false);
+  const [colaPendiente,    setColaPendiente]    = useState([]);
+  const [anulando,         setAnulando]         = useState(null);
+  const [motivoAnulacion,  setMotivoAnulacion]  = useState('');
+  const [agregando,        setAgregando]        = useState(false);
+  const [fechaTurno,       setFechaTurno]       = useState(todayStr());
+  const [modalReapertura,  setModalReapertura]  = useState(false);
+  const [causaReapertura,  setCausaReapertura]  = useState('');
+  const [reabriendo,       setReabriendo]       = useState(false);
 
   const isAdmin = usuario?.rol === 'admin';
 
@@ -78,6 +89,12 @@ export default function CargarPage() {
 
     setColaPendiente(getCola());
 
+    // Cargar nombre del cajero actual
+    const sb = getClient();
+    sb.from('usuarios').select('nombre').eq('id', usuario.id).single()
+      .then(({ data }) => { if (data) setNombreCajero(data.nombre); })
+      .catch(() => {});
+
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
       setTurnosCerrados(cerrados);
       if (cerrados.includes('1') && cerrados.includes('2')) {
@@ -89,9 +106,7 @@ export default function CargarPage() {
           } else {
             if (!isAdmin) setMostrarApertura(true);
           }
-        }).catch(() => {
-          if (!isAdmin) setMostrarApertura(true);
-        });
+        }).catch(() => { if (!isAdmin) setMostrarApertura(true); });
       } else if (cerrados.includes('1')) {
         setTurno('2');
         getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
@@ -101,9 +116,7 @@ export default function CargarPage() {
           } else {
             if (!isAdmin) setMostrarApertura(true);
           }
-        }).catch(() => {
-          if (!isAdmin) setMostrarApertura(true);
-        });
+        }).catch(() => { if (!isAdmin) setMostrarApertura(true); });
       } else {
         setTurno('1');
         getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
@@ -113,9 +126,7 @@ export default function CargarPage() {
           } else {
             if (!isAdmin) setMostrarApertura(true);
           }
-        }).catch(() => {
-          if (!isAdmin) setMostrarApertura(true);
-        });
+        }).catch(() => { if (!isAdmin) setMostrarApertura(true); });
       }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
@@ -129,6 +140,7 @@ export default function CargarPage() {
     const interval = setInterval(() => {
       getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
         if (cierre) setDiaCerrado(true);
+        else setDiaCerrado(false);
       }).catch(() => {});
     }, 5000);
     return () => clearInterval(interval);
@@ -155,6 +167,22 @@ export default function CargarPage() {
       show('✗ Error al sincronizar — reintentando más tarde');
     } finally {
       setSincronizando(false);
+    }
+  }
+
+  async function confirmarReapertura() {
+    if (!causaReapertura) return show('⚠ Seleccioná una causa');
+    setReabriendo(true);
+    try {
+      await reabrirDia(usuario.bar_id, todayStr(), causaReapertura);
+      setDiaCerrado(false);
+      setModalReapertura(false);
+      setCausaReapertura('');
+      show('✓ Día reabierto');
+    } catch {
+      show('✗ Error al reabrir el día');
+    } finally {
+      setReabriendo(false);
     }
   }
 
@@ -298,18 +326,48 @@ export default function CargarPage() {
   if (bloqueado) {
     return (
       <Screen>
-        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-6">
           <span className="text-5xl">🔒</span>
           <div className="text-lg font-bold text-t1">Día cerrado</div>
-          <div className="text-sm text-t3">El día fue cerrado por el administrador.</div>
-          {isAdmin && (
-            <button
-              onClick={() => setDiaCerrado(false)}
-              className="mt-4 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold">
-              Reabrir día
-            </button>
-          )}
+          <div className="text-sm text-t3">El día fue cerrado.</div>
+          <button
+            onClick={() => { setCausaReapertura(''); setModalReapertura(true); }}
+            className="mt-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold">
+            Reabrir día
+          </button>
         </div>
+
+        {modalReapertura && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
+            <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
+              <div className="text-center">
+                <div className="text-2xl mb-1">🔓</div>
+                <div className="text-base font-bold text-t1">¿Por qué reabrís el día?</div>
+              </div>
+              <div className="flex flex-col gap-2">
+                {CAUSAS_REAPERTURA.map(causa => (
+                  <button
+                    key={causa}
+                    onClick={() => setCausaReapertura(causa)}
+                    className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all border
+                      ${causaReapertura === causa
+                        ? 'bg-primary/10 border-primary/40 text-primary'
+                        : 'bg-offset border-transparent text-t2'}`}>
+                    {causa}
+                  </button>
+                ))}
+              </div>
+              <BtnPrimary
+                label={reabriendo ? 'Reabriendo...' : 'Confirmar reapertura'}
+                onClick={confirmarReapertura}
+                loading={reabriendo}
+              />
+              <button onClick={() => setModalReapertura(false)} className="w-full h-10 text-t3 text-sm">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
       </Screen>
     );
   }
@@ -359,6 +417,11 @@ export default function CargarPage() {
               <div className="text-sm text-t3 mt-1 capitalize">
                 {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : turno === '2' ? 'Turno 2 🌙' : 'Turno único ⭐'}
               </div>
+              {nombreCajero && (
+                <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                  👤 {nombreCajero}
+                </div>
+              )}
             </div>
             <div>
               <FieldLabel>{turno === '2' ? 'Monto recibido del turno anterior' : 'Monto de apertura de caja'}</FieldLabel>
