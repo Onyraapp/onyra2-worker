@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, subDays } from 'date-fns';
-import { es, ptBR } from 'date-fns/locale';
+import { es } from 'date-fns/locale';
+import ptBR from 'date-fns/locale/pt-BR';
 import { useAuth } from '../../../hooks/useAuth';
 import {
   getIngresosDia, getEgresosDia, calcularResumenDia,
