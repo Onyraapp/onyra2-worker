@@ -6,21 +6,23 @@ import Link from 'next/link';
 import { AuthProvider, useAuth } from '../../hooks/useAuth';
 import { FullScreenSpinner } from '../../components/ui';
 import { getClient } from '../../lib/supabase';
-
-const NAV = [
-  { href: '/dashboard',    label: 'Hoy',     icon: '◫' },
-  { href: '/cargar',       label: 'Cargar',   icon: '+' },
-  { href: '/egresos',      label: 'Gastos',   icon: '−' },
-  { href: '/resumen',      label: 'Resumen',  icon: '▤' },
-  { href: '/vencimientos', label: 'Vence',   icon: '⏰' },
-];
+import { useLocale } from '../../hooks/useLocale';
 
 function AppShell({ children }) {
   const { usuario, cargando } = useAuth();
   const router   = useRouter();
   const pathname = usePathname();
+  const { t, fmt } = useLocale();
   const [alertasVenc, setAlertasVenc] = useState([]);
   const [modalAlerta, setModalAlerta] = useState(false);
+
+  const NAV = [
+    { href: '/dashboard',    label: t.nav_hoy,     icon: '◫' },
+    { href: '/cargar',       label: t.nav_cargar,  icon: '+' },
+    { href: '/egresos',      label: t.nav_gastos,  icon: '−' },
+    { href: '/resumen',      label: t.nav_resumen, icon: '▤' },
+    { href: '/vencimientos', label: t.nav_vence,   icon: '⏰' },
+  ];
 
   useEffect(() => {
     if (!cargando && !usuario) router.push('/login');
@@ -61,13 +63,12 @@ function AppShell({ children }) {
   return (
     <div className="min-h-screen bg-bg flex flex-col max-w-lg mx-auto overflow-x-hidden">
 
-      {/* Alerta vencimientos */}
       {modalAlerta && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
             <div className="text-center">
               <div className="text-3xl mb-2">⚠️</div>
-              <div className="text-lg font-bold text-t1">Vencimientos próximos</div>
+              <div className="text-lg font-bold text-t1">{t.vencimientos}</div>
             </div>
             <div className="flex flex-col gap-2">
               {alertasVenc.map(v => {
@@ -78,25 +79,22 @@ function AppShell({ children }) {
                     <div>
                       <div className="text-sm font-semibold text-t1">{v.detalle}</div>
                       <div className={`text-xs font-bold ${esHoy ? 'text-red-500' : 'text-amber-500'}`}>
-                        {esHoy ? '⚠ Hoy' : '⚠ Mañana'}
+                        {esHoy ? `⚠ ${t.hoy}` : `⚠ ${t.nav_hoy === 'Hoje' ? 'Amanhã' : 'Mañana'}`}
                       </div>
                     </div>
-                    <div className="text-sm font-bold text-t1">
-                      {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v.importe)}
-                    </div>
+                    <div className="text-sm font-bold text-t1">{fmt(v.importe)}</div>
                   </div>
                 );
               })}
             </div>
             <button onClick={() => setModalAlerta(false)}
               className="w-full h-12 rounded-xl bg-primary text-white font-semibold text-[15px]">
-              Entendido
+              {t.confirmar}
             </button>
           </div>
         </div>
       )}
 
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-white/[0.08]">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -133,10 +131,8 @@ function AppShell({ children }) {
         </div>
       </header>
 
-      {/* Content */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24">{children}</main>
 
-      {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto
         bg-surface border-t border-white/[0.08] pb-safe flex items-center justify-around px-4 py-3">
         {NAV.map(n => (
