@@ -311,3 +311,8 @@ export const countryToLocale = {
 
 export const defaultLocale = 'es';
 export const supportedLocales = ['es', 'pt', 'en'];
+export function fmtMoney(n, locale) {
+  if (n == null) return locale === 'pt' ? 'R$\u00a00' : '$\u00a00';
+  const symbol = locale === 'pt' ? 'R$\u00a0' : '$\u00a0';
+  return symbol + Math.round(n).toLocaleString('es-AR');
+}
