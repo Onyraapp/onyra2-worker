@@ -209,7 +209,7 @@ export default function DashboardPage() {
                 loading={cerrandoDia}
               />
             ) : (
-              
+              <a
                 href={resumenCierre.url}
                 className="w-full h-12 rounded-xl bg-[#25D366] text-white font-semibold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-sm"
               >
