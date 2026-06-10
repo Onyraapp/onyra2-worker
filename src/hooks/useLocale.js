@@ -1,7 +1,7 @@
 // src/hooks/useLocale.js
 'use client';
 import { useState, useEffect } from 'react';
-import { translations, fmtMoney } from '../lib/i18n';
+import { translations, fmtMoney } from '../lib/i18n/translations';
 
 export function useLocale() {
   const [locale, setLocale] = useState('es');
