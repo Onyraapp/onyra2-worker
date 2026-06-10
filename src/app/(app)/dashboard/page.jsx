@@ -249,16 +249,15 @@ export default function DashboardPage() {
           className="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:bg-white/10 text-xl font-bold disabled:opacity-30">›</button>
       </div>
 
-      {loading ? <Spinner /> : (<>
+     {loading ? <Spinner /> : (<>
         <div className="flex gap-3">
-          <KpiCard label={t.caja_inicial}  value={cajaInicial} fmt={fmtL} />
-          <KpiCard label={t.ventas_brutas} value={resFiltrado.totalBruto} color="green" fmt={fmtL} />
+          <KpiCard label={t.caja_inicial}  value={cajaInicial} />
+          <KpiCard label={t.ventas_brutas} value={resFiltrado.totalBruto} color="green" />
         </div>
         <div className="flex gap-3">
-          <KpiCard label={t.gastos}  value={resFiltrado.totalEgresos} color="amber" fmt={fmtL} />
-          <KpiCard label={t.saldo}   value={resFiltrado.resultado} color={resFiltrado.resultado >= 0 ? 'green' : 'red'} fmt={fmtL} />
+          <KpiCard label={t.gastos}  value={resFiltrado.totalEgresos} color="amber" />
+          <KpiCard label={t.saldo}   value={resFiltrado.resultado} color={resFiltrado.resultado >= 0 ? 'green' : 'red'} />
         </div>
-
         {retRows.length > 0 && (
           <Card>
             <CardHeader title={t.por_medio_pago} subtitle={t.ventas_brutas} />
