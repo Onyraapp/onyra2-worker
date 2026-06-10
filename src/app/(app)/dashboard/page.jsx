@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [modalCierre,   setModalCierre]   = useState(false);
   const [resumenCierre, setResumenCierre] = useState(null);
   const [cierreListo,   setCierreListo]   = useState(false);
+  const [reaperturaCausa, setReoaerturaCausa] = useState(null);
 
   const esHoy = fecha === todayStr();
   const isAdmin = usuario?.rol === 'admin';
