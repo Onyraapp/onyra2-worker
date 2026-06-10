@@ -4,6 +4,7 @@ export const MEDIOS_PAGO = [
   { key: 'tarjeta',       label: 'Tarjeta',            color: '#1A4F6A', defaultRet: 27 },
   { key: 'qr',            label: 'QR / Mercado Pago',  color: '#4A90A4', defaultRet: 2  },
   { key: 'transferencia', label: 'Transferencia',      color: '#6BAFC0', defaultRet: 0  },
+  { key: 'pix',           label: 'PIX',                color: '#00BDAE', defaultRet: 0  },
   { key: 'delivery',      label: 'Delivery',           color: '#f87171', defaultRet: 25 },
 ];
 export const TIPOS_EGRESO = [
@@ -19,6 +20,7 @@ export const TIPOS_EGRESO = [
 export const MEDIOS_PAGO_EGRESO = [
   { key: 'efectivo',      label: 'Efectivo' },
   { key: 'transferencia', label: 'Transferencia' },
+  { key: 'pix',           label: 'PIX' },
 ];
 export const TURNOS = [
   { key: '1',         label: 'Turno 1',     icon: '☀️' },
@@ -30,6 +32,7 @@ export const CONFIG_KEYS = {
   tarjeta:       'retencion_tarjeta',
   qr:            'retencion_qr',
   transferencia: 'retencion_transferencia',
+  pix:           'retencion_pix',
   pedidosya:     'retencion_pedidosya',
   rappi:         'retencion_rappi',
   delivery:      'retencion_delivery',
