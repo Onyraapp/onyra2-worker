@@ -7,6 +7,30 @@ function fmt(n) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 }
 
+function diasHasta(fecha) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const f = new Date(fecha + 'T12:00:00');
+  return Math.ceil((f - hoy) / (1000 * 60 * 60 * 24));
+}
+
+function semaforo(fecha) {
+  const dias = diasHasta(fecha);
+  if (dias < 0)  return { bg: 'bg-red-100',    border: 'border-red-300',    dot: 'bg-red-500',    label: 'text-red-600',    texto: 'Vencido' };
+  if (dias === 0) return { bg: 'bg-red-100',   border: 'border-red-300',    dot: 'bg-red-500',    label: 'text-red-600',    texto: 'Hoy' };
+  if (dias <= 2)  return { bg: 'bg-pink-50',   border: 'border-pink-300',   dot: 'bg-pink-500',   label: 'text-pink-600',   texto: `En ${dias}d` };
+  if (dias <= 6)  return { bg: 'bg-amber-50',  border: 'border-amber-300',  dot: 'bg-amber-400',  label: 'text-amber-600',  texto: `En ${dias}d` };
+  return           { bg: 'bg-green-50',  border: 'border-green-200',  dot: 'bg-green-500',  label: 'text-green-600',  texto: `En ${dias}d` };
+}
+
+function labelFecha(fecha) {
+  const dias = diasHasta(fecha);
+  if (dias < 0)   return `Vencido hace ${Math.abs(dias)}d`;
+  if (dias === 0) return '⚠ Hoy';
+  if (dias === 1) return '⚠ Mañana';
+  return new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export default function VencimientosPage() {
   const { usuario } = useAuth();
   const isAdmin = usuario?.rol === 'admin';
@@ -31,8 +55,7 @@ export default function VencimientosPage() {
 
   async function guardar() {
     if (!form.detalle || !form.importe || !form.fecha) return;
-    setGuardando(true);console.log('bar_id:', usuario.bar_id);
-console.log('form:', form);
+    setGuardando(true);
     const sb = getClient();
     await sb.from('vencimientos').insert([{
       bar_id: usuario.bar_id,
@@ -52,21 +75,6 @@ console.log('form:', form);
     cargar();
   }
 
-  const hoy = new Date().toISOString().slice(0, 10);
-  const manana = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-
-  function colorFecha(fecha) {
-    if (fecha === hoy) return 'text-red-500 font-bold';
-    if (fecha === manana) return 'text-amber-500 font-semibold';
-    return 'text-t3';
-  }
-
-  function labelFecha(fecha) {
-    if (fecha === hoy) return '⚠ Hoy';
-    if (fecha === manana) return '⚠ Mañana';
-    return new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
-  }
-
   return (
     <div className="px-4 py-6 flex flex-col gap-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between">
@@ -77,6 +85,22 @@ console.log('form:', form);
             + Agregar
           </button>
         )}
+      </div>
+
+      {/* Leyenda semáforo */}
+      <div className="flex gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 text-xs text-t3">
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500"/> +6 días
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-t3">
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-400"/> 3-6 días
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-t3">
+          <div className="w-2.5 h-2.5 rounded-full bg-pink-500"/> 1-2 días
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-t3">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500"/> Hoy / Vencido
+        </div>
       </div>
 
       {agregando && (
@@ -121,20 +145,26 @@ console.log('form:', form);
         <div className="text-center text-t3 text-sm py-8">No hay vencimientos cargados</div>
       ) : (
         <div className="flex flex-col gap-2">
-          {vencimientos.map(v => (
-            <div key={v.id} className="bg-surface rounded-2xl shadow-card px-4 py-3 flex items-center justify-between">
-              <div className="flex flex-col gap-0.5">
-                <div className="text-sm font-semibold text-t1">{v.detalle}</div>
-                <div className={`text-xs ${colorFecha(v.fecha)}`}>{labelFecha(v.fecha)}</div>
+          {vencimientos.map(v => {
+            const s = semaforo(v.fecha);
+            return (
+              <div key={v.id} className={`${s.bg} border ${s.border} rounded-2xl px-4 py-3 flex items-center justify-between`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${s.dot}`} />
+                  <div className="flex flex-col gap-0.5">
+                    <div className="text-sm font-semibold text-t1">{v.detalle}</div>
+                    <div className={`text-xs font-medium ${s.label}`}>{labelFecha(v.fecha)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-bold text-t1">{fmt(v.importe)}</div>
+                  {isAdmin && (
+                    <button onClick={() => eliminar(v.id)} className="text-t4 text-lg leading-none">×</button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="text-sm font-bold text-t1">{fmt(v.importe)}</div>
-                {isAdmin && (
-                  <button onClick={() => eliminar(v.id)} className="text-t4 text-lg leading-none">×</button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
