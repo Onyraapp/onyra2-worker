@@ -281,7 +281,7 @@ export default function DashboardPage() {
             <div className="p-4 flex flex-col gap-3">
               {TIPOS_EGRESO.filter(tipo => egresosPorTipo[tipo.key]).map(tipo => (
   <BreakdownBar key={tipo.key} label={tipo.label} value={egresosPorTipo[tipo.key]} total={res.totalEgresos} color="#FF9500" />
-)}
+))}
             </div>
           </Card>
         )}
