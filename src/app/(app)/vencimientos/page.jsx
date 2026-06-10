@@ -16,19 +16,26 @@ function diasHasta(fecha) {
 
 function semaforo(fecha) {
   const dias = diasHasta(fecha);
-  if (dias < 0)  return { bg: 'bg-red-100',    border: 'border-red-300',    dot: 'bg-red-500',    label: 'text-red-600',    texto: 'Vencido' };
-  if (dias === 0) return { bg: 'bg-red-100',   border: 'border-red-300',    dot: 'bg-red-500',    label: 'text-red-600',    texto: 'Hoy' };
-  if (dias <= 2)  return { bg: 'bg-pink-50',   border: 'border-pink-300',   dot: 'bg-pink-500',   label: 'text-pink-600',   texto: `En ${dias}d` };
-  if (dias <= 6)  return { bg: 'bg-amber-50',  border: 'border-amber-300',  dot: 'bg-amber-400',  label: 'text-amber-600',  texto: `En ${dias}d` };
-  return           { bg: 'bg-green-50',  border: 'border-green-200',  dot: 'bg-green-500',  label: 'text-green-600',  texto: `En ${dias}d` };
+  if (dias < 0)   return { bg: 'bg-red-100',   border: 'border-red-300',   dot: 'bg-red-500',   label: 'text-red-600'   };
+  if (dias === 0) return { bg: 'bg-red-100',   border: 'border-red-300',   dot: 'bg-red-500',   label: 'text-red-600'   };
+  if (dias <= 2)  return { bg: 'bg-pink-50',   border: 'border-pink-300',  dot: 'bg-pink-500',  label: 'text-pink-600'  };
+  if (dias <= 6)  return { bg: 'bg-amber-50',  border: 'border-amber-300', dot: 'bg-amber-400', label: 'text-amber-600' };
+  return           { bg: 'bg-green-50',  border: 'border-green-200', dot: 'bg-green-500', label: 'text-green-600' };
+}
+
+function labelDias(fecha) {
+  const dias = diasHasta(fecha);
+  if (dias < 0)   return `Vencido hace ${Math.abs(dias)}d`;
+  if (dias === 0) return '⚠ Hoy';
+  if (dias === 1) return '1 día';
+  return `${dias} días`;
 }
 
 function labelFecha(fecha) {
   const dias = diasHasta(fecha);
-  if (dias < 0)   return `Vencido hace ${Math.abs(dias)}d`;
+  if (dias < 0)   return `Vencido`;
   if (dias === 0) return '⚠ Hoy';
-  if (dias === 1) return '⚠ Mañana';
-  return new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
 }
 
 export default function VencimientosPage() {
@@ -87,22 +94,6 @@ export default function VencimientosPage() {
         )}
       </div>
 
-      {/* Leyenda semáforo */}
-      <div className="flex gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5 text-xs text-t3">
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500"/> +6 días
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-t3">
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-400"/> 3-6 días
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-t3">
-          <div className="w-2.5 h-2.5 rounded-full bg-pink-500"/> 1-2 días
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-t3">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500"/> Hoy / Vencido
-        </div>
-      </div>
-
       {agregando && (
         <div className="bg-surface rounded-2xl shadow-card p-4 flex flex-col gap-3">
           <div className="text-sm font-semibold text-t1">Nuevo vencimiento</div>
@@ -148,16 +139,19 @@ export default function VencimientosPage() {
           {vencimientos.map(v => {
             const s = semaforo(v.fecha);
             return (
-              <div key={v.id} className={`${s.bg} border ${s.border} rounded-2xl px-4 py-3 flex items-center justify-between`}>
-                <div className="flex items-center gap-3">
+              <div key={v.id} className={`${s.bg} border ${s.border} rounded-2xl px-4 py-3 flex items-center justify-between gap-3`}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className={`w-3 h-3 rounded-full flex-shrink-0 ${s.dot}`} />
-                  <div className="flex flex-col gap-0.5">
-                    <div className="text-sm font-semibold text-t1">{v.detalle}</div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="text-sm font-semibold text-t1 truncate">{v.detalle}</div>
                     <div className={`text-xs font-medium ${s.label}`}>{labelFecha(v.fecha)}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-sm font-bold text-t1">{fmt(v.importe)}</div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-t1">{fmt(v.importe)}</div>
+                    <div className={`text-xs font-semibold ${s.label}`}>{labelDias(v.fecha)}</div>
+                  </div>
                   {isAdmin && (
                     <button onClick={() => eliminar(v.id)} className="text-t4 text-lg leading-none">×</button>
                   )}
