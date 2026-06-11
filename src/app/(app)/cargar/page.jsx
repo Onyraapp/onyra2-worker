@@ -496,7 +496,7 @@ export default function CargarPage() {
         <div className="p-4 flex flex-col gap-4">
           <div>
             <FieldLabel>{t.medio_pago}</FieldLabel>
-            <ChipGroup options={MEDIOS_PAGO.map(m => ({ value: m.key, label: m.label, color: m.color }))} value={medio} onChange={setMedio} />
+            <ChipGroup options={MEDIOS_PAGO.map(m => ({ value: m.key, label: m.label, color: m.color }))} value={medio} onChange={setMedio} className="grid grid-cols-3" />
           </div>
           <div>
             <FieldLabel>{t.importe}</FieldLabel>
