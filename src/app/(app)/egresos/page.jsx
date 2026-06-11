@@ -9,10 +9,13 @@ import {
   FieldLabel, BtnPrimary, Toast, useToast, Textarea
 } from '../../../components/ui';
 import { getClient } from '../../../lib/supabase';
+import { useLocale } from '../../../hooks/useLocale';
 
 export default function EgresosPage() {
   const { usuario } = useAuth();
   const { toast, visible, show } = useToast();
+  const { t, isPT, fmt: fmtL } = useLocale();
+  const symbol = isPT ? 'R$' : '$';
 
   const [config,    setConfig]    = useState(null);
   const [tipo,      setTipo]      = useState('proveedores');
@@ -49,7 +52,7 @@ export default function EgresosPage() {
 
   async function guardar() {
     const m = parseFloat(monto);
-    if (!m || m <= 0) return show('⚠ Ingresá un monto válido');
+    if (!m || m <= 0) return show('⚠ ' + (isPT ? 'Informe um valor válido' : 'Ingresá un monto válido'));
     setLoading(true);
     try {
       await crearEgreso({
@@ -57,25 +60,25 @@ export default function EgresosPage() {
         tipo, monto: m, detalle, medio_pago: medioPago,
       });
       setMonto(''); setDetalle('');
-      show('✓ Gasto registrado');
+      show('✓ ' + (isPT ? 'Gasto registrado' : 'Gasto registrado'));
       cargarEgresos();
       if (config?.wa_alerta_gasto && config?.whatsapp_numero) {
         const montoMinimo = config?.wa_alerta_gasto_monto || 10000;
         if (m >= montoMinimo) {
-          const tipoLabel = TIPOS_EGRESO.find(t => t.key === tipo)?.label || tipo;
-          const medioLabel = MEDIOS_PAGO_EGRESO.find(t => t.key === medioPago)?.label || medioPago;
+          const tipoLabel = TIPOS_EGRESO.find(tp => tp.key === tipo)?.label || tipo;
+          const medioLabel = MEDIOS_PAGO_EGRESO.find(tp => tp.key === medioPago)?.label || medioPago;
           const msg = [
-            `*Troco - Alerta de gasto*`, ``,
-            `Se registró un gasto de *${fmt(m)}*`,
-            `Tipo: ${tipoLabel}`,
-            `Medio de pago: ${medioLabel}`,
-            detalle ? `Detalle: ${detalle}` : '',
+            `*Troco - ${isPT ? 'Alerta de gasto' : 'Alerta de gasto'}*`, ``,
+            `${isPT ? 'Foi registrado um gasto de' : 'Se registró un gasto de'} *${fmtL(m)}*`,
+            `${isPT ? 'Tipo' : 'Tipo'}: ${tipoLabel}`,
+            `${isPT ? 'Forma de pagamento' : 'Medio de pago'}: ${medioLabel}`,
+            detalle ? `${isPT ? 'Detalhe' : 'Detalle'}: ${detalle}` : '',
           ].filter(Boolean).join('\n');
           window.open(`https://wa.me/${config.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
         }
       }
     } catch {
-      show('✗ Error al guardar');
+      show('✗ ' + t.error);
     } finally {
       setLoading(false);
     }
@@ -91,29 +94,29 @@ export default function EgresosPage() {
 
   async function guardarEdicion() {
     const m = parseFloat(editMonto);
-    if (!m || m <= 0) return show('⚠ Ingresá un monto válido');
+    if (!m || m <= 0) return show('⚠ ' + (isPT ? 'Informe um valor válido' : 'Ingresá un monto válido'));
     try {
       const sb = getClient();
       await sb.from('egresos').update({
         monto: m, detalle: editDetalle, tipo: editTipo, medio_pago: editMedio,
       }).eq('id', editando.id);
       setEditando(null);
-      show('✓ Gasto actualizado');
+      show('✓ ' + (isPT ? 'Gasto atualizado' : 'Gasto actualizado'));
       cargarEgresos();
     } catch {
-      show('✗ Error al actualizar');
+      show('✗ ' + t.error);
     }
   }
 
   async function eliminar(id) {
-    if (!confirm('¿Eliminar este gasto?')) return;
+    if (!confirm(isPT ? 'Excluir este gasto?' : '¿Eliminar este gasto?')) return;
     try {
       const sb = getClient();
       await sb.from('egresos').delete().eq('id', id);
-      show('✓ Gasto eliminado');
+      show('✓ ' + (isPT ? 'Gasto excluído' : 'Gasto eliminado'));
       cargarEgresos();
     } catch {
-      show('✗ Error al eliminar');
+      show('✗ ' + t.error);
     }
   }
 
@@ -124,74 +127,77 @@ export default function EgresosPage() {
       {editando && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
-            <div className="text-base font-bold text-t1">Editar gasto</div>
+            <div className="text-base font-bold text-t1">{isPT ? 'Editar gasto' : 'Editar gasto'}</div>
             <div>
-              <FieldLabel>Tipo</FieldLabel>
-              <ChipGroup options={TIPOS_EGRESO.map(t => ({ value: t.key, label: t.label }))} value={editTipo} onChange={setEditTipo} />
+              <FieldLabel>{t.tipo_gasto}</FieldLabel>
+              <ChipGroup options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={editTipo} onChange={setEditTipo} />
             </div>
             <div>
-              <FieldLabel>Forma de pago</FieldLabel>
-              <ChipGroup options={MEDIOS_PAGO_EGRESO.map(t => ({ value: t.key, label: t.label }))} value={editMedio} onChange={setEditMedio} />
+              <FieldLabel>{t.medio_pago_egreso}</FieldLabel>
+              <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={editMedio} onChange={setEditMedio} />
             </div>
             <div>
-              <FieldLabel>Monto</FieldLabel>
-              <MontoInput value={editMonto} onChange={setEditMonto} color="text-ambertext" />
+              <FieldLabel>{t.importe}</FieldLabel>
+              <MontoInput value={editMonto} onChange={setEditMonto} color="text-ambertext" symbol={symbol} />
             </div>
             <div>
-              <FieldLabel>Detalle</FieldLabel>
-              <Textarea value={editDetalle} onChange={setEditDetalle} placeholder="Detalle del gasto..." />
+              <FieldLabel>{t.detalle}</FieldLabel>
+              <Textarea value={editDetalle} onChange={setEditDetalle} placeholder={isPT ? 'Detalhe do gasto...' : 'Detalle del gasto...'} />
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setEditando(null)} className="flex-1 h-11 rounded-xl bg-offset text-t2 text-sm font-medium">Cancelar</button>
-              <button onClick={guardarEdicion} className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold">Guardar</button>
+              <button onClick={() => setEditando(null)} className="flex-1 h-11 rounded-xl bg-offset text-t2 text-sm font-medium">{t.cancelar}</button>
+              <button onClick={guardarEdicion} className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold">{t.guardar}</button>
             </div>
           </div>
         </div>
       )}
 
       <Card>
-        <CardHeader title="Registrar gasto" />
+        <CardHeader title={isPT ? 'Registrar gasto' : 'Registrar gasto'} />
         <div className="p-4 flex flex-col gap-4">
           <div>
-            <FieldLabel>Tipo de gasto</FieldLabel>
-            <ChipGroup options={TIPOS_EGRESO.map(t => ({ value: t.key, label: t.label }))} value={tipo} onChange={setTipo} />
+            <FieldLabel>{t.tipo_gasto}</FieldLabel>
+            <ChipGroup options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={tipo} onChange={setTipo} />
           </div>
           <div>
-            <FieldLabel>Forma de pago</FieldLabel>
-            <ChipGroup options={MEDIOS_PAGO_EGRESO.map(t => ({ value: t.key, label: t.label }))} value={medioPago} onChange={setMedioPago} />
+            <FieldLabel>{t.medio_pago_egreso}</FieldLabel>
+            <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={medioPago} onChange={setMedioPago} />
           </div>
           <div>
-            <FieldLabel>Turno</FieldLabel>
-            <ChipGroup options={TURNOS.map(t => ({ value: t.key, label: `${t.icon} ${t.label}` }))} value={turno} onChange={setTurno} />
+            <FieldLabel>{t.turno}</FieldLabel>
+            <ChipGroup options={TURNOS.map(tp => ({ value: tp.key, label: `${tp.icon} ${tp.label}` }))} value={turno} onChange={setTurno} />
           </div>
           <div>
-            <FieldLabel>Monto</FieldLabel>
-            <MontoInput value={monto} onChange={setMonto} color="text-ambertext" />
+            <FieldLabel>{t.importe}</FieldLabel>
+            <MontoInput value={monto} onChange={setMonto} color="text-ambertext" symbol={symbol} />
           </div>
           <div>
-            <FieldLabel>Detalle (opcional)</FieldLabel>
-            <Textarea value={detalle} onChange={setDetalle} placeholder="Ej: Pago cervezas Quilmes, factura luz mayo..." />
+            <FieldLabel>{t.detalle_opcional}</FieldLabel>
+            <Textarea value={detalle} onChange={setDetalle} placeholder={isPT ? 'Ex: Pagamento fornecedor, conta de luz...' : 'Ej: Pago cervezas Quilmes, factura luz mayo...'} />
           </div>
-          <BtnPrimary label="Registrar gasto" onClick={guardar} loading={loading} className="bg-amber" />
+          <BtnPrimary label={isPT ? 'Registrar gasto' : 'Registrar gasto'} onClick={guardar} loading={loading} className="bg-amber" />
         </div>
       </Card>
 
       {egresos.length > 0 && (
         <Card>
-          <CardHeader title="Gastos de hoy" subtitle={`${egresos.length} registros · ${fmt(egresos.reduce((s, e) => s + e.monto, 0))}`} />
+          <CardHeader
+            title={isPT ? 'Gastos de hoje' : 'Gastos de hoy'}
+            subtitle={`${egresos.length} · ${fmtL(egresos.reduce((s, e) => s + e.monto, 0))}`}
+          />
           <div className="p-4 flex flex-col gap-2">
             {egresos.map(e => {
-              const t = TIPOS_EGRESO.find(te => te.key === e.tipo);
+              const tp = TIPOS_EGRESO.find(te => te.key === e.tipo);
               return (
                 <div key={e.id} className="flex items-start gap-3 p-3 rounded-xl bg-offset border border-divider">
                   <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0 bg-amber" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-t1">{t?.label || e.tipo}</div>
+                    <div className="text-sm font-semibold text-t1">{tp?.label || e.tipo}</div>
                     {e.detalle && <div className="text-xs text-t3 mt-0.5 truncate">{e.detalle}</div>}
                     <div className="text-xs text-t3 mt-0.5">{e.fecha?.slice(11,16)}</div>
                   </div>
                   <div className="text-sm font-bold tabular-nums text-ambertext flex-shrink-0">
-                    {fmt(e.monto)}
+                    {fmtL(e.monto)}
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     <button onClick={() => abrirEditar(e)}
