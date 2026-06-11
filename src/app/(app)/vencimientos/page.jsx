@@ -2,10 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { getClient } from '../../../lib/supabase';
-
-function fmt(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
-}
+import { useLocale } from '../../../hooks/useLocale';
 
 function diasHasta(fecha) {
   const ahora = new Date();
@@ -18,37 +15,38 @@ function diasHasta(fecha) {
 function semaforo(fecha) {
   const dias = diasHasta(fecha);
   if (dias < 0)   return { bg: '#fecaca', border: '#f87171', dot: '#b91c1c', label: '#991b1b' };
-if (dias === 0) return { bg: '#fecaca', border: '#f87171', dot: '#b91c1c', label: '#991b1b' };
-if (dias <= 2)  return { bg: '#fee2e2', border: '#fca5a5', dot: '#ef4444', label: '#dc2626' };
+  if (dias === 0) return { bg: '#fecaca', border: '#f87171', dot: '#b91c1c', label: '#991b1b' };
+  if (dias <= 2)  return { bg: '#fee2e2', border: '#fca5a5', dot: '#ef4444', label: '#dc2626' };
   if (dias <= 6)  return { bg: '#fffbeb', border: '#fcd34d', dot: '#f59e0b', label: '#d97706' };
   return           { bg: '#f0fdf4', border: '#86efac', dot: '#22c55e', label: '#16a34a' };
 }
 
-function labelDias(fecha) {
-  const dias = diasHasta(fecha);
-  if (dias < 0)   return `Vencido hace ${Math.abs(dias)}d`;
-  if (dias === 0) return '⚠ Hoy';
-  if (dias === 1) return '1 día';
-  return `${dias} días`;
-}
-
-function labelFecha(fecha) {
-  const dias = diasHasta(fecha);
-  if (dias < 0)   return 'Vencido';
-  if (dias === 0) return '⚠ Hoy';
-  const partes = fecha.split('-');
-  const f = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
-  return f.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-}
-
 export default function VencimientosPage() {
   const { usuario } = useAuth();
+  const { t, isPT, fmt: fmtL } = useLocale();
   const isAdmin = usuario?.rol === 'admin';
   const [vencimientos, setVencimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ detalle: '', importe: '', fecha: '' });
   const [agregando, setAgregando] = useState(false);
   const [guardando, setGuardando] = useState(false);
+
+  function labelDias(fecha) {
+    const dias = diasHasta(fecha);
+    if (dias < 0)   return `${t.vencido_hace} ${Math.abs(dias)}d`;
+    if (dias === 0) return `⚠ ${t.hoy}`;
+    if (dias === 1) return t.un_dia;
+    return `${dias} ${t.dias}`;
+  }
+
+  function labelFecha(fecha) {
+    const dias = diasHasta(fecha);
+    if (dias < 0)   return t.vencido;
+    if (dias === 0) return `⚠ ${t.hoy}`;
+    const partes = fecha.split('-');
+    const f = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+    return f.toLocaleDateString(isPT ? 'pt-BR' : 'es-AR', { day: 'numeric', month: 'short' });
+  }
 
   async function cargar() {
     const sb = getClient();
@@ -88,28 +86,28 @@ export default function VencimientosPage() {
   return (
     <div className="px-4 py-6 flex flex-col gap-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between">
-        <div className="text-lg font-bold text-t1">Vencimientos</div>
+        <div className="text-lg font-bold text-t1">{t.vencimientos}</div>
         {isAdmin && !agregando && (
           <button onClick={() => setAgregando(true)}
             className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold">
-            + Agregar
+            + {t.agregar}
           </button>
         )}
       </div>
 
       {agregando && (
         <div className="bg-surface rounded-2xl shadow-card p-4 flex flex-col gap-3">
-          <div className="text-sm font-semibold text-t1">Nuevo vencimiento</div>
+          <div className="text-sm font-semibold text-t1">{t.nuevo_vencimiento}</div>
           <input
             type="text"
-            placeholder="Detalle (ej: Alquiler, Luz, etc)"
+            placeholder={isPT ? 'Detalhe (ex: Aluguel, Luz, etc)' : 'Detalle (ej: Alquiler, Luz, etc)'}
             value={form.detalle}
             onChange={e => setForm({ ...form, detalle: e.target.value })}
             className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm focus:outline-none"
           />
           <input
             type="number"
-            placeholder="Importe"
+            placeholder={t.importe}
             value={form.importe}
             onChange={e => setForm({ ...form, importe: e.target.value })}
             className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm focus:outline-none"
@@ -123,20 +121,20 @@ export default function VencimientosPage() {
           <div className="flex gap-2">
             <button onClick={() => setAgregando(false)}
               className="flex-1 h-11 rounded-xl border border-divider text-t3 text-sm">
-              Cancelar
+              {t.cancelar}
             </button>
             <button onClick={guardar} disabled={guardando}
               className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50">
-              {guardando ? '...' : 'Guardar'}
+              {guardando ? '...' : t.guardar}
             </button>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="text-center text-t3 text-sm py-8">Cargando...</div>
+        <div className="text-center text-t3 text-sm py-8">{t.cargando}</div>
       ) : vencimientos.length === 0 ? (
-        <div className="text-center text-t3 text-sm py-8">No hay vencimientos cargados</div>
+        <div className="text-center text-t3 text-sm py-8">{t.sin_vencimientos}</div>
       ) : (
         <div className="flex flex-col gap-2">
           {vencimientos.map(v => {
@@ -153,7 +151,7 @@ export default function VencimientosPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="text-right">
-                    <div className="text-sm font-bold text-t1">{fmt(v.importe)}</div>
+                    <div className="text-sm font-bold text-t1">{fmtL(v.importe)}</div>
                     <div style={{ color: s.label }} className="text-xs font-semibold">{labelDias(v.fecha)}</div>
                   </div>
                   {isAdmin && (
