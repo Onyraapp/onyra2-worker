@@ -5,15 +5,17 @@ import { translations, fmtMoney } from '../lib/i18n/translations';
 
 export function useLocale() {
   const [locale, setLocale] = useState('es');
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const lang = navigator.language || navigator.userLanguage || 'es';
+    const lang = navigator.language || 'es';
     setLocale(lang.startsWith('pt') ? 'pt' : 'es');
+    setHydrated(true);
   }, []);
 
-  const t = translations[locale];
-  const isPT = locale === 'pt';
-  const fmt = (n) => fmtMoney(n, locale);
+  const t = translations[hydrated ? locale : 'es'];
+  const isPT = hydrated && locale === 'pt';
+  const fmt = (n) => fmtMoney(n, hydrated ? locale : 'es');
 
   return { t, locale, isPT, fmt };
 }
