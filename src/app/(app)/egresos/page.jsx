@@ -130,12 +130,12 @@ export default function EgresosPage() {
             <div className="text-base font-bold text-t1">{isPT ? 'Editar gasto' : 'Editar gasto'}</div>
             <div>
               <FieldLabel>{t.tipo_gasto}</FieldLabel>
-              <ChipGroup options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={editTipo} onChange={setEditTipo} />
-            </div>
-            <div>
-              <FieldLabel>{t.medio_pago_egreso}</FieldLabel>
-              <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={editMedio} onChange={setEditMedio} />
-            </div>
+              <ChipGroup 
+  options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} 
+  value={tipo} 
+  onChange={setTipo}
+  className="grid grid-cols-3"
+/>
             <div>
               <FieldLabel>{t.importe}</FieldLabel>
               <MontoInput value={editMonto} onChange={setEditMonto} color="text-ambertext" symbol={symbol} />
