@@ -4,14 +4,24 @@
 
 @font-face {
   font-family: 'Neonize';
- src: url('/neonize-2.ttf') format('truetype');
+  src: url('/neonize-2.ttf') format('truetype');
   font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-SemiBold.otf') format('opentype');
+  font-weight: 600;
   font-style: normal;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overscroll-behavior: none; background: #FFFFFF; }
-body { font-family: 'Space Grotesk', -apple-system, 'SF Pro Display', 'SF Pro Text', Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Inter', -apple-system, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
 input[type=number]::-webkit-inner-spin-button,
