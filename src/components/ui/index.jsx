@@ -142,10 +142,10 @@ export function Input({ value, onChange, placeholder, type = 'text', className =
   );
 }
 
-export function MontoInput({ value, onChange, color }) {
+export function MontoInput({ value, onChange, color, symbol = '$' }) {
   return (
     <div className="flex items-center bg-offset rounded-xl px-4 border border-transparent focus-within:border-primary/40 transition">
-      <span className="text-2xl font-light text-t3 mr-1">$</span>
+      <span className="text-2xl font-light text-t3 mr-1">{symbol}</span>
       <input type="number" inputMode="decimal" value={value} onChange={e => onChange(e.target.value)} placeholder="0"
         className={`flex-1 bg-transparent py-4 text-3xl font-bold tracking-tight placeholder:text-t4 focus:outline-none tabular-nums ${color || 'text-t1'}`} />
     </div>
