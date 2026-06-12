@@ -1,8 +1,14 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "lat.troco.www.app",
-        "sha256_cert_fingerprints": ["6B:5B:71:30:E7:BE:09:E4:DB:87:7F:C9:29:A9:A2:8D:F9:26:0A:3C:CD:77:ED:B5:3B:C4:41:46:D5:65:0B:3B"]
-      }
-    }]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "lat.troco.app",
+      "sha256_cert_fingerprints": [
+        "AF:F6:F3:C4:EA:A9:50:82:D6:D1:04:C4:10:2B:ED:A2:C9:E2:D5:BF:E8:41:05:EF:83:C0:6D:CA:D7:E9:C4:20"
+      ]
+    }
+  }
+]
