@@ -25,6 +25,7 @@ export default function RootLayout({ children }) {
         <link rel="preload" href="/neonize-2.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/logo.svg" as="image" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="bg-bg text-t1 antialiased">
         <Providers>
