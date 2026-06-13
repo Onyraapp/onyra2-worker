@@ -17,7 +17,7 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overscroll-behavior: none; background: #FFFFFF; }
+html, body { min-height: 100%; overscroll-behavior: none; background: #FFFFFF; }
 body {
   font-family: 'Inter', -apple-system, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
