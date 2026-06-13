@@ -44,7 +44,11 @@ export default function RegisterPage() {
       });
       router.push('/');
     } catch (err) {
-      setError(err.message);
+      if (err.message?.includes('duplicate') || err.message?.includes('already registered')) {
+        setError('Este email ya tiene una cuenta registrada. Iniciá sesión o usá otro email.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
