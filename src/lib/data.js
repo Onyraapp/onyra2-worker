@@ -356,7 +356,7 @@ export function todayStr() {
   const now = new Date();
   const offset = now.getTimezoneOffset();
   const local = new Date(now.getTime() - offset * 60000);
-  if (local.getHours() < 4) {
+  if (local.getHours() < 6) {
     const ayer = new Date(local.getTime() - 24 * 60 * 60 * 1000);
     return ayer.toISOString().slice(0, 10);
   }
