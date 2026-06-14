@@ -133,7 +133,13 @@ export default function CargarPage() {
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
-      if (cierre) setDiaCerrado(true);
+      if (cierre) {
+        getTurnoAbierto(usuario.bar_id, realDateStr(), '1').then(t1 => {
+          getTurnoAbierto(usuario.bar_id, realDateStr(), 'sin_turno').then(tU => {
+            if (!t1 && !tU) setDiaCerrado(true);
+          }).catch(() => { if (!t1) setDiaCerrado(true); });
+        }).catch(() => { setDiaCerrado(true); });
+      }
     }).catch(() => {});
   }, [usuario]);
 
@@ -141,8 +147,14 @@ export default function CargarPage() {
     if (!usuario) return;
     const interval = setInterval(() => {
       getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
-        if (cierre) setDiaCerrado(true);
-        else setDiaCerrado(false);
+        if (cierre) {
+          getTurnoAbierto(usuario.bar_id, realDateStr(), '1').then(t1 => {
+            getTurnoAbierto(usuario.bar_id, realDateStr(), 'sin_turno').then(tU => {
+              if (!t1 && !tU) setDiaCerrado(true);
+              else setDiaCerrado(false);
+            }).catch(() => { if (!t1) setDiaCerrado(true); else setDiaCerrado(false); });
+          }).catch(() => { setDiaCerrado(true); });
+        } else setDiaCerrado(false);
       }).catch(() => {});
     }, 5000);
     return () => clearInterval(interval);
