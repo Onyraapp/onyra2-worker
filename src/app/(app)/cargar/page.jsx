@@ -54,7 +54,7 @@ export default function CargarPage() {
   const [anulando,         setAnulando]         = useState(null);
   const [motivoAnulacion,  setMotivoAnulacion]  = useState('');
   const [agregando,        setAgregando]        = useState(false);
-  const [fechaTurno,       setFechaTurno]       = useState(todayStr());
+  const [fechaTurno,       setFechaTurno]       = useState(realDateStr());
   const [modalReapertura,  setModalReapertura]  = useState(false);
   const [causaReapertura,  setCausaReapertura]  = useState('');
   const [reabriendo,       setReabriendo]       = useState(false);
@@ -67,7 +67,7 @@ export default function CargarPage() {
 
     try {
       const fechaGuardada = localStorage.getItem(CAJA_KEY);
-      if (fechaGuardada && !fechaGuardada.startsWith(todayStr())) {
+      if (fechaGuardada && !fechaGuardada.startsWith(realDateStr())) {
         localStorage.removeItem(CAJA_KEY);
       }
     } catch {}
@@ -97,45 +97,38 @@ export default function CargarPage() {
       .then(({ data }) => { if (data) setNombreCajero(data.nombre); })
       .catch(() => {});
 
+    const hoy = realDateStr();
+    setFechaTurno(hoy);
+
     getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
       setTurnosCerrados(cerrados);
-      if (cerrados.includes('1') && cerrados.includes('2')) {
-        setTurno('sin_turno');
-        getTurnoAbierto(usuario.bar_id, todayStr(), 'sin_turno').then(turnoExistente => {
-          if (turnoExistente) {
-            setAperturaLista(true);
-            try { localStorage.setItem(CAJA_KEY, todayStr() + '_sin_turno'); } catch {}
-          } else {
-            setMostrarApertura(true);
-          }
-        }).catch(() => { setMostrarApertura(true); });
-      } else if (cerrados.includes('1')) {
-        setTurno('2');
-        getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
-          if (turnoExistente) {
-            setAperturaLista(true);
-            try { localStorage.setItem(CAJA_KEY, todayStr() + '_2'); } catch {}
-          } else {
-            setMostrarApertura(true);
-          }
-        }).catch(() => { setMostrarApertura(true); });
-      } else {
-        setTurno('1');
-        getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
-          if (turnoExistente) {
-            setAperturaLista(true);
-            try { localStorage.setItem(CAJA_KEY, todayStr() + '_1'); } catch {}
-          } else {
-            setMostrarApertura(true);
-          }
-        }).catch(() => { setMostrarApertura(true); });
-      }
+      const turnoActual = cerrados.includes('1') && cerrados.includes('2')
+        ? 'sin_turno'
+        : cerrados.includes('1') ? '2' : '1';
+      setTurno(turnoActual);
+
+      getTurnoAbierto(usuario.bar_id, hoy, turnoActual).then(turnoExistente => {
+        if (turnoExistente) {
+          setAperturaLista(true);
+          try { localStorage.setItem(CAJA_KEY, hoy + '_' + turnoActual); } catch {}
+        } else {
+          getTurnoAbierto(usuario.bar_id, todayStr(), turnoActual).then(turnoAnterior => {
+            if (turnoAnterior) {
+              setAperturaLista(true);
+              setFechaTurno(todayStr());
+              try { localStorage.setItem(CAJA_KEY, todayStr() + '_' + turnoActual); } catch {}
+            } else {
+              setMostrarApertura(true);
+            }
+          }).catch(() => { setMostrarApertura(true); });
+        }
+      }).catch(() => { setMostrarApertura(true); });
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
       if (cierre) {
-        getTurnoAbierto(usuario.bar_id, realDateStr(), '1').then(t1 => {
-          getTurnoAbierto(usuario.bar_id, realDateStr(), 'sin_turno').then(tU => {
+        getTurnoAbierto(usuario.bar_id, hoy, '1').then(t1 => {
+          getTurnoAbierto(usuario.bar_id, hoy, 'sin_turno').then(tU => {
             if (!t1 && !tU) setDiaCerrado(true);
           }).catch(() => { if (!t1) setDiaCerrado(true); });
         }).catch(() => { setDiaCerrado(true); });
@@ -146,10 +139,11 @@ export default function CargarPage() {
   useEffect(() => {
     if (!usuario) return;
     const interval = setInterval(() => {
+      const hoy = realDateStr();
       getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
         if (cierre) {
-          getTurnoAbierto(usuario.bar_id, realDateStr(), '1').then(t1 => {
-            getTurnoAbierto(usuario.bar_id, realDateStr(), 'sin_turno').then(tU => {
+          getTurnoAbierto(usuario.bar_id, hoy, '1').then(t1 => {
+            getTurnoAbierto(usuario.bar_id, hoy, 'sin_turno').then(tU => {
               if (!t1 && !tU) setDiaCerrado(true);
               else setDiaCerrado(false);
             }).catch(() => { if (!t1) setDiaCerrado(true); else setDiaCerrado(false); });
@@ -352,7 +346,6 @@ export default function CargarPage() {
             {t.reabrir_dia}
           </button>
         </div>
-
         {modalReapertura && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
             <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
@@ -362,25 +355,15 @@ export default function CargarPage() {
               </div>
               <div className="flex flex-col gap-2">
                 {CAUSAS_REAPERTURA.map(causa => (
-                  <button
-                    key={causa}
-                    onClick={() => setCausaReapertura(causa)}
-                    className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all border
-                      ${causaReapertura === causa
-                        ? 'bg-primary/10 border-primary/40 text-primary'
-                        : 'bg-offset border-transparent text-t2'}`}>
+                  <button key={causa} onClick={() => setCausaReapertura(causa)}
+                    className={"w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all border " +
+                      (causaReapertura === causa ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-offset border-transparent text-t2')}>
                     {causa}
                   </button>
                 ))}
               </div>
-              <BtnPrimary
-                label={reabriendo ? t.cargando : t.confirmar_reapertura}
-                onClick={confirmarReapertura}
-                loading={reabriendo}
-              />
-              <button onClick={() => setModalReapertura(false)} className="w-full h-10 text-t3 text-sm">
-                {t.cancelar}
-              </button>
+              <BtnPrimary label={reabriendo ? t.cargando : t.confirmar_reapertura} onClick={confirmarReapertura} loading={reabriendo} />
+              <button onClick={() => setModalReapertura(false)} className="w-full h-10 text-t3 text-sm">{t.cancelar}</button>
             </div>
           </div>
         )}
@@ -391,7 +374,6 @@ export default function CargarPage() {
   return (
     <Screen>
       <Toast msg={toast} visible={visible} />
-
       {!online && (
         <div className="bg-ambersoft border border-amber/20 rounded-2xl p-3 flex items-center gap-3">
           <span className="text-xl">📴</span>
@@ -401,27 +383,23 @@ export default function CargarPage() {
           </div>
         </div>
       )}
-
       {sincronizando && (
         <div className="bg-greensoft border border-primary/20 rounded-2xl p-3 flex items-center gap-3">
           <span className="text-xl">🔄</span>
           <div className="text-sm font-semibold text-greentext">{isPT ? 'Sincronizando dados...' : 'Sincronizando datos...'}</div>
         </div>
       )}
-
       {colaPendiente.length > 0 && online && !sincronizando && (
         <div className="bg-ambersoft border border-amber/20 rounded-2xl p-3 flex items-center justify-between">
           <div>
             <div className="text-sm font-semibold text-ambertext">{isPT ? 'Dados pendentes' : 'Datos pendientes'}</div>
             <div className="text-xs text-t3">{colaPendiente.length} {isPT ? 'turno(s) sem sincronizar' : 'turno(s) sin sincronizar'}</div>
           </div>
-          <button onClick={sincronizarCola}
-            className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold">
+          <button onClick={sincronizarCola} className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold">
             {isPT ? 'Sincronizar' : 'Sincronizar'}
           </button>
         </div>
       )}
-
       {mostrarApertura && !aperturaLista && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-5 shadow-xl">
@@ -431,7 +409,7 @@ export default function CargarPage() {
                 {turno === '1' ? t.apertura_caja : turno === '2' ? t.recepcion_caja : t.apertura_caja}
               </div>
               <div className="text-sm text-t3 mt-1 capitalize">
-                {new Date().toLocaleDateString(isPT ? 'pt-BR' : 'es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : turno === '2' ? 'Turno 2 🌙' : `${isPT ? 'Turno único' : 'Turno único'} ⭐`}
+                {new Date().toLocaleDateString(isPT ? 'pt-BR' : 'es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : turno === '2' ? 'Turno 2 🌙' : (isPT ? 'Turno único' : 'Turno único') + ' ⭐'}
               </div>
               {nombreCajero && (
                 <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
@@ -457,15 +435,12 @@ export default function CargarPage() {
               if (!cajaInicial) setCajaInicial('0');
               try { localStorage.setItem(CAJA_KEY, fechaApertura + '_' + turno); } catch {}
               if (online) {
-                try {
-                  await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, turno, parseFloat(cajaInicial) || 0);
-                } catch {}
+                try { await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, turno, parseFloat(cajaInicial) || 0); } catch {}
               }
             }} />
           </div>
         </div>
       )}
-
       {anulando && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-5 flex flex-col gap-4 shadow-xl">
@@ -487,16 +462,13 @@ export default function CargarPage() {
           </div>
         </div>
       )}
-
       <Card>
         <div className="p-4">
-          <div className="mb-2">
-            <FieldLabel>{t.turno}</FieldLabel>
-          </div>
+          <div className="mb-2"><FieldLabel>{t.turno}</FieldLabel></div>
           <ChipGroup
             options={TURNOS.map(turnoOpt => ({
               value: turnoOpt.key,
-              label: `${turnoOpt.icon} ${turnoOpt.label}${turnosCerrados.includes(turnoOpt.key) ? ' ✓' : ''}`,
+              label: turnoOpt.icon + ' ' + turnoOpt.label + (turnosCerrados.includes(turnoOpt.key) ? ' ✓' : ''),
               color: turnosCerrados.includes(turnoOpt.key) ? '#6B7280' : undefined,
             }))}
             value={turno}
@@ -504,9 +476,8 @@ export default function CargarPage() {
           />
         </div>
       </Card>
-
       <Card>
-        <CardHeader title={t.nueva_venta} subtitle={`${TURNOS.find(turnoOpt => turnoOpt.key === turno)?.icon} ${TURNOS.find(turnoOpt => turnoOpt.key === turno)?.label} · ${isPT ? 'Adiciona à lista' : 'Se agrega a la lista'}`} />
+        <CardHeader title={t.nueva_venta} subtitle={(TURNOS.find(o => o.key === turno)?.icon || '') + ' ' + (TURNOS.find(o => o.key === turno)?.label || '') + ' · ' + (isPT ? 'Adiciona à lista' : 'Se agrega a la lista')} />
         <div className="p-4 flex flex-col gap-4">
           <div>
             <FieldLabel>{t.medio_pago}</FieldLabel>
@@ -519,7 +490,7 @@ export default function CargarPage() {
           {preview && (
             <div className="bg-offset rounded-xl border border-divider p-3">
               <DivRow label={t.importe} value={fmtL(preview.monto_bruto)} />
-              {preview.retencion_pct > 0 && <DivRow label={`${t.retenciones} (${preview.retencion_pct}%)`} value={`−${fmtL(preview.retencion_monto)}`} valueClass="text-redtext" />}
+              {preview.retencion_pct > 0 && <DivRow label={t.retenciones + ' (' + preview.retencion_pct + '%)'} value={'−' + fmtL(preview.retencion_monto)} valueClass="text-redtext" />}
               <DivRow label={t.ventas_netas} value={fmtL(preview.monto_neto)} valueClass="text-greentext" bold />
             </div>
           )}
@@ -534,10 +505,9 @@ export default function CargarPage() {
           </button>
         </div>
       </Card>
-
       {activas.length > 0 && (
         <Card>
-          <CardHeader title={`${t.lista} · ${activas.length} ${t.wa_ventas}`} subtitle={`${fmtL(totalBruto)}`} />
+          <CardHeader title={t.lista + ' · ' + activas.length + ' ' + t.wa_ventas} subtitle={fmtL(totalBruto)} />
           <div className="p-4 flex flex-col gap-2">
             {activas.map(item => (
               <div key={item._id} className="flex items-start gap-3 p-3 rounded-xl bg-offset border border-divider">
@@ -555,19 +525,18 @@ export default function CargarPage() {
               </div>
             ))}
             <div className="mt-1 bg-offset rounded-xl border border-divider p-3">
-              <DivRow label={t.ventas_brutas}  value={fmtL(totalBruto)} />
-              <DivRow label={t.retenciones}     value={`−${fmtL(totalRetencion)}`} valueClass="text-redtext" />
-              <DivRow label={t.ventas_netas}    value={fmtL(totalNeto)} valueClass="text-greentext" bold />
+              <DivRow label={t.ventas_brutas} value={fmtL(totalBruto)} />
+              <DivRow label={t.retenciones} value={'−' + fmtL(totalRetencion)} valueClass="text-redtext" />
+              <DivRow label={t.ventas_netas} value={fmtL(totalNeto)} valueClass="text-greentext" bold />
             </div>
-            <BtnPrimary label={cerrando ? t.cargando : `${t.cerrar_turno} · ${activas.length} ${t.wa_ventas}`} onClick={cerrarTurnoHandler} loading={cerrando} className="mt-1" />
+            <BtnPrimary label={cerrando ? t.cargando : t.cerrar_turno + ' · ' + activas.length + ' ' + t.wa_ventas} onClick={cerrarTurnoHandler} loading={cerrando} className="mt-1" />
             <BtnSecondary label={t.limpiar_todo} onClick={() => { setLista([]); localStorage.removeItem(STORAGE_KEY); }} />
           </div>
         </Card>
       )}
-
       {anuladas.length > 0 && (
         <Card>
-          <CardHeader title={`${t.anuladas} · ${anuladas.length}`} />
+          <CardHeader title={t.anuladas + ' · ' + anuladas.length} />
           <div className="p-4 flex flex-col gap-2">
             {anuladas.map(item => (
               <div key={item._id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft/50 border border-red/10 opacity-60">
@@ -581,7 +550,6 @@ export default function CargarPage() {
           </div>
         </Card>
       )}
-
       {lista.length === 0 && (
         <div className="text-center py-8 text-t3 text-sm">
           {isPT ? 'Adicione vendas à lista e feche o turno ao terminar.' : 'Agregá ventas a la lista y cerrá el turno al terminar.'}
