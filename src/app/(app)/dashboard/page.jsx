@@ -224,7 +224,7 @@ export default function DashboardPage() {
                 {t.enviar_whatsapp}
               </a>
             )}
-            <button onClick={() => { setModalCierre(false); setCierreListo(false); }} className="w-full h-10 text-t3 text-sm">
+            <button onClick={() => { setModalCierre(false); setCierreListo(false); if (cierreListo) router.push('/cargar'); }} className="w-full h-10 text-t3 text-sm">
               {cierreListo ? t.cerrar : t.cancelar}
             </button>
           </div>
