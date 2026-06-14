@@ -106,9 +106,9 @@ export default function CargarPage() {
             setAperturaLista(true);
             try { localStorage.setItem(CAJA_KEY, todayStr() + '_sin_turno'); } catch {}
           } else {
-            if (!isAdmin) setMostrarApertura(true);
+            setMostrarApertura(true);
           }
-        }).catch(() => { if (!isAdmin) setMostrarApertura(true); });
+        }).catch(() => { setMostrarApertura(true); });
       } else if (cerrados.includes('1')) {
         setTurno('2');
         getTurnoAbierto(usuario.bar_id, todayStr(), '2').then(turnoExistente => {
@@ -116,9 +116,9 @@ export default function CargarPage() {
             setAperturaLista(true);
             try { localStorage.setItem(CAJA_KEY, todayStr() + '_2'); } catch {}
           } else {
-            if (!isAdmin) setMostrarApertura(true);
+            setMostrarApertura(true);
           }
-        }).catch(() => { if (!isAdmin) setMostrarApertura(true); });
+        }).catch(() => { setMostrarApertura(true); });
       } else {
         setTurno('1');
         getTurnoAbierto(usuario.bar_id, todayStr(), '1').then(turnoExistente => {
@@ -126,9 +126,9 @@ export default function CargarPage() {
             setAperturaLista(true);
             try { localStorage.setItem(CAJA_KEY, todayStr() + '_1'); } catch {}
           } else {
-            if (!isAdmin) setMostrarApertura(true);
+            setMostrarApertura(true);
           }
-        }).catch(() => { if (!isAdmin) setMostrarApertura(true); });
+        }).catch(() => { setMostrarApertura(true); });
       }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
@@ -180,6 +180,8 @@ export default function CargarPage() {
       setDiaCerrado(false);
       setModalReapertura(false);
       setCausaReapertura('');
+      setAperturaLista(false);
+      setMostrarApertura(true);
       show('✓ ' + t.reabrir_dia);
     } catch {
       show('✗ ' + t.error);
