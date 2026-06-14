@@ -8,7 +8,7 @@ import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
   cerrarTurnoConPendientes, fmt, todayStr, realDateStr, reabrirDia,
-  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getIngresosDia
+  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getTurnoAbiertoHoy, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
@@ -107,20 +107,13 @@ export default function CargarPage() {
         : cerrados.includes('1') ? '2' : '1';
       setTurno(turnoActual);
 
-      getTurnoAbierto(usuario.bar_id, hoy, turnoActual).then(turnoExistente => {
+      getTurnoAbiertoHoy(usuario.bar_id, turnoActual).then(turnoExistente => {
         if (turnoExistente) {
           setAperturaLista(true);
-          try { localStorage.setItem(CAJA_KEY, hoy + '_' + turnoActual); } catch {}
+          setFechaTurno(turnoExistente.fecha);
+          try { localStorage.setItem(CAJA_KEY, turnoExistente.fecha + '_' + turnoActual); } catch {}
         } else {
-          getTurnoAbierto(usuario.bar_id, todayStr(), turnoActual).then(turnoAnterior => {
-            if (turnoAnterior) {
-              setAperturaLista(true);
-              setFechaTurno(todayStr());
-              try { localStorage.setItem(CAJA_KEY, todayStr() + '_' + turnoActual); } catch {}
-            } else {
-              setMostrarApertura(true);
-            }
-          }).catch(() => { setMostrarApertura(true); });
+          setMostrarApertura(true);
         }
       }).catch(() => { setMostrarApertura(true); });
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });

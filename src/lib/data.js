@@ -119,6 +119,12 @@ export async function getTurnoAbierto(barId, fecha, numero) {
   return data;
 }
 
+export async function getTurnoAbiertoHoy(barId, numero) {
+  const t1 = await getTurnoAbierto(barId, realDateStr(), numero);
+  if (t1) return t1;
+  return getTurnoAbierto(barId, todayStr(), numero);
+}
+
 export async function abrirTurno(barId, usuarioId, fecha, numero, cajaInicial = 0) {
   const sb = getClient();
   const existente = await getTurnoAbierto(barId, fecha, numero);
