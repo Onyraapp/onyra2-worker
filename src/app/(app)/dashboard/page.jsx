@@ -356,11 +356,17 @@ export default function DashboardPage() {
             className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium">
             {t.registrar_gasto}
           </button>
-          <button onClick={abrirCierreDiario} disabled={cerrandoDia || diaCerrado}
-            className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40
-              ${diaCerrado ? 'bg-offset text-t3 border border-divider' : 'bg-primary text-white'}`}>
-            {cerrandoDia ? '...' : diaCerrado ? t.dia_cerrado : t.cierre_diario}
-          </button>
+          {diaCerrado ? (
+            <button onClick={() => router.push('/cargar')}
+              className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm">
+              {isPT ? 'Começar novo dia' : 'Empezar nuevo día'}
+            </button>
+          ) : (
+            <button onClick={abrirCierreDiario} disabled={cerrandoDia}
+              className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm disabled:opacity-40">
+              {cerrandoDia ? '...' : t.cierre_diario}
+            </button>
+          )}
         </div>
       </>)}
     </Screen>
