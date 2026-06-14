@@ -95,7 +95,7 @@ export function calcularRetencion(montoBruto, pct) {
     monto_bruto:     montoBruto,
     retencion_pct:   pct,
     retencion_monto: Math.round(retencionMonto * 100) / 100,
-    monto_neto:      Math.round((montoBruto - retencionMonto) * 100) / 100,
+    monto_neto:      montoBruto,
   };
 }
 
