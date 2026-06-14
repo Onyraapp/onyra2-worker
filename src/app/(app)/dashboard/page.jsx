@@ -216,6 +216,7 @@ export default function DashboardPage() {
             ) : (
               <a
                 href={resumenCierre.url}
+                onClick={() => { setTimeout(() => { setModalCierre(false); setCierreListo(false); router.push('/cargar'); }, 500); }}
                 className="w-full h-12 rounded-xl bg-[#25D366] text-white font-semibold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-sm"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
@@ -224,8 +225,8 @@ export default function DashboardPage() {
                 {t.enviar_whatsapp}
               </a>
             )}
-            <button onClick={() => { setModalCierre(false); setCierreListo(false); if (cierreListo) router.push('/cargar'); }} className="w-full h-10 text-t3 text-sm">
-              {cierreListo ? t.cerrar : t.cancelar}
+            <button onClick={() => { setModalCierre(false); setCierreListo(false); router.push('/cargar'); }} className="w-full h-10 text-t3 text-sm">
+              {cierreListo ? (isPT ? 'Pular WhatsApp → Novo dia' : 'Saltar WhatsApp → Nuevo día') : t.cancelar}
             </button>
           </div>
         </div>
