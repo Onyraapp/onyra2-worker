@@ -7,7 +7,7 @@ import { useOnline, agregarACola, getCola, limpiarCola } from '../../../hooks/us
 import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
-  cerrarTurnoConPendientes, fmt, todayStr, reabrirDia,
+  cerrarTurnoConPendientes, fmt, todayStr, realDateStr, reabrirDia,
   getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
@@ -438,7 +438,7 @@ export default function CargarPage() {
               </div>
             </div>
             <BtnPrimary label={turno === '2' ? t.recibir_caja : t.abrir_caja} onClick={async () => {
-              const fechaApertura = todayStr();
+              const fechaApertura = realDateStr();
               setFechaTurno(fechaApertura);
               setMostrarApertura(false);
               setAperturaLista(true);
