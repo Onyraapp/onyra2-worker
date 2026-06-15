@@ -74,22 +74,6 @@ export default function CargarPage() {
 
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
 
-    getIngresosDia(usuario.bar_id, todayStr()).then(data => {
-      const mapeadas = data.map(i => ({
-        ...i,
-        medio_label: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.label,
-        medio_color: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.color,
-        supabase_id: i.id,
-        _id: i.id,
-      }));
-      setLista(mapeadas);
-    }).catch(() => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) setLista(JSON.parse(saved));
-      } catch {}
-    });
-
     setColaPendiente(getCola());
 
     const sb = getClient();
@@ -97,25 +81,48 @@ export default function CargarPage() {
       .then(({ data }) => { if (data) setNombreCajero(data.nombre); })
       .catch(() => {});
 
+    // Buscar cualquier turno abierto hoy (por fecha real o fecha de caja)
     const hoy = realDateStr();
-    setFechaTurno(hoy);
+    const ayer = todayStr();
 
-    getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-      setTurnosCerrados(cerrados);
-      const turnoActual = cerrados.includes('1') && cerrados.includes('2')
-        ? 'sin_turno'
-        : cerrados.includes('1') ? '2' : '1';
-      setTurno(turnoActual);
+    async function buscarTurnoAbierto() {
+      const sb = getClient();
+      // Buscar turno abierto en los últimos 2 días
+      const { data } = await sb
+        .from('turnos')
+        .select('*')
+        .eq('bar_id', usuario.bar_id)
+        .eq('cerrado', false)
+        .gte('fecha', ayer < hoy ? ayer : hoy)
+        .order('fecha', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    }
 
-      getTurnoAbiertoHoy(usuario.bar_id, turnoActual).then(turnoExistente => {
-        if (turnoExistente) {
-          setAperturaLista(true);
-          setFechaTurno(turnoExistente.fecha);
-          try { localStorage.setItem(CAJA_KEY, turnoExistente.fecha + '_' + turnoActual); } catch {}
-        } else {
-          setMostrarApertura(true);
-        }
-      }).catch(() => { setMostrarApertura(true); });
+    buscarTurnoAbierto().then(turnoAbierto => {
+      if (turnoAbierto) {
+        setTurno(turnoAbierto.numero);
+        setFechaTurno(turnoAbierto.fecha);
+        setAperturaLista(true);
+        try { localStorage.setItem(CAJA_KEY, turnoAbierto.fecha + '_' + turnoAbierto.numero); } catch {}
+        // Cargar ventas de la fecha del turno
+        getIngresosDia(usuario.bar_id, turnoAbierto.fecha).then(data => {
+          const mapeadas = data.map(i => ({
+            ...i,
+            medio_label: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.label,
+            medio_color: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.color,
+            supabase_id: i.id,
+            _id: i.id,
+          }));
+          setLista(mapeadas);
+        }).catch(() => {});
+        // Verificar turnos cerrados de esa fecha
+        getTurnosCerradosHoy(usuario.bar_id).then(setTurnosCerrados).catch(() => {});
+      } else {
+        setTurno('1');
+        setMostrarApertura(true);
+      }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
     getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
