@@ -13,6 +13,17 @@ export const translations = {
     volver: 'Volver',
     moneda: '$',
 
+    // Auth
+    appTagline: 'Control de caja inteligente',
+    auth: {
+      email: 'Email',
+      password: 'Contraseña',
+      login: 'Iniciar sesión',
+      loginError: 'Email o contraseña incorrectos',
+      noAccount: '¿No tenés cuenta?',
+      register: 'Registrate',
+    },
+
     // Nav
     nav_hoy: 'Hoy',
     nav_cargar: 'Cargar',
@@ -211,6 +222,17 @@ export const translations = {
     wa_anulaciones: 'cancelamentos',
     wa_venc_manana: '⚠ Vencimentos amanhã',
     wa_cierre_turno: 'Troco - Fechamento do',
+
+    // Auth
+    appTagline: 'Controle de caixa inteligente',
+    auth: {
+      email: 'E-mail',
+      password: 'Senha',
+      login: 'Entrar',
+      loginError: 'E-mail ou senha incorretos',
+      noAccount: 'Não tem conta?',
+      register: 'Cadastre-se',
+    },
   },
 };
 
