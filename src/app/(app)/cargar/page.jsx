@@ -83,7 +83,6 @@ export default function CargarPage() {
 
     // Buscar cualquier turno abierto hoy (por fecha real o fecha de caja)
     const hoy = realDateStr();
-    const ayer = todayStr();
 
     async function buscarTurnoAbierto() {
       const sb = getClient();
@@ -93,7 +92,6 @@ export default function CargarPage() {
         .select('*')
         .eq('bar_id', usuario.bar_id)
         .eq('cerrado', false)
-        .gte('fecha', ayer < hoy ? ayer : hoy)
         .order('fecha', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -136,23 +134,6 @@ export default function CargarPage() {
     }).catch(() => {});
   }, [usuario]);
 
-  useEffect(() => {
-    if (!usuario) return;
-    const interval = setInterval(() => {
-      const hoy = realDateStr();
-      getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
-        if (cierre) {
-          getTurnoAbierto(usuario.bar_id, hoy, '1').then(t1 => {
-            getTurnoAbierto(usuario.bar_id, hoy, 'sin_turno').then(tU => {
-              if (!t1 && !tU) setDiaCerrado(true);
-              else setDiaCerrado(false);
-            }).catch(() => { if (!t1) setDiaCerrado(true); else setDiaCerrado(false); });
-          }).catch(() => { setDiaCerrado(true); });
-        } else setDiaCerrado(false);
-      }).catch(() => {});
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [usuario]);
 
   useEffect(() => {
     if (online && colaPendiente.length > 0) sincronizarCola();
