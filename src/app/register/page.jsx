@@ -5,33 +5,34 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '../../hooks/useI18n';
 
-const fields = [
-  {
-    section: 'Tu negocio',
-    items: [
-      { key: 'businessName', label: 'Nombre del negocio', type: 'text', placeholder: 'Ej: Bar El Toro' },
-    ],
-  },
-  {
-    section: 'Tu cuenta',
-    items: [
-      { key: 'email', label: 'Email', type: 'email', placeholder: 'tu@email.com' },
-      { key: 'password', label: 'Contraseña', type: 'password', placeholder: 'Mínimo 6 caracteres' },
-    ],
-  },
-];
-
 export default function RegisterPage() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isPT = locale === 'pt';
   const [form, set] = useState({ businessName: '', email: '', password: '' });
   const [acepto, setAcepto] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const fields = [
+    {
+      section: isPT ? 'Seu negócio' : 'Tu negocio',
+      items: [
+        { key: 'businessName', label: isPT ? 'Nome do negócio' : 'Nombre del negocio', type: 'text', placeholder: isPT ? 'Ex: Bar do João' : 'Ej: Bar El Toro' },
+      ],
+    },
+    {
+      section: isPT ? 'Sua conta' : 'Tu cuenta',
+      items: [
+        { key: 'email', label: t('auth.email'), type: 'email', placeholder: isPT ? 'voce@email.com' : 'tu@email.com' },
+        { key: 'password', label: t('auth.password'), type: 'password', placeholder: isPT ? 'Mínimo 6 caracteres' : 'Mínimo 6 caracteres' },
+      ],
+    },
+  ];
+
   async function handleRegister(e) {
     e.preventDefault();
-    if (!acepto) { setError('Tenés que aceptar los términos'); return; }
+    if (!acepto) { setError(isPT ? 'Você precisa aceitar os termos' : 'Tenés que aceptar los términos'); return; }
     setLoading(true);
     setError('');
     try {
@@ -45,7 +46,7 @@ export default function RegisterPage() {
       router.push('/');
     } catch (err) {
       if (err.message?.includes('duplicate') || err.message?.includes('already registered')) {
-        setError('Este email ya tiene una cuenta registrada. Iniciá sesión o usá otro email.');
+        setError(isPT ? 'Este e-mail já tem uma conta registrada. Faça login ou use outro e-mail.' : 'Este email ya tiene una cuenta registrada. Iniciá sesión o usá otro email.');
       } else {
         setError(err.message);
       }
@@ -59,7 +60,7 @@ export default function RegisterPage() {
       <div className="flex flex-col items-center mb-8">
         <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" />
         <span translate="no" className="font-neonize text-2xl text-t1 tracking-tight lowercase">troco</span>
-        <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">registrá tu negocio</span>
+        <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">{isPT ? 'cadastre seu negócio' : 'registrá tu negocio'}</span>
       </div>
 
       <form onSubmit={handleRegister} className="w-full max-w-sm flex flex-col gap-3">
@@ -95,10 +96,10 @@ export default function RegisterPage() {
             className="mt-0.5 w-4 h-4 rounded accent-primary flex-shrink-0"
           />
           <label htmlFor="acepto" className="text-xs text-t3 leading-relaxed">
-            Acepto los{' '}
-            <a href="/terminos" className="text-primary underline">Términos y Condiciones</a>
-            {' '}y la{' '}
-            <a href="/privacidad" className="text-primary underline">Política de Privacidad</a>
+            {isPT ? 'Aceito os' : 'Acepto los'}{' '}
+            <a href="/terminos" className="text-primary underline">{isPT ? 'Termos e Condições' : 'Términos y Condiciones'}</a>
+            {' '}{isPT ? 'e a' : 'y la'}{' '}
+            <a href="/privacidad" className="text-primary underline">{isPT ? 'Política de Privacidade' : 'Política de Privacidad'}</a>
             {'.'}
           </label>
         </div>
@@ -108,12 +109,12 @@ export default function RegisterPage() {
           disabled={loading}
           className="w-full h-12 rounded-xl bg-[#0F4C5C] font-semibold text-white text-[15px] disabled:opacity-50 uppercase tracking-wide"
         >
-          {loading ? '...' : 'Crear cuenta'}
+          {loading ? '...' : (isPT ? 'Criar conta' : 'Crear cuenta')}
         </button>
 
         <p className="text-center text-sm text-t3 lowercase pb-4">
-          ¿Ya tenés cuenta?{' '}
-          <a href="/login" className="text-primary font-medium">Iniciá sesión</a>
+          {isPT ? 'Já tem conta?' : '¿Ya tenés cuenta?'}{' '}
+          <a href="/login" className="text-primary font-medium">{isPT ? 'Faça login' : 'Iniciá sesión'}</a>
         </p>
       </form>
     </div>
