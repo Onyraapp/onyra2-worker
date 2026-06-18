@@ -280,14 +280,12 @@ export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, deta
 
 export async function getEgresosDia(barId, fechaStr) {
   const sb = getClient();
-  const inicio = new Date(fechaStr + 'T00:00:00-03:00').toISOString();
-  const fin    = new Date(fechaStr + 'T23:59:59-03:00').toISOString();
   const { data, error } = await sb
     .from('egresos')
     .select('*')
     .eq('bar_id', barId)
-    .gte('fecha', inicio)
-    .lte('fecha', fin)
+    .gte('fecha', fechaStr + 'T00:00:00.000Z')
+    .lte('fecha', fechaStr + 'T23:59:59.999Z')
     .order('fecha', { ascending: true });
   if (error) throw error;
   return data || [];
