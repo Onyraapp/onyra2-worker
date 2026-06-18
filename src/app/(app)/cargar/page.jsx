@@ -84,19 +84,9 @@ export default function CargarPage() {
     // Buscar cualquier turno abierto hoy (por fecha real o fecha de caja)
     const hoy = realDateStr();
 
-    async function buscarTurnoAbierto() {
-      const sb = getClient();
-      // Buscar turno abierto en los últimos 2 días
-      const { data } = await sb
-        .from('turnos')
-        .select('*')
-        .eq('bar_id', usuario.bar_id)
-        .eq('cerrado', false)
-        .order('fecha', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    }
+async function buscarTurnoAbierto() {
+  return await getTurnoAbiertoGlobal(usuario.bar_id);
+}
 
     buscarTurnoAbierto().then(turnoAbierto => {
       if (turnoAbierto && !turnoAbierto.cerrado) {
