@@ -99,7 +99,7 @@ export default function CargarPage() {
     }
 
     buscarTurnoAbierto().then(turnoAbierto => {
-      if (turnoAbierto) {
+      if (turnoAbierto && !turnoAbierto.cerrado) {
         setTurno(turnoAbierto.numero);
         setFechaTurno(turnoAbierto.fecha);
         setAperturaLista(true);
@@ -186,7 +186,7 @@ export default function CargarPage() {
   const totalRetencion = activas.reduce((s, i) => s + i.retencion_monto, 0);
   const totalNeto      = activas.reduce((s, i) => s + i.monto_neto, 0);
 
-  const bloqueado = diaCerrado;
+  const bloqueado = false; // diaCerrado ya no bloquea — abre nuevo día directo
 
   async function agregarAVentas() {
     if (!montoBruto || montoBruto <= 0) return show('⚠ ' + (isPT ? 'Informe um valor válido' : 'Ingresá un monto válido'));
