@@ -7,12 +7,14 @@ import { useI18n } from '../../hooks/useI18n';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { t, locale } = useI18n();
+  const { t, locale, loading: localeLoading } = useI18n();
   const isPT = locale === 'pt';
   const [form, set] = useState({ businessName: '', email: '', password: '' });
   const [acepto, setAcepto] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  if (localeLoading) return null;
 
   const fields = [
     {

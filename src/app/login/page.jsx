@@ -7,7 +7,7 @@ import { useI18n } from '../../hooks/useI18n';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, loading: localeLoading } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,6 +25,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
+
+  if (localeLoading) return null;
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
