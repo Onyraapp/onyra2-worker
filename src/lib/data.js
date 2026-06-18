@@ -465,3 +465,15 @@ export async function getCajaInicialDia(barId, fechaStr) {
   if (!data || data.length === 0) return 0;
   return data.reduce((s, t) => s + (t.caja_inicial || 0), 0);
 }
+// NUEVA FUNCIÓN PARA ELIMINAR EL ERROR DE LÍMITE DE HORARIO
+export async function getTurnoAbiertoGlobal(barId) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('turnos')
+    .select('*')
+    .eq('bar_id', barId)
+    .eq('cerrado', false)
+    .maybeSingle(); 
+  if (error) throw error;
+  return data;
+}
