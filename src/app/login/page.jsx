@@ -7,7 +7,7 @@ import { useI18n } from '../../hooks/useI18n';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t, loading: localeLoading } = useI18n();
+  const { t, locale, setLocale, loading: localeLoading } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,6 +30,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
+      <div className="absolute top-4 right-4 flex gap-2">
+        <button onClick={() => setLocale('es')}
+          className={"px-2 py-1 rounded-lg text-xs font-semibold border transition-all " + (locale === 'es' ? 'bg-primary text-white border-primary' : 'bg-surface text-t3 border-divider')}>
+          🇦🇷 ES
+        </button>
+        <button onClick={() => setLocale('pt')}
+          className={"px-2 py-1 rounded-lg text-xs font-semibold border transition-all " + (locale === 'pt' ? 'bg-primary text-white border-primary' : 'bg-surface text-t3 border-divider')}>
+          🇧🇷 PT
+        </button>
+      </div>
       <div className="flex flex-col items-center mb-10">
         <img src="/logo.svg" alt="Troco" className="w-24 h-24 mb-3" />
         <span className="text-[11px] text-t3 mt-1 uppercase tracking-widest">{t('appTagline')}</span>
