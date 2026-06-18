@@ -225,9 +225,28 @@ export default function DashboardPage() {
                 {t.enviar_whatsapp}
               </a>
             )}
-            <button onClick={() => { setModalCierre(false); setCierreListo(false); router.push('/cargar'); }} className="w-full h-10 text-t3 text-sm">
-              {cierreListo ? (isPT ? 'Pular WhatsApp → Novo dia' : 'Saltar WhatsApp → Nuevo día') : t.cancelar}
-            </button>
+            {cierreListo ? (
+              isAdmin ? (
+                <div className="flex gap-2">
+                  <button onClick={() => { setModalCierre(false); setCierreListo(false); setModalReapertura(true); }}
+                    className="flex-1 h-11 rounded-xl bg-offset text-t2 text-sm font-medium">
+                    {isPT ? '🔓 Reabrir dia' : '🔓 Reabrir día'}
+                  </button>
+                  <button onClick={() => { setModalCierre(false); setCierreListo(false); router.push('/cargar'); }}
+                    className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold">
+                    {isPT ? '→ Próximo dia' : '→ Próximo día'}
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => { setModalCierre(false); setCierreListo(false); router.push('/cargar'); }} className="w-full h-10 text-t3 text-sm">
+                  {isPT ? 'Ir ao próximo dia →' : 'Ir al próximo día →'}
+                </button>
+              )
+            ) : (
+              <button onClick={() => { setModalCierre(false); setCierreListo(false); }} className="w-full h-10 text-t3 text-sm">
+                {t.cancelar}
+              </button>
+            )}
           </div>
         </div>
       )}
