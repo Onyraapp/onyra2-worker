@@ -93,6 +93,13 @@ export const translations = {
     tipo_gasto: 'Tipo de gasto',
     detalle_opcional: 'Detalle (opcional)',
     medio_pago_egreso: 'Medio de pago',
+    registrar_gasto: 'Registrar gasto',
+    editar_gasto: 'Editar gasto',
+    gastos_hoy: 'Gastos de hoy',
+    eliminar_gasto: '¿Eliminar este gasto?',
+    gasto_registrado: 'Gasto registrado',
+    gasto_actualizado: 'Gasto actualizado',
+    gasto_eliminado: 'Gasto eliminado',
 
     // Vencimientos
     vencimientos: 'Vencimientos',
@@ -200,6 +207,13 @@ export const translations = {
     tipo_gasto: 'Tipo de gasto',
     detalle_opcional: 'Detalhe (opcional)',
     medio_pago_egreso: 'Forma de pagamento',
+    registrar_gasto: 'Registrar gasto',
+    editar_gasto: 'Editar gasto',
+    gastos_hoy: 'Gastos de hoje',
+    eliminar_gasto: 'Excluir este gasto?',
+    gasto_registrado: 'Gasto registrado',
+    gasto_actualizado: 'Gasto atualizado',
+    gasto_eliminado: 'Gasto excluído',
 
     // Vencimientos
     vencimientos: 'Vencimentos',

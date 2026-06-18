@@ -60,7 +60,7 @@ export default function EgresosPage() {
         tipo, monto: m, detalle, medio_pago: medioPago,
       });
       setMonto(''); setDetalle('');
-      show('✓ Gasto registrado');
+      show('✓ ' + t.gasto_registrado);
       cargarEgresos();
       if (config?.wa_alerta_gasto && config?.whatsapp_numero) {
         const montoMinimo = config?.wa_alerta_gasto_monto || 10000;
@@ -101,7 +101,7 @@ export default function EgresosPage() {
         monto: m, detalle: editDetalle, tipo: editTipo, medio_pago: editMedio,
       }).eq('id', editando.id);
       setEditando(null);
-      show('✓ Gasto actualizado');
+      show('✓ ' + t.gasto_actualizado);
       cargarEgresos();
     } catch {
       show('✗ ' + t.error);
@@ -109,11 +109,11 @@ export default function EgresosPage() {
   }
 
   async function eliminar(id) {
-    if (!confirm('¿Eliminar este gasto?')) return;
+    if (!confirm(t.eliminar_gasto)) return;
     try {
       const sb = getClient();
       await sb.from('egresos').delete().eq('id', id);
-      show('✓ Gasto eliminado');
+      show('✓ ' + t.gasto_eliminado);
       cargarEgresos();
     } catch {
       show('✗ ' + t.error);
@@ -127,7 +127,7 @@ export default function EgresosPage() {
       {editando && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
           <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
-            <div className="text-base font-bold text-t1">Editar gasto</div>
+            <div className="text-base font-bold text-t1">{t.editar_gasto}</div>
             <div>
               <FieldLabel>{t.tipo_gasto}</FieldLabel>
               <ChipGroup
@@ -147,7 +147,7 @@ export default function EgresosPage() {
             </div>
             <div>
               <FieldLabel>{t.detalle}</FieldLabel>
-              <Textarea value={editDetalle} onChange={setEditDetalle} placeholder="Detalle del gasto..." />
+              <Textarea value={editDetalle} onChange={setEditDetalle} placeholder={t.detalle_opcional} />
             </div>
             <div className="flex gap-2">
               <button onClick={() => setEditando(null)} className="flex-1 h-11 rounded-xl bg-offset text-t2 text-sm font-medium">{t.cancelar}</button>
@@ -158,7 +158,7 @@ export default function EgresosPage() {
       )}
 
       <Card>
-        <CardHeader title="Registrar gasto" />
+        <CardHeader title={t.registrar_gasto} />
         <div className="p-4 flex flex-col gap-4">
           <div>
             <FieldLabel>{t.tipo_gasto}</FieldLabel>
@@ -183,16 +183,16 @@ export default function EgresosPage() {
           </div>
           <div>
             <FieldLabel>{t.detalle_opcional}</FieldLabel>
-            <Textarea value={detalle} onChange={setDetalle} placeholder="Ej: Pago cervezas Quilmes, factura luz mayo..." />
+            <Textarea value={detalle} onChange={setDetalle} placeholder={t.detalle_opcional} />
           </div>
-          <BtnPrimary label="Registrar gasto" onClick={guardar} loading={loading} className="bg-amber" />
+          <BtnPrimary label={t.registrar_gasto} onClick={guardar} loading={loading} className="bg-amber" />
         </div>
       </Card>
 
       {egresos.length > 0 && (
         <Card>
           <CardHeader
-            title="Gastos de hoy"
+            title={t.gastos_hoy}
             subtitle={egresos.length + ' · ' + fmtL(egresos.reduce((s, e) => s + e.monto, 0))}
           />
           <div className="p-4 flex flex-col gap-2">
