@@ -11,7 +11,7 @@ import {
   getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getTurnoAbiertoHoy, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
-import { MEDIOS_PAGO, TURNOS } from '../../../lib/constants';
+import { MEDIOS_PAGO, TURNOS, getLabel } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
   BtnPrimary, BtnSecondary, Toast, useToast, Spinner,
@@ -108,7 +108,7 @@ export default function CargarPage() {
         getIngresosDia(usuario.bar_id, turnoAbierto.fecha).then(data => {
           const mapeadas = data.map(i => ({
             ...i,
-            medio_label: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.label,
+            medio_label: getLabel(MEDIOS_PAGO.find(m => m.key === i.medio_pago) || {}, isPT),
             medio_color: MEDIOS_PAGO.find(m => m.key === i.medio_pago)?.color,
             supabase_id: i.id,
             _id: i.id,
@@ -196,7 +196,7 @@ export default function CargarPage() {
     } catch {}
     const m    = MEDIOS_PAGO.find(mp => mp.key === medio);
     const calc = calcularRetencion(montoBruto, pct);
-    const item = { ...calc, medio_pago: medio, medio_label: m?.label, medio_color: m?.color, nota, anulada: false, _id: Date.now() };
+    const item = { ...calc, medio_pago: medio, medio_label: getLabel(m || {}, isPT), medio_color: m?.color, nota, anulada: false, _id: Date.now() };
 
     if (online) {
       setAgregando(true);
@@ -449,7 +449,7 @@ export default function CargarPage() {
           <ChipGroup
             options={TURNOS.map(turnoOpt => ({
               value: turnoOpt.key,
-              label: turnoOpt.icon + ' ' + turnoOpt.label + (turnosCerrados.includes(turnoOpt.key) ? ' ✓' : ''),
+              label: turnoOpt.icon + ' ' + getLabel(turnoOpt, isPT) + (turnosCerrados.includes(turnoOpt.key) ? ' ✓' : ''),
               color: turnosCerrados.includes(turnoOpt.key) ? '#6B7280' : undefined,
             }))}
             value={turno}
@@ -462,7 +462,7 @@ export default function CargarPage() {
         <div className="p-4 flex flex-col gap-4">
           <div>
             <FieldLabel>{t.medio_pago}</FieldLabel>
-            <ChipGroup options={MEDIOS_PAGO.map(m => ({ value: m.key, label: m.label, color: m.color }))} value={medio} onChange={setMedio} className="grid grid-cols-3" />
+            <ChipGroup options={MEDIOS_PAGO.map(m => ({ value: m.key, label: getLabel(m, isPT), color: m.color }))} value={medio} onChange={setMedio} className="grid grid-cols-3" />
           </div>
           <div>
             <FieldLabel>{t.importe}</FieldLabel>
