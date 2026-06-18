@@ -205,7 +205,7 @@ export default function ResumenPage() {
                         )}
                         <div className="bg-offset rounded-xl p-3">
                           <DivRow label={t.ventas_brutas} value={fmtL(ventasBrutas)} />
-                          {retenciones > 0 && <DivRow label={t.retenciones} value={`−${fmtL(retenciones)}`} valueClass="text-redtext" />}
+                          {retenciones > 0 && <DivRow label={t.retenciones} value={fmtL(retenciones)} valueClass="text-t3" />}
                           <DivRow label={t.ventas_netas} value={fmtL(ventasNetas)} valueClass="text-greentext" />
                           {gastosTurno > 0 && <DivRow label={t.gastos} value={`−${fmtL(gastosTurno)}`} valueClass="text-ambertext" />}
                           <DivRow label={t.resultado}
@@ -241,7 +241,7 @@ export default function ResumenPage() {
                     <CardHeader title={isPT ? 'Total do dia' : 'Total del día'} />
                     <div className="p-4">
                       <DivRow label={t.ventas_brutas} value={fmtL(resDia.totalBruto)} />
-                      {resDia.totalRetencion > 0 && <DivRow label={t.retenciones} value={`−${fmtL(resDia.totalRetencion)}`} valueClass="text-redtext" />}
+                      {resDia.totalRetencion > 0 && <DivRow label={t.retenciones} value={fmtL(resDia.totalRetencion)} valueClass="text-t3" />}
                       <DivRow label={t.ventas_netas} value={fmtL(resDia.totalNeto)} valueClass="text-greentext" />
                       {resDia.totalEgresos > 0 && <DivRow label={t.gastos} value={`−${fmtL(resDia.totalEgresos)}`} valueClass="text-ambertext" />}
                       <DivRow label={t.resultado}
