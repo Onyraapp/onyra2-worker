@@ -47,11 +47,7 @@ export default function RegisterPage() {
       });
       router.push('/');
     } catch (err) {
-      if (err.message?.includes('duplicate') || err.message?.includes('already registered')) {
-        setError(isPT ? 'Este e-mail já tem uma conta registrada. Faça login ou use outro e-mail.' : 'Este email ya tiene una cuenta registrada. Iniciá sesión o usá otro email.');
-      } else {
-        setError(err.message);
-      }
+      setError(err.message);
     } finally {
       setLoading(false);
     }
