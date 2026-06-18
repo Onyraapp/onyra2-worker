@@ -207,7 +207,7 @@ export const translations = {
     tipo_gasto: 'Tipo de gasto',
     detalle_opcional: 'Detalhe (opcional)',
     medio_pago_egreso: 'Forma de pagamento',
-    registrar_gasto: 'Registrar gasto',
+    registrar_gasto: 'Lançar despesa',
     editar_gasto: 'Editar gasto',
     gastos_hoy: 'Gastos de hoje',
     eliminar_gasto: 'Excluir este gasto?',
