@@ -22,6 +22,7 @@ export const translations = {
       loginError: 'Email o contraseña incorrectos',
       noAccount: '¿No tenés cuenta?',
       register: 'Registrate',
+      forgotPassword: '¿Olvidaste tu contraseña?',
     },
 
     // Nav
@@ -232,6 +233,7 @@ export const translations = {
       loginError: 'E-mail ou senha incorretos',
       noAccount: 'Não tem conta?',
       register: 'Cadastre-se',
+      forgotPassword: 'Esqueceu sua senha?',
     },
   },
 };

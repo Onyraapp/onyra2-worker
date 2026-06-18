@@ -64,7 +64,7 @@ export default function LoginPage() {
           className="w-full h-12 rounded-xl bg-[#0F4C5C] font-semibold text-white text-[15px] disabled:opacity-40 active:scale-[0.98] transition-all uppercase tracking-wide">
           {loading ? '...' : t('auth.login')}
         </button>
-        <p className="text-center text-sm text-t3 mb-1"><a href='/forgot-password' className='text-primary font-medium'>¿Olvidaste tu contraseña?</a></p>
+        <p className="text-center text-sm text-t3 mb-1"><a href='/forgot-password' className='text-primary font-medium'>{locale === 'pt' ? 'Esqueceu sua senha?' : '¿Olvidaste tu contraseña?'}</a></p>
         <p className="text-center text-sm text-t3 lowercase">
           {t('auth.noAccount')}{' '}
           <Link href="/register" className="text-primary font-medium">{t('auth.register')}</Link>
