@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { crearEgreso, getConfiguracion, getEgresosDia, fmt, todayStr, getTurnosCerradosHoy } from '../../../lib/data';
-import { TIPOS_EGRESO, TURNOS, MEDIOS_PAGO_EGRESO } from '../../../lib/constants';
+import { TIPOS_EGRESO, TURNOS, MEDIOS_PAGO_EGRESO, getLabel } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
   FieldLabel, BtnPrimary, Toast, useToast, Textarea
@@ -131,7 +131,7 @@ export default function EgresosPage() {
             <div>
               <FieldLabel>{t.tipo_gasto}</FieldLabel>
               <ChipGroup
-                options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))}
+                options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }))}
                 value={editTipo}
                 onChange={setEditTipo}
                 className="grid grid-cols-3"
@@ -139,7 +139,7 @@ export default function EgresosPage() {
             </div>
             <div>
               <FieldLabel>{t.medio_pago_egreso}</FieldLabel>
-              <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={editMedio} onChange={setEditMedio} />
+              <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }))} value={editMedio} onChange={setEditMedio} />
             </div>
             <div>
               <FieldLabel>{t.importe}</FieldLabel>
@@ -163,7 +163,7 @@ export default function EgresosPage() {
           <div>
             <FieldLabel>{t.tipo_gasto}</FieldLabel>
             <ChipGroup
-              options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))}
+              options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }))}
               value={tipo}
               onChange={setTipo}
               className="grid grid-cols-3"
@@ -171,11 +171,11 @@ export default function EgresosPage() {
           </div>
           <div>
             <FieldLabel>{t.medio_pago_egreso}</FieldLabel>
-            <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: tp.label }))} value={medioPago} onChange={setMedioPago} />
+            <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }))} value={medioPago} onChange={setMedioPago} />
           </div>
           <div>
             <FieldLabel>{t.turno}</FieldLabel>
-            <ChipGroup options={TURNOS.map(tp => ({ value: tp.key, label: tp.icon + ' ' + tp.label }))} value={turno} onChange={setTurno} />
+            <ChipGroup options={TURNOS.map(tp => ({ value: tp.key, label: tp.icon + ' ' + getLabel(tp, isPT) }))} value={turno} onChange={setTurno} />
           </div>
           <div>
             <FieldLabel>{t.importe}</FieldLabel>
@@ -202,7 +202,7 @@ export default function EgresosPage() {
                 <div key={e.id} className="flex items-start gap-3 p-3 rounded-xl bg-offset border border-divider">
                   <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0 bg-amber" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-t1">{tp?.label || e.tipo}</div>
+                    <div className="text-sm font-semibold text-t1">{tp ? getLabel(tp, isPT) : e.tipo}</div>
                     {e.detalle && <div className="text-xs text-t3 mt-0.5 truncate">{e.detalle}</div>}
                     <div className="text-xs text-t3 mt-0.5">{e.fecha?.slice(11,16)}</div>
                   </div>
