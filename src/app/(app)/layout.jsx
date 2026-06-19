@@ -61,7 +61,7 @@ function AppShell({ children }) {
   const active = NAV.find(n => pathname.startsWith(n.href))?.href;
 
   return (
-    <div className="h-screen bg-bg flex flex-col max-w-lg mx-auto overflow-hidden">
+    <div className="h-screen w-screen bg-bg flex flex-col max-w-lg mx-auto overflow-hidden relative">
 
       {modalAlerta && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center pb-24 px-4">
