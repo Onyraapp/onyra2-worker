@@ -473,7 +473,8 @@ export async function getTurnoAbiertoGlobal(barId) {
     .select('*')
     .eq('bar_id', barId)
     .eq('cerrado', false)
-    .maybeSingle(); 
+    .order('fecha', { ascending: false })
+    .limit(1);
   if (error) throw error;
-  return data;
+  return data && data.length > 0 ? data[0] : null;
 }
