@@ -49,23 +49,6 @@ function AppShell({ children }) {
 
   if (cargando || !usuario) return <FullScreenSpinner />;
 
-  if (typeof window !== 'undefined') {
-    setTimeout(() => {
-      let culprit = null;
-      let maxRight = window.innerWidth;
-      document.querySelectorAll('*').forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (rect.right > maxRight + 1) {
-          maxRight = rect.right;
-          culprit = el;
-        }
-      });
-      if (culprit) {
-        alert('CULPRIT: ' + culprit.tagName + ' class=' + culprit.className + ' right=' + maxRight + ' innerWidth=' + window.innerWidth);
-      }
-    }, 1000);
-  }
-
   const ahora = new Date();
   const trialHasta = usuario.bares?.trial_hasta ? new Date(usuario.bares.trial_hasta) : null;
   const planVencido = !usuario.bares?.plan_activo || (usuario.bares?.plan === 'trial' && trialHasta && ahora > trialHasta);
