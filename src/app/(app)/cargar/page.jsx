@@ -8,7 +8,7 @@ import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
   cerrarTurnoConPendientes, fmt, todayStr, realDateStr, reabrirDia,
-  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getTurnoAbiertoHoy, getIngresosDia
+  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getTurnoAbiertoHoy, getTurnoAbiertoGlobal, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TURNOS, getLabel } from '../../../lib/constants';
