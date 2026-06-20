@@ -193,13 +193,15 @@ export async function crearIngresosBulk(ingresos) {
   return data;
 }
 
-export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBruto, retencionPct, retencionMonto, montoNeto, nota }) {
+export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBruto, retencionPct, retencionMonto, montoNeto, nota, fechaTurno }) {
   const sb = getClient();
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  const fecha = local.getHours() < 4
-    ? new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
-    : now.toISOString();
+  // La venta se registra con la hora real del momento, pero en el día calendario
+  // del turno abierto (fechaTurno) — no se recalcula la fecha por hora del reloj.
+  const ahora = new Date();
+  const horaActual = ahora.toISOString().slice(11);
+  const fecha = fechaTurno
+    ? fechaTurno + 'T' + horaActual
+    : ahora.toISOString();
 
   const { data, error } = await sb.from('ingresos').insert([{
     bar_id: barId,

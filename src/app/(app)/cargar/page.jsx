@@ -200,6 +200,7 @@ async function buscarTurnoAbierto() {
           retencionMonto: calc.retencion_monto,
           montoNeto: calc.monto_neto,
           nota,
+          fechaTurno,
         });
         setLista(l => [...l, { ...item, supabase_id: saved.id, _id: saved.id }]);
         show('✓ ' + (isPT ? 'Venda salva' : 'Venta guardada'));
