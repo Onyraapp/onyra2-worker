@@ -72,6 +72,7 @@ export default function VencimientosPage() {
   const [form, setForm] = useState({ detalle: '', importe: '', fecha: '' });
   const [agregando, setAgregando] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [sugerencias, setSugerencias] = useState([]);
 
   function labelDias(fecha) {
     const dias = diasHasta(fecha);
@@ -112,6 +113,19 @@ export default function VencimientosPage() {
 
   useEffect(() => { if (usuario) cargar(); }, [usuario]);
 
+  async function cargarSugerencias() {
+    const sb = getClient();
+    const { data } = await sb
+      .from('vencimientos_historial')
+      .select('detalle')
+      .eq('bar_id', usuario.bar_id);
+    if (!data) return;
+    const conteo = {};
+    data.forEach(r => { conteo[r.detalle] = (conteo[r.detalle] || 0) + 1; });
+    const frecuentes = Object.keys(conteo).filter(k => conteo[k] >= 2);
+    setSugerencias(frecuentes);
+  }
+
   async function guardar() {
     if (!form.detalle || !form.importe || !form.fecha) return;
     setGuardando(true);
@@ -121,6 +135,10 @@ export default function VencimientosPage() {
       detalle: form.detalle,
       importe: parseFloat(form.importe),
       fecha: form.fecha,
+    }]);
+    await sb.from('vencimientos_historial').insert([{
+      bar_id: usuario.bar_id,
+      detalle: form.detalle,
     }]);
     setForm({ detalle: '', importe: '', fecha: '' });
     setAgregando(false);
@@ -139,7 +157,7 @@ export default function VencimientosPage() {
       <div className="flex items-center justify-between">
         <div className="text-lg font-bold text-t1">{t.vencimientos}</div>
         {isAdmin && !agregando && (
-          <button onClick={() => setAgregando(true)}
+          <button onClick={() => { setAgregando(true); cargarSugerencias(); }}
             className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold">
             + {t.agregar}
           </button>
@@ -149,6 +167,16 @@ export default function VencimientosPage() {
       {agregando && (
         <div className="bg-surface rounded-2xl shadow-card p-4 flex flex-col gap-3">
           <div className="text-sm font-semibold text-t1">{t.nuevo_vencimiento}</div>
+          {sugerencias.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {sugerencias.map(s => (
+                <button key={s} onClick={() => setForm({ ...form, detalle: s })}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border ${form.detalle === s ? 'bg-primary text-white border-primary' : 'bg-offset text-t2 border-divider'}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
           <input type="text"
             placeholder={isPT ? 'Detalhe (ex: Aluguel, Luz, etc)' : 'Detalle (ej: Alquiler, Luz, etc)'}
             value={form.detalle} onChange={e => setForm({ ...form, detalle: e.target.value })}
