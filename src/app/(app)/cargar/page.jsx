@@ -241,6 +241,7 @@ async function buscarTurnoAbierto() {
   }
 
   async function cerrarTurnoHandler() {
+    if (cerrando) return; // Protección contra doble-click / doble-tap
     if (activas.length === 0) return show('⚠ ' + (isPT ? 'Não há vendas para fechar' : 'No hay ventas para cerrar'));
     setCerrando(true);
 
