@@ -9,7 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import {
   getIngresosDia, getEgresosDia, calcularResumenDia,
   getConfiguracion, getCierreDiario, crearCierreDiario,
-  getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr
+  getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr, getTurnoAbiertoGlobal
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [resumenCierre,   setResumenCierre]   = useState(null);
   const [cierreListo,     setCierreListo]     = useState(false);
   const [waEnviado,       setWaEnviado]       = useState(false);
+  const [turnoPendiente,  setTurnoPendiente]  = useState(null);
 
   const esHoy = fecha === todayStr();
   const isAdmin = usuario?.rol === 'admin';
@@ -99,6 +100,17 @@ export default function DashboardPage() {
     const interval = setInterval(cargar, 15000);
     return () => clearInterval(interval);
   }, [cargar]);
+
+  useEffect(() => {
+    if (!usuario) return;
+    getTurnoAbiertoGlobal(usuario.bar_id).then(t => {
+      if (t && !t.cerrado && t.fecha !== todayStr()) {
+        setTurnoPendiente(t);
+      } else {
+        setTurnoPendiente(null);
+      }
+    }).catch(() => {});
+  }, [usuario, fecha]);
 
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
   const ingresosAnulados = ingresos.filter(i => i.anulada);
@@ -182,6 +194,24 @@ export default function DashboardPage() {
   return (
     <Screen>
       <Toast msg={toast} visible={visible} />
+
+      {turnoPendiente && (
+        <div className="bg-ambersoft border border-amber/30 rounded-2xl p-4 flex items-center gap-3">
+          <span className="text-2xl">⚠️</span>
+          <div className="flex-1">
+            <div className="text-sm font-bold text-ambertext">
+              {isPT ? 'Sessão de caixa aberta desde' : 'Sesión de caja abierta desde'} {format(new Date(turnoPendiente.fecha + 'T12:00:00'), "EEEE d 'de' MMMM", { locale: dateLocale })}
+            </div>
+            <div className="text-xs text-t3 mt-0.5">
+              {isPT ? 'Ainda não foi fechada. Vá para Cargar para fechá-la.' : 'Todavía no se cerró. Ve a Cargar para cerrarla.'}
+            </div>
+          </div>
+          <button onClick={() => router.push('/cargar')}
+            className="px-3 py-2 rounded-xl bg-primary text-white text-xs font-semibold flex-shrink-0">
+            {isPT ? 'Ir' : 'Ir'}
+          </button>
+        </div>
+      )}
 
       {modalCierre && resumenCierre && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-24 px-4">
