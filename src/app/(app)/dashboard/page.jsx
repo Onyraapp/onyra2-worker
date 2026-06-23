@@ -405,7 +405,9 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        <BtnPrimary label={t.cargar_venta} onClick={() => router.push('/cargar')} />
+        {!diaCerrado && (
+          <BtnPrimary label={t.cargar_venta} onClick={() => router.push('/cargar')} />
+        )}
         <div className="flex gap-2">
           <button onClick={() => router.push('/egresos')}
             className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium">
