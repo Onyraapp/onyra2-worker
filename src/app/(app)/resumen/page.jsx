@@ -290,6 +290,26 @@ export default function ResumenPage() {
               </div>
             </Card>
           )}
+          {resMes.egresosPorTipo && Object.keys(resMes.egresosPorTipo).length > 0 && (
+            <Card>
+              <CardHeader title={t.gastos} />
+              <div className="p-4">
+                {Object.entries(resMes.egresosPorTipo).map(([tipo, info]) => {
+                  const tp = TIPOS_EGRESO.find(te => te.key === tipo);
+                  const pct = resMes.totalEgresos > 0 ? ((info.monto / resMes.totalEgresos) * 100).toFixed(0) : 0;
+                  return (
+                    <div key={tipo} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
+                      <span className="text-sm text-t2">{tp?.label || tipo}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-t3">{pct}%</span>
+                        <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmtL(info.monto)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
         </>)}
       </>)}
     </Screen>

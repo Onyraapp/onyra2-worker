@@ -314,7 +314,14 @@ export function calcularResumenDia(ingresos, egresos) {
   const totalEgresos   = egresos.reduce((s, e) => s + e.monto, 0);
   const resultado      = totalNeto - totalEgresos;
 
-  return { porMedio, totalBruto, totalRetencion, totalNeto, totalEgresos, resultado };
+  const egresosPorTipo = {};
+  for (const e of egresos) {
+    if (!egresosPorTipo[e.tipo]) egresosPorTipo[e.tipo] = { monto: 0, items: [] };
+    egresosPorTipo[e.tipo].monto += e.monto;
+    egresosPorTipo[e.tipo].items.push(e);
+  }
+
+  return { porMedio, totalBruto, totalRetencion, totalNeto, totalEgresos, resultado, egresosPorTipo };
 }
 
 // ── RESUMEN MES ───────────────────────────────────────────
