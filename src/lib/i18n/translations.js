@@ -27,7 +27,7 @@ export const translations = {
 
     // Nav
     nav_hoy: 'Hoy',
-    nav_cargar: 'Cargar',
+    nav_cargar: 'Ventas',
     nav_gastos: 'Gastos',
     nav_resumen: 'Resumen',
     nav_vence: 'Vence',
