@@ -141,7 +141,7 @@ export const translations = {
 
     // Nav
     nav_hoy: 'Hoje',
-    nav_cargar: 'Venda',
+    nav_cargar: 'Vendas',
     nav_gastos: 'Gastos',
     nav_resumen: 'Resumo',
     nav_vence: 'Vence',
