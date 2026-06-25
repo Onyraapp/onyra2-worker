@@ -16,7 +16,7 @@ export default function SplashScreen() {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      backgroundColor: '#0F4C5C',
+      backgroundColor: '#0B1F2E',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       transition: 'opacity 0.5s ease',
@@ -28,7 +28,7 @@ export default function SplashScreen() {
       }}>
         <img src="/logo.svg" alt="Troco" style={{ width: 200, height: 200 }} />
         <span translate="no" style={{
-          color: '#7FFFD4', fontSize: 42, fontWeight: 800,
+          color: '#1DD3B0', fontSize: 42, fontWeight: 800,
           letterSpacing: '-0.5px', fontFamily: 'Neonize, sans-serif',
         }}>
           troco
