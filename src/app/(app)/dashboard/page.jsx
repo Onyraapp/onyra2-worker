@@ -9,7 +9,8 @@ import { useAuth } from '../../../hooks/useAuth';
 import {
   getIngresosDia, getEgresosDia, calcularResumenDia,
   getConfiguracion, getCierreDiario, crearCierreDiario,
-  getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr, getTurnoAbiertoGlobal
+  getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr, getTurnoAbiertoGlobal,
+  cerrarTurnoConPendientes
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
@@ -42,6 +43,8 @@ export default function DashboardPage() {
   const [cierreListo,     setCierreListo]     = useState(false);
   const [waEnviado,       setWaEnviado]       = useState(false);
   const [turnoPendiente,  setTurnoPendiente]  = useState(null);
+  const [turnosCerrados,  setTurnosCerrados]  = useState([]);
+  const [cerrandoTurno,   setCerrandoTurno]   = useState(null);
 
   const esHoy = fecha === todayStr();
   const isAdmin = usuario?.rol === 'admin';
@@ -111,6 +114,35 @@ export default function DashboardPage() {
       }
     }).catch(() => {});
   }, [usuario, fecha]);
+
+  const cargarTurnosCerrados = useCallback(() => {
+    if (!usuario) return;
+    getTurnosCerradosHoy(usuario.bar_id).then(setTurnosCerrados).catch(() => {});
+  }, [usuario]);
+
+  useEffect(() => { cargarTurnosCerrados(); }, [cargarTurnosCerrados]);
+
+  async function cerrarTurnoRapido(numero) {
+    if (cerrandoTurno) return;
+    setCerrandoTurno(numero);
+    try {
+      const cajaInicial = await getCajaInicialDia(usuario.bar_id, todayStr()).catch(() => 0);
+      await cerrarTurnoConPendientes({
+        barId: usuario.bar_id,
+        usuarioId: usuario.id,
+        fecha: todayStr(),
+        turno: numero,
+        cajaInicial: cajaInicial || 0,
+      });
+      show('✓ ' + (isPT ? `Turno ${numero} fechado` : `Turno ${numero} cerrado`));
+      cargarTurnosCerrados();
+      cargar();
+    } catch {
+      show('✗ ' + t.error);
+    } finally {
+      setCerrandoTurno(null);
+    }
+  }
 
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
   const ingresosAnulados = ingresos.filter(i => i.anulada);
@@ -210,6 +242,23 @@ export default function DashboardPage() {
             className="px-3 py-2 rounded-xl bg-primary text-white text-xs font-semibold flex-shrink-0">
             {isPT ? 'Ir' : 'Ir'}
           </button>
+        </div>
+      )}
+
+      {esHoy && (
+        <div className="flex gap-2">
+          {!turnosCerrados.includes('1') && (
+            <button onClick={() => cerrarTurnoRapido('1')} disabled={cerrandoTurno !== null}
+              className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
+              {cerrandoTurno === '1' ? '...' : (isPT ? '☀️ Fechar Turno 1' : '☀️ Cerrar Turno 1')}
+            </button>
+          )}
+          {!turnosCerrados.includes('2') && (
+            <button onClick={() => cerrarTurnoRapido('2')} disabled={cerrandoTurno !== null}
+              className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
+              {cerrandoTurno === '2' ? '...' : (isPT ? '🌙 Fechar Turno 2' : '🌙 Cerrar Turno 2')}
+            </button>
+          )}
         </div>
       )}
 
