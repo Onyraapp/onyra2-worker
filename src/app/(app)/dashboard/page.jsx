@@ -245,7 +245,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {esHoy && (
+      {(
         <div className="flex gap-2">
           {!turnosCerrados.includes('1') && (
             <button onClick={() => cerrarTurnoRapido('1')} disabled={cerrandoTurno !== null}
