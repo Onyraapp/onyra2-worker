@@ -252,28 +252,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {turnoAbiertoActual && (
-        <div className="flex gap-2">
-          {turnoAbiertoActual.numero === '1' && (
-            <button onClick={() => cerrarTurnoRapido('1')} disabled={cerrandoTurno !== null}
-              className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
-              {cerrandoTurno === '1' ? '...' : (isPT ? '☀️ Fechar Turno 1' : '☀️ Cerrar Turno 1')}
-            </button>
-          )}
-          {turnoAbiertoActual.numero === '2' && (
-            <button onClick={() => cerrarTurnoRapido('2')} disabled={cerrandoTurno !== null}
-              className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
-              {cerrandoTurno === '2' ? '...' : (isPT ? '🌙 Fechar Turno 2' : '🌙 Cerrar Turno 2')}
-            </button>
-          )}
-          {turnoAbiertoActual.numero === 'sin_turno' && (
-            <button onClick={() => cerrarTurnoRapido('sin_turno')} disabled={cerrandoTurno !== null}
-              className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
-              {cerrandoTurno === 'sin_turno' ? '...' : (isPT ? '⭐ Fechar Turno' : '⭐ Cerrar Turno')}
-            </button>
-          )}
-        </div>
-      )}
+
 
       {modalCierre && resumenCierre && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-24 px-4">
@@ -468,7 +447,18 @@ export default function DashboardPage() {
         )}
 
         {!diaCerrado && (
-          <BtnPrimary label={t.cargar_venta} onClick={() => router.push('/cargar')} />
+          <div className="flex gap-2">
+            <button onClick={() => cerrarTurnoRapido('1')}
+              disabled={cerrandoTurno !== null || turnosCerrados.includes('1')}
+              className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40 ${turnosCerrados.includes('1') ? 'bg-offset text-t3' : 'bg-primary text-white'}`}>
+              {cerrandoTurno === '1' ? '...' : (isPT ? '☀️ Fechar Turno 1' : '☀️ Cierre Turno 1')}
+            </button>
+            <button onClick={() => cerrarTurnoRapido('2')}
+              disabled={cerrandoTurno !== null || turnosCerrados.includes('2')}
+              className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40 ${turnosCerrados.includes('2') ? 'bg-offset text-t3' : 'bg-primary text-white'}`}>
+              {cerrandoTurno === '2' ? '...' : (isPT ? '🌙 Fechar Turno 2' : '🌙 Cierre Turno 2')}
+            </button>
+          </div>
         )}
         <div className="flex gap-2">
           <button onClick={() => router.push('/egresos')}
