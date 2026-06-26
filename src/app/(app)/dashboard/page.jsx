@@ -104,16 +104,22 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [cargar]);
 
-  useEffect(() => {
+  const [turnoAbiertoActual, setTurnoAbiertoActual] = useState(null);
+
+  const cargarTurnoAbierto = useCallback(() => {
     if (!usuario) return;
     getTurnoAbiertoGlobal(usuario.bar_id).then(t => {
-      if (t && !t.cerrado && t.fecha !== todayStr()) {
-        setTurnoPendiente(t);
+      if (t && !t.cerrado) {
+        setTurnoAbiertoActual(t);
+        setTurnoPendiente(t.fecha !== todayStr() ? t : null);
       } else {
+        setTurnoAbiertoActual(null);
         setTurnoPendiente(null);
       }
     }).catch(() => {});
-  }, [usuario, fecha]);
+  }, [usuario]);
+
+  useEffect(() => { cargarTurnoAbierto(); }, [cargarTurnoAbierto, fecha]);
 
   const cargarTurnosCerrados = useCallback(() => {
     if (!usuario) return;
@@ -136,6 +142,7 @@ export default function DashboardPage() {
       });
       show('✓ ' + (isPT ? `Turno ${numero} fechado` : `Turno ${numero} cerrado`));
       cargarTurnosCerrados();
+      cargarTurnoAbierto();
       cargar();
     } catch {
       show('✗ ' + t.error);
@@ -245,18 +252,24 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {(
+      {turnoAbiertoActual && (
         <div className="flex gap-2">
-          {!turnosCerrados.includes('1') && (
+          {turnoAbiertoActual.numero === '1' && (
             <button onClick={() => cerrarTurnoRapido('1')} disabled={cerrandoTurno !== null}
               className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
               {cerrandoTurno === '1' ? '...' : (isPT ? '☀️ Fechar Turno 1' : '☀️ Cerrar Turno 1')}
             </button>
           )}
-          {!turnosCerrados.includes('2') && (
+          {turnoAbiertoActual.numero === '2' && (
             <button onClick={() => cerrarTurnoRapido('2')} disabled={cerrandoTurno !== null}
               className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
               {cerrandoTurno === '2' ? '...' : (isPT ? '🌙 Fechar Turno 2' : '🌙 Cerrar Turno 2')}
+            </button>
+          )}
+          {turnoAbiertoActual.numero === 'sin_turno' && (
+            <button onClick={() => cerrarTurnoRapido('sin_turno')} disabled={cerrandoTurno !== null}
+              className="flex-1 h-11 rounded-xl bg-surface shadow-card border border-border text-t1 text-sm font-medium disabled:opacity-50">
+              {cerrandoTurno === 'sin_turno' ? '...' : (isPT ? '⭐ Fechar Turno' : '⭐ Cerrar Turno')}
             </button>
           )}
         </div>
