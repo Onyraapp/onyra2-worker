@@ -132,14 +132,41 @@ export default function DashboardPage() {
     if (cerrandoTurno) return;
     setCerrandoTurno(numero);
     try {
-      const cajaInicial = await getCajaInicialDia(usuario.bar_id, todayStr()).catch(() => 0);
+      const fechaTurnoReal = turnoAbiertoActual?.fecha || todayStr();
+      const cajaInicial = await getCajaInicialDia(usuario.bar_id, fechaTurnoReal).catch(() => 0);
+
+      const [ingDelTurno, cfg] = await Promise.all([
+        getIngresosDia(usuario.bar_id, fechaTurnoReal),
+        getConfiguracion(usuario.bar_id),
+      ]);
+      const ingTurno = ingDelTurno.filter(i => !i.anulada && (i.turnos?.numero ?? 'sin_turno') === numero || (!i.turno_id && numero === turnoAbiertoActual?.numero));
+      const activasTurno = ingTurno.length > 0 ? ingTurno : ingDelTurno.filter(i => !i.anulada);
+      const totalBrutoTurno     = activasTurno.reduce((s, i) => s + i.monto_bruto, 0);
+      const totalRetencionTurno = activasTurno.reduce((s, i) => s + i.retencion_monto, 0);
+      const totalNetoTurno      = activasTurno.reduce((s, i) => s + i.monto_neto, 0);
+
       await cerrarTurnoConPendientes({
         barId: usuario.bar_id,
         usuarioId: usuario.id,
-        fecha: todayStr(),
+        fecha: fechaTurnoReal,
         turno: numero,
         cajaInicial: cajaInicial || 0,
       });
+
+      if (cfg?.wa_cierre_turno && cfg?.whatsapp_numero) {
+        const turnoLabel = numero === '1' ? 'Turno 1' : numero === '2' ? 'Turno 2' : (isPT ? 'Turno único' : 'Turno único');
+        const msg = [
+          `*${t.wa_cierre_turno} ${turnoLabel}*`, ``,
+          `${t.wa_ventas_brutas}:  ${fmtL(totalBrutoTurno)}`,
+          `${t.wa_retenciones}:    -${fmtL(totalRetencionTurno)}`,
+          `${t.wa_ventas_netas}:   ${fmtL(totalNetoTurno)}`, ``,
+          `_${activasTurno.length} ${t.wa_ventas}_`,
+        ].join('\n');
+        const waUrl = `https://wa.me/${cfg.whatsapp_numero}?text=${encodeURIComponent(msg)}`;
+        const waWindow = window.open(waUrl, '_blank');
+        if (!waWindow) window.location.href = waUrl;
+      }
+
       show('✓ ' + (isPT ? `Turno ${numero} fechado` : `Turno ${numero} cerrado`));
       cargarTurnosCerrados();
       cargarTurnoAbierto();
