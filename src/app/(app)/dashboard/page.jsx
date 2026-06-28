@@ -10,7 +10,7 @@ import {
   getIngresosDia, getEgresosDia, calcularResumenDia,
   getConfiguracion, getCierreDiario, crearCierreDiario,
   getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr, getTurnoAbiertoGlobal,
-  cerrarTurnoConPendientes
+  cerrarTurnoConPendientes, abrirTurno
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
@@ -105,6 +105,7 @@ export default function DashboardPage() {
   }, [cargar]);
 
   const [turnoAbiertoActual, setTurnoAbiertoActual] = useState(null);
+  const [modalPostCierre, setModalPostCierre] = useState(null);
 
   const cargarTurnoAbierto = useCallback(() => {
     if (!usuario) return;
@@ -167,15 +168,34 @@ export default function DashboardPage() {
         if (!waWindow) window.location.href = waUrl;
       }
 
-      show('✓ ' + (isPT ? `Turno ${numero} fechado` : `Turno ${numero} cerrado`));
       cargarTurnosCerrados();
       cargarTurnoAbierto();
       cargar();
+      setModalPostCierre({ numero, fechaTurnoReal });
     } catch {
       show('✗ ' + t.error);
     } finally {
       setCerrandoTurno(null);
     }
+  }
+
+  async function continuarConTurno2() {
+    const fechaTurnoReal = modalPostCierre?.fechaTurnoReal || todayStr();
+    try {
+      await abrirTurno(usuario.bar_id, usuario.id, fechaTurnoReal, '2', 0);
+      show('✓ ' + (isPT ? 'Turno 2 aberto' : 'Turno 2 abierto'));
+      cargarTurnoAbierto();
+      cargarTurnosCerrados();
+    } catch {
+      show('✗ ' + t.error);
+    }
+    setModalPostCierre(null);
+  }
+
+  async function confirmarCierreDiarioDesdeTurno() {
+    const fechaTurnoReal = modalPostCierre?.fechaTurnoReal || todayStr();
+    setModalPostCierre(null);
+    await abrirCierreDiario(fechaTurnoReal);
   }
 
   const ingresosActivos  = ingresos.filter(i => !i.anulada);
@@ -194,12 +214,12 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  async function abrirCierreDiario() {
+  async function abrirCierreDiario(fechaForzada) {
     if (diaCerrado) return;
     setCerrandoDia(true);
     setCierreListo(false);
     try {
-      const fechaCierre = fecha;
+      const fechaCierre = fechaForzada || fecha;
       const [ing, egr, cfg, caja] = await Promise.all([
         getIngresosDia(usuario.bar_id, fechaCierre),
         getEgresosDia(usuario.bar_id, fechaCierre),
@@ -260,6 +280,35 @@ export default function DashboardPage() {
   return (
     <Screen>
       <Toast msg={toast} visible={visible} />
+
+      {modalPostCierre && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-24 px-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
+            <div className="text-center">
+              <div className="text-3xl mb-2">📋</div>
+              <div className="text-lg font-bold text-t1">
+                {isPT ? 'Confirmar fechamento diário?' : '¿Confirmás cierre diario?'}
+              </div>
+              {modalPostCierre.numero === '1' && (
+                <div className="text-sm text-t3 mt-1">
+                  {isPT ? 'Se trabalha com 2 turnos, escolha Não.' : 'Si trabajás con 2 turnos, elegí No.'}
+                </div>
+              )}
+            </div>
+            <BtnPrimary
+              label={cerrandoDia ? '...' : (isPT ? 'Sim, fechar o dia' : 'Sí, cerrar el día')}
+              onClick={confirmarCierreDiarioDesdeTurno}
+              loading={cerrandoDia}
+            />
+            {modalPostCierre.numero === '1' && (
+              <button onClick={continuarConTurno2}
+                className="w-full h-11 rounded-xl bg-offset text-t2 text-sm font-medium">
+                {isPT ? 'Não, abrir Turno 2' : 'No, abrir Turno 2'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {turnoPendiente && (
         <div className="bg-ambersoft border border-amber/30 rounded-2xl p-4 flex items-center gap-3">
