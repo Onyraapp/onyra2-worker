@@ -86,8 +86,7 @@ export default function DashboardPage() {
         getCajaInicialDia(usuario.bar_id, fecha),
       ]);
       setIngresos(ing); setEgresos(egr);
-      const hayTurnoAbiertoHoy = turnoAbiertoActual && turnoAbiertoActual.fecha === fecha;
-      setDiaCerrado(!!cierre && !hayTurnoAbiertoHoy);
+      setDiaCerrado(!!cierre);
       setReoaerturaCausa(cierre?.reapertura_causa || null);
       setCajaInicial(caja);
       if (esHoy) {
@@ -97,7 +96,7 @@ export default function DashboardPage() {
         else setTurnoActivo('☀️ Turno 1');
       }
     } finally { setLoading(false); }
-  }, [usuario, fecha, turnoAbiertoActual]);
+  }, [usuario, fecha]);
 
   useEffect(() => {
     cargar();
