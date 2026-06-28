@@ -522,19 +522,19 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {!diaCerrado && (
-          <div className="flex gap-2">
-            <button onClick={() => cerrarTurnoRapido('1')}
-              disabled={cerrandoTurno !== null || turnosCerrados.includes('1')}
-              className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40 ${turnosCerrados.includes('1') ? 'bg-offset text-t3' : 'bg-primary text-white'}`}>
-              {cerrandoTurno === '1' ? '...' : (isPT ? '☀️ Fechar Turno 1' : '☀️ Cierre Turno 1')}
-            </button>
-            <button onClick={() => cerrarTurnoRapido('2')}
-              disabled={cerrandoTurno !== null || turnosCerrados.includes('2')}
-              className={`flex-1 h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40 ${turnosCerrados.includes('2') ? 'bg-offset text-t3' : 'bg-primary text-white'}`}>
-              {cerrandoTurno === '2' ? '...' : (isPT ? '🌙 Fechar Turno 2' : '🌙 Cierre Turno 2')}
-            </button>
-          </div>
+        {!diaCerrado && !turnosCerrados.includes('1') && (
+          <button onClick={() => cerrarTurnoRapido('1')}
+            disabled={cerrandoTurno !== null}
+            className="w-full h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40 bg-primary text-white">
+            {cerrandoTurno === '1' ? '...' : (isPT ? '☀️ Fechar Turno 1' : '☀️ Cierre Turno 1')}
+          </button>
+        )}
+        {!diaCerrado && turnosCerrados.includes('1') && !turnosCerrados.includes('2') && turnoAbiertoActual?.numero === '2' && (
+          <button onClick={() => cerrarTurnoRapido('2')}
+            disabled={cerrandoTurno !== null}
+            className="w-full h-11 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-40 bg-primary text-white">
+            {cerrandoTurno === '2' ? '...' : (isPT ? '🌙 Fechar Turno 2' : '🌙 Cierre Turno 2')}
+          </button>
         )}
         <div className="flex gap-2">
           <button onClick={() => router.push('/egresos')}
