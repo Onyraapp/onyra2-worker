@@ -401,6 +401,10 @@ async function buscarTurnoAbierto() {
               </div>
             </div>
             <BtnPrimary label={turno === '2' ? t.recibir_caja : t.abrir_caja} onClick={async () => {
+              if (turnosCerrados.includes(turno)) {
+                show('⚠ ' + (isPT ? 'Este turno já foi fechado hoje' : 'Este turno ya fue cerrado hoy'));
+                return;
+              }
               const fechaApertura = realDateStr();
               setFechaTurno(fechaApertura);
               setMostrarApertura(false);
@@ -443,6 +447,7 @@ async function buscarTurnoAbierto() {
               value: turnoOpt.key,
               label: turnoOpt.icon + ' ' + getLabel(turnoOpt, isPT) + (turnosCerrados.includes(turnoOpt.key) ? ' ✓' : ''),
               color: turnosCerrados.includes(turnoOpt.key) ? '#6B7280' : undefined,
+              disabled: turnosCerrados.includes(turnoOpt.key),
             }))}
             value={turno}
             onChange={setTurno}
