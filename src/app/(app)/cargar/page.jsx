@@ -446,21 +446,6 @@ async function buscarTurnoAbierto() {
         </div>
       )}
       <Card>
-        <div className="p-4">
-          <div className="mb-2"><FieldLabel>{t.turno}</FieldLabel></div>
-          <ChipGroup
-            options={TURNOS.map(turnoOpt => ({
-              value: turnoOpt.key,
-              label: turnoOpt.icon + ' ' + getLabel(turnoOpt, isPT) + (turnosCerrados.includes(turnoOpt.key) ? ' ✓' : ''),
-              color: turnosCerrados.includes(turnoOpt.key) ? '#6B7280' : undefined,
-              disabled: turnosCerrados.includes(turnoOpt.key),
-            }))}
-            value={turno}
-            onChange={setTurno}
-          />
-        </div>
-      </Card>
-      <Card>
         <CardHeader title={t.nueva_venta} subtitle={(TURNOS.find(o => o.key === turno)?.icon || '') + ' ' + (TURNOS.find(o => o.key === turno)?.label || '') + ' · ' + (isPT ? 'Adiciona à lista' : 'Se agrega a la lista')} />
         <div className="p-4 flex flex-col gap-4">
           <div>
