@@ -33,9 +33,9 @@ export function KpiCard({ label, value, sub, color = 'default', className = '', 
   };
   const s = styles[color] || styles.default;
   return (
-    <div className={`flex-1 rounded-2xl p-4 shadow-card ${s.wrap} ${className}`}>
+    <div className={`flex-1 min-w-0 rounded-2xl p-4 shadow-card ${s.wrap} ${className}`}>
       <div className="text-[11px] font-medium text-t3 mb-1.5 uppercase tracking-wide">{label}</div>
-      <div className={`text-2xl font-bold tabular-nums tracking-tight ${s.val}`}>
+      <div className={`text-2xl font-bold tabular-nums tracking-tight break-words ${s.val}`}>
         {typeof value === 'number' ? (fmtFn ? fmtFn(value) : fmt(value)) : value}
       </div>
       {sub && <div className="text-xs text-t3 mt-1">{sub}</div>}
