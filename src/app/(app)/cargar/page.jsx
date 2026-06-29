@@ -108,7 +108,13 @@ async function buscarTurnoAbierto() {
         // Verificar turnos cerrados de esa fecha
         getTurnosCerradosHoy(usuario.bar_id).then(setTurnosCerrados).catch(() => {});
       } else {
-        setTurno('1');
+        getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
+          setTurnosCerrados(cerrados);
+          const siguiente = !cerrados.includes('1') ? '1'
+                           : !cerrados.includes('2') ? '2'
+                           : 'sin_turno';
+          setTurno(siguiente);
+        }).catch(() => setTurno('1'));
         setMostrarApertura(true);
       }
     }).catch(() => { setTurno('1'); setMostrarApertura(true); });
