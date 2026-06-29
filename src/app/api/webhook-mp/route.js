@@ -1,12 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request) {
+  try {
   const body = await request.text();
-  
+  console.log('[webhook-mp] body recibido:', body);
+
   const xSignature = request.headers.get('x-signature');
   const xRequestId = request.headers.get('x-request-id');
   const urlParams = new URL(request.url).searchParams;
   const dataId = urlParams.get('data.id');
+  console.log('[webhook-mp] xSignature:', xSignature, '| xRequestId:', xRequestId, '| dataId (url):', dataId, '| MP_WEBHOOK_SECRET seteado:', !!process.env.MP_WEBHOOK_SECRET, '| MP_ACCESS_TOKEN seteado:', !!process.env.MP_ACCESS_TOKEN);
 
   if (xSignature) {
     const parts = xSignature.split(',');
@@ -15,13 +18,18 @@ export async function POST(request) {
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
     const crypto = await import('crypto');
     const hmac = crypto.createHmac('sha256', process.env.MP_WEBHOOK_SECRET).update(manifest).digest('hex');
+    console.log('[webhook-mp] manifest:', manifest, '| hmac calculado:', hmac, '| v1 recibido:', v1, '| coinciden:', hmac === v1);
     if (hmac !== v1) {
+      console.log('[webhook-mp] RECHAZADO por firma invalida');
       return new Response('Invalid signature', { status: 400 });
     }
+  } else {
+    console.log('[webhook-mp] sin header x-signature, se omite verificacion');
   }
 
   const payload = JSON.parse(body);
   const { type, data } = payload;
+  console.log('[webhook-mp] type:', type, '| data:', data);
 
   if (type !== 'payment') {
     return new Response('ok', { status: 200 });
@@ -79,4 +87,8 @@ export async function POST(request) {
   }
 
   return new Response('ok', { status: 200 });
+  } catch (err) {
+    console.error('[webhook-mp] ERROR no manejado:', err);
+    return new Response('error: ' + err.message, { status: 500 });
+  }
 }
