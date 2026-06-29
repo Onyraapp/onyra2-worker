@@ -1,6 +1,6 @@
 // src/lib/constants.js
 export const MEDIOS_PAGO = [
-  { key: 'efectivo',      label: 'Efectivo',          labelPT: 'Dinheiro',         color: '#2D6B8C', defaultRet: 0  },
+  { key: 'efectivo',      label: 'Efectivo',          labelPT: 'Dinheiro',         color: '#0F4C5C', defaultRet: 0  },
   { key: 'tarjeta',       label: 'Tarjeta',            labelPT: 'Cartão',           color: '#1A4F6A', defaultRet: 27 },
   { key: 'qr',            label: 'QR / Mercado Pago',  labelPT: 'QR / Mercado Pago',color: '#4A90A4', defaultRet: 2  },
   { key: 'transferencia', label: 'Transferencia',      labelPT: 'Transferência',    color: '#6BAFC0', defaultRet: 0  },
