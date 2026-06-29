@@ -477,11 +477,15 @@ export async function getCajaInicialDia(barId, fechaStr) {
 // NUEVA FUNCIÓN PARA ELIMINAR EL ERROR DE LÍMITE DE HORARIO
 export async function getTurnoAbiertoGlobal(barId) {
   const sb = getClient();
+  const hoy = new Date();
+  const ayer = new Date(hoy.getTime() - 24 * 60 * 60 * 1000);
+  const ayerStr = formatInTimeZone(ayer, TZ_ART, 'yyyy-MM-dd');
   const { data, error } = await sb
     .from('turnos')
     .select('*')
     .eq('bar_id', barId)
     .eq('cerrado', false)
+    .gte('fecha', ayerStr)
     .order('fecha', { ascending: false })
     .limit(1);
   if (error) throw error;
