@@ -1,105 +1,93 @@
-'use client';
-import { useState } from 'react';
-import { useAuth } from '../../../hooks/useAuth';
+import { createClient } from '@supabase/supabase-js';
 
-const PLANES = [
-  {
-    key: 'pro',
-    nombre: 'Troco Pro',
-    precio: 'USD 6.99',
-    desc: '1 local · 1 Admin + 3 Cajeros · Todas las funciones',
-    stripe: 'https://buy.stripe.com/14A5kw2cM0F3fFt4Ifg7e00',
-    mp: 'https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=3067c71cd277415ba7a4fcc568b6fd79',
-    pixCode: '00020126580014BR.GOV.BCB.PIX01365f6b583f-12a2-41fe-b7dd-dc66f7448cbf520400005303986540540.005802BR5913Gustavo Llusa6009SAO PAULO62140510a0w6UpTsAg63040044',
-    pixLabel: 'R$ 40,00',
-    destacado: true,
-  },
-  {
-    key: 'multi',
-    nombre: 'Troco Multilocal',
-    precio: 'USD 14.99',
-    desc: '5 locales · Admin central + 10 Cajeros',
-    stripe: 'https://buy.stripe.com/bJebIU18I87v0Kz5Mjg7e01',
-    mp: 'https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=ceffd835393d4218af243f774da1399c',
-    pixCode: '00020126580014BR.GOV.BCB.PIX01365f6b583f-12a2-41fe-b7dd-dc66f7448cbf520400005303986540586.005802BR5913Gustavo Llusa6009SAO PAULO621405102uEpyFJIdt6304AD6D',
-    pixLabel: 'R$ 86,00',
-    destacado: false,
-  },
-];
+export async function POST(request) {
+  try {
+    const body = await request.text();
+    console.log('[webhook-stripe] body recibido:', body);
 
-export default function PlanVencidoPage() {
-  const { usuario } = useAuth();
-  const [pixModal, setPixModal] = useState(null);
-  const [copiado, setCopiado] = useState(false);
+    const sig = request.headers.get('stripe-signature');
+    console.log('[webhook-stripe] stripe-signature:', sig, '| STRIPE_WEBHOOK_SECRET seteado:', !!process.env.STRIPE_WEBHOOK_SECRET);
 
-  function copiarPix(code) {
-    navigator.clipboard.writeText(code);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 2000);
+    if (sig && process.env.STRIPE_WEBHOOK_SECRET) {
+      const parts = sig.split(',');
+      const ts = parts.find(p => p.startsWith('t='))?.slice(2);
+      const v1 = parts.find(p => p.startsWith('v1='))?.slice(3);
+      const crypto = await import('crypto');
+      const signedPayload = `${ts}.${body}`;
+      const hmac = crypto.createHmac('sha256', process.env.STRIPE_WEBHOOK_SECRET).update(signedPayload).digest('hex');
+      console.log('[webhook-stripe] hmac calculado:', hmac, '| v1 recibido:', v1, '| coinciden:', hmac === v1);
+      if (hmac !== v1) {
+        console.log('[webhook-stripe] RECHAZADO por firma invalida');
+        return new Response('Invalid signature', { status: 400 });
+      }
+    } else {
+      console.log('[webhook-stripe] sin verificacion de firma (falta header o secret)');
+    }
+
+    const event = JSON.parse(body);
+    console.log('[webhook-stripe] event.type:', event.type);
+
+    if (event.type !== 'checkout.session.completed') {
+      return new Response('ok', { status: 200 });
+    }
+
+    const session = event.data?.object;
+    if (!session) return new Response('ok', { status: 200 });
+
+    if (session.payment_status !== 'paid') {
+      console.log('[webhook-stripe] payment_status no es paid:', session.payment_status);
+      return new Response('ok', { status: 200 });
+    }
+
+    const email = session.customer_details?.email || session.customer_email;
+    const amount = session.amount_total; // en centavos de USD
+
+    // Mapeo por monto (USD 6.99 -> pro, USD 14.99 -> multi). Ver PLANES en plan-vencido/page.jsx.
+    let planKey = null;
+    if (amount === 699) planKey = 'pro';
+    else if (amount === 1499) planKey = 'multi';
+
+    console.log('[webhook-stripe] email:', email, '| amount:', amount, '| planKey:', planKey);
+
+    if (!email || !planKey) return new Response('ok', { status: 200 });
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    let barId = null;
+    const { data: bar } = await supabase
+      .from('bares')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (bar) {
+      barId = bar.id;
+    } else {
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('bar_id')
+        .eq('email', email)
+        .maybeSingle();
+      if (usuario) barId = usuario.bar_id;
+    }
+
+    console.log('[webhook-stripe] barId resuelto:', barId);
+
+    if (barId) {
+      const vence = new Date();
+      vence.setMonth(vence.getMonth() + 1);
+      await supabase
+        .from('bares')
+        .update({ plan_activo: true, plan: planKey, trial_hasta: vence.toISOString() })
+        .eq('id', barId);
+    }
+
+    return new Response('ok', { status: 200 });
+  } catch (err) {
+    console.error('[webhook-stripe] ERROR no manejado:', err);
+    return new Response('error: ' + err.message, { status: 500 });
   }
-
-  return (
-    <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 py-10">
-      <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
-        <img src="/logo.svg" alt="Troco" className="w-24 h-24" />
-        <div>
-          <div className="text-2xl font-bold text-t1 tracking-tight">Tu período de prueba terminó</div>
-          <div className="text-sm text-t3 mt-2">Gracias por probar Troco. Para seguir usando la app elegí un plan.</div>
-        </div>
-
-        <div className="w-full flex flex-col gap-4">
-          {PLANES.map(plan => (
-            <div key={plan.key} className={`bg-surface rounded-2xl shadow-card p-5 text-left ${plan.destacado ? 'border-2 border-primary' : ''}`}>
-              <div className={`text-[11px] font-semibold uppercase tracking-wide mb-1 ${plan.destacado ? 'text-primary' : 'text-t3'}`}>{plan.nombre}</div>
-              <div className="text-2xl font-black text-t1 mb-1">{plan.precio} <span className="text-sm font-normal text-t3">/ mes</span></div>
-              <div className="text-xs text-t3 mb-4">{plan.desc}</div>
-              <div className="flex flex-col gap-2">
-                <a href={plan.stripe} target="_blank"
-                  className="w-full h-10 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2">
-                  💳 Pagar con tarjeta
-                </a>
-                <a href={plan.mp} target="_blank"
-                  className="w-full h-10 rounded-xl bg-[#009EE3] text-white font-semibold text-sm flex items-center justify-center gap-2">
-                  💙 Mercado Pago
-                </a>
-                <button onClick={() => setPixModal(plan)}
-                  className="w-full h-10 rounded-xl bg-[#32BCAD] text-white font-semibold text-sm flex items-center justify-center gap-2">
-                  🟢 Pix · {plan.pixLabel}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <a href={"https://wa.me/55998202670?text=Hola%2C%20quiero%20contratar%20Troco%20para%20" + encodeURIComponent(usuario?.bares?.nombre || '')}
-          target="_blank"
-          className="w-full h-12 rounded-xl bg-primary text-white font-semibold text-[15px] flex items-center justify-center shadow-sm">
-          Contratar por WhatsApp
-        </a>
-        <div className="text-xs text-t3">También podés escribirnos a troco@gmail.com</div>
-      </div>
-
-      {pixModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-24 px-4">
-          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
-            <div className="text-center">
-              <div className="text-3xl mb-2">🟢</div>
-              <div className="text-lg font-bold text-t1">Pagar con Pix</div>
-              <div className="text-sm text-t3 mt-1">{pixModal.nombre} · {pixModal.pixLabel}</div>
-            </div>
-            <div className="bg-offset rounded-xl p-3 text-xs text-t2 break-all font-mono">
-              {pixModal.pixCode}
-            </div>
-            <button onClick={() => copiarPix(pixModal.pixCode)}
-              className="w-full h-12 rounded-xl bg-[#32BCAD] text-white font-semibold text-[15px]">
-              {copiado ? '✓ Copiado!' : 'Copiar código Pix'}
-            </button>
-            <button onClick={() => setPixModal(null)} className="w-full h-10 text-t3 text-sm">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
