@@ -1,6 +1,9 @@
 // src/lib/data.js
 import { getClient } from './supabase';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
+
+const TZ_ART = 'America/Argentina/Buenos_Aires';
 import { CONFIG_KEYS } from './constants';
 
 // ── AUTH ─────────────────────────────────────────────────
@@ -238,8 +241,8 @@ export async function cerrarTurnoConPendientes({ barId, usuarioId, fecha, turno,
 
 export async function getIngresosDia(barId, fechaStr) {
   const sb = getClient();
-  const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
+  const inicio = fromZonedTime(`${fechaStr} 00:00:00`, TZ_ART).toISOString();
+  const fin    = fromZonedTime(`${fechaStr} 23:59:59.999`, TZ_ART).toISOString();
   const { data, error } = await sb
     .from('ingresos').select('*')
     .eq('bar_id', barId)
@@ -282,8 +285,8 @@ export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, deta
 
 export async function getEgresosDia(barId, fechaStr) {
   const sb = getClient();
-  const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
+  const inicio = fromZonedTime(`${fechaStr} 00:00:00`, TZ_ART).toISOString();
+  const fin    = fromZonedTime(`${fechaStr} 23:59:59.999`, TZ_ART).toISOString();
   const { data, error } = await sb
     .from('egresos')
     .select('*')
@@ -367,21 +370,17 @@ export function fmtPct(n) {
 }
 
 export function realDateStr() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - offset * 60000);
-  return local.toISOString().slice(0, 10);
+  return formatInTimeZone(new Date(), TZ_ART, 'yyyy-MM-dd');
 }
 
 export function todayStr() {
   const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - offset * 60000);
-  if (local.getHours() < 6) {
-    const ayer = new Date(local.getTime() - 24 * 60 * 60 * 1000);
-    return ayer.toISOString().slice(0, 10);
+  const horaArt = parseInt(formatInTimeZone(now, TZ_ART, 'HH'), 10);
+  if (horaArt < 6) {
+    const ayer = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return formatInTimeZone(ayer, TZ_ART, 'yyyy-MM-dd');
   }
-  return local.toISOString().slice(0, 10);
+  return formatInTimeZone(now, TZ_ART, 'yyyy-MM-dd');
 }
 
 export async function getTurnosCerradosHoy(barId) {
