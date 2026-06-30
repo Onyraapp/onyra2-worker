@@ -176,7 +176,7 @@ export function ChipGroup({ options, value, onChange, className = '' }) {
         return (
           <button key={o.value} onClick={() => { if (!o.disabled) onChange(o.value); }}
             disabled={o.disabled}
-            className={`px-1.5 py-2 rounded-xl font-medium transition-all active:scale-[0.97] text-center w-full text-sm disabled:opacity-40 disabled:cursor-not-allowed ${sel ? 'bg-primary text-white shadow-sm' : 'bg-offset text-t2'}`}
+            className={`px-1.5 py-2 rounded-xl font-medium transition-all active:scale-[0.97] text-center w-full text-sm leading-tight break-words disabled:opacity-40 disabled:cursor-not-allowed ${sel ? 'bg-primary text-white shadow-sm' : 'bg-offset text-t2'}`}
             style={sel && o.color ? { backgroundColor: o.color } : {}}>
             {o.label}
           </button>

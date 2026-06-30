@@ -13,6 +13,7 @@ export const TIPOS_EGRESO = [
   { key: 'servicios',     label: 'Luz / Gas / Agua', labelPT: 'Luz / Gás / Água'  },
   { key: 'sueldos',       label: 'Sueldos',          labelPT: 'Salários'          },
   { key: 'mantenimiento', label: 'Mantenimiento',    labelPT: 'Manutenção'        },
+  { key: 'limpieza',      label: 'Limpieza/Papelería',labelPT: 'Limpeza/Papelaria' },
   { key: 'retiros',       label: 'Retiros',          labelPT: 'Retiradas'         },
   { key: 'impuestos',     label: 'Impuestos y Tasas',labelPT: 'Impostos e Taxas'  },
   { key: 'otros',         label: 'Otros',            labelPT: 'Outros'            },
