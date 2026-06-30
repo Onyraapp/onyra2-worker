@@ -2,8 +2,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-import { crearEgreso, getConfiguracion, getEgresosDia, fmt, todayStr, getTurnosCerradosHoy } from '../../../lib/data';
-import { TIPOS_EGRESO, TURNOS, MEDIOS_PAGO_EGRESO, getLabel } from '../../../lib/constants';
+import { crearEgreso, getConfiguracion, getEgresosDia, fmt, todayStr } from '../../../lib/data';
+import { TIPOS_EGRESO, MEDIOS_PAGO_EGRESO, getLabel } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
   FieldLabel, BtnPrimary, Toast, useToast, Textarea
@@ -19,7 +19,6 @@ export default function EgresosPage() {
 
   const [config,    setConfig]    = useState(null);
   const [tipo,      setTipo]      = useState('proveedores');
-  const [turno,     setTurno]     = useState('sin_turno');
   const [medioPago, setMedioPago] = useState('efectivo');
   const [monto,     setMonto]     = useState('');
   const [detalle,   setDetalle]   = useState('');
@@ -35,11 +34,6 @@ export default function EgresosPage() {
     if (!usuario) return;
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
     cargarEgresos();
-    getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-      if (cerrados.includes('1') && cerrados.includes('2')) setTurno('sin_turno');
-      else if (cerrados.includes('1')) setTurno('2');
-      else setTurno('1');
-    }).catch(() => {});
   }, [usuario]);
 
   async function cargarEgresos() {
@@ -172,10 +166,6 @@ export default function EgresosPage() {
           <div>
             <FieldLabel>{t.medio_pago_egreso}</FieldLabel>
             <ChipGroup options={MEDIOS_PAGO_EGRESO.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }))} value={medioPago} onChange={setMedioPago} />
-          </div>
-          <div>
-            <FieldLabel>{t.turno}</FieldLabel>
-            <ChipGroup options={TURNOS.map(tp => ({ value: tp.key, label: tp.icon + ' ' + getLabel(tp, isPT) }))} value={turno} onChange={setTurno} />
           </div>
           <div>
             <FieldLabel>{t.importe}</FieldLabel>
