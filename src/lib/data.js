@@ -130,9 +130,25 @@ export async function getTurnoAbiertoHoy(barId, numero) {
 
 export async function abrirTurno(barId, usuarioId, fecha, numero, cajaInicial = 0) {
   const sb = getClient();
+
+  // 1. Si ya existe un turno abierto para esta fecha y número, devolverlo directamente
   const existente = await getTurnoAbierto(barId, fecha, numero);
   if (existente) return existente;
 
+  // 2. Si existe un turno abierto con este número en CUALQUIER fecha (fantasma),
+  //    cerrarlo automáticamente antes de crear el nuevo
+  const { data: fantasmas } = await sb
+    .from('turnos')
+    .select('id')
+    .eq('bar_id', barId)
+    .eq('numero', numero)
+    .eq('cerrado', false);
+  if (fantasmas && fantasmas.length > 0) {
+    const ids = fantasmas.map(t => t.id);
+    await sb.from('turnos').update({ cerrado: true, cerrado_at: new Date().toISOString() }).in('id', ids);
+  }
+
+  // 3. Insertar el turno nuevo
   const { data, error } = await sb
     .from('turnos')
     .insert([{ bar_id: barId, usuario_id: usuarioId, fecha, numero, caja_inicial: cajaInicial }])
