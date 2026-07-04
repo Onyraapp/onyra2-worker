@@ -422,7 +422,7 @@ async function buscarTurnoAbierto() {
               if (!cajaInicial) setCajaInicial('0');
               try { localStorage.setItem(CAJA_KEY, fechaApertura + '_' + turno); } catch {}
               if (online) {
-                try { await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, turno, parseFloat(cajaInicial) || 0); } catch {}
+                try { await abrirTurno(usuario.bar_id, usuario.id, fechaApertura, turno, parseFloat(cajaInicial) || 0); } catch (err) { console.error('[abrirTurno error]', err); }
               }
             }} />
           </div>
