@@ -11,7 +11,11 @@ import {
   getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getTurnoAbiertoHoy, getTurnoAbiertoGlobal, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
+import { formatInTimeZone } from 'date-fns-tz';
+import { es as esLocale } from 'date-fns/locale/es';
+import { ptBR as ptBRLocale } from 'date-fns/locale/pt-BR';
 import { MEDIOS_PAGO, TURNOS, getLabel } from '../../../lib/constants';
+const TZ_ART = 'America/Argentina/Buenos_Aires';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
   BtnPrimary, BtnSecondary, Toast, useToast, Spinner,
@@ -388,7 +392,7 @@ async function buscarTurnoAbierto() {
                 {turno === '1' ? t.apertura_caja : turno === '2' ? t.recepcion_caja : t.apertura_caja}
               </div>
               <div className="text-sm text-t3 mt-1 capitalize">
-                {new Date().toLocaleDateString(isPT ? 'pt-BR' : 'es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} · {turno === '1' ? 'Turno 1 ☀️' : turno === '2' ? 'Turno 2 🌙' : (isPT ? 'Turno único' : 'Turno único') + ' ⭐'}
+                {formatInTimeZone(new Date(), TZ_ART, "EEEE d 'de' MMMM", { locale: isPT ? ptBRLocale : esLocale })} · {turno === '1' ? 'Turno 1 ☀️' : turno === '2' ? 'Turno 2 🌙' : (isPT ? 'Turno único' : 'Turno único') + ' ⭐'}
               </div>
               {nombreCajero && (
                 <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
