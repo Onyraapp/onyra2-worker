@@ -222,6 +222,21 @@ export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBr
     ? fechaTurno + 'T' + horaActual
     : ahora.toISOString();
 
+  // Anti-duplicado: verificar si existe una venta idéntica en los últimos 30 segundos
+  const hace30s = new Date(ahora.getTime() - 30000).toISOString();
+  const { data: existente } = await sb.from('ingresos')
+    .select('id')
+    .eq('bar_id', barId)
+    .eq('medio_pago', medioPago)
+    .eq('monto_bruto', montoBruto)
+    .eq('anulada', false)
+    .gte('fecha', hace30s)
+    .limit(1);
+  if (existente && existente.length > 0) {
+    console.warn('[crearIngresoInstant] venta duplicada bloqueada', { medioPago, montoBruto });
+    return existente[0];
+  }
+
   const { data, error } = await sb.from('ingresos').insert([{
     bar_id: barId,
     turno_id: null,
