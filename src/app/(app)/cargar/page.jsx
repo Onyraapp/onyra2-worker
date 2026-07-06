@@ -7,7 +7,7 @@ import { useOnline, agregarACola, getCola, limpiarCola } from '../../../hooks/us
 import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
-  cerrarTurnoConPendientes, fmt, todayStr, realDateStr, reabrirDia,
+  cerrarTurnoConPendientes, fmt, todayStr, realDateStr, reabrirDia, guardarHoraCorte,
   getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getTurnoAbiertoHoy, getTurnoAbiertoGlobal, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
@@ -76,7 +76,10 @@ export default function CargarPage() {
       }
     } catch {}
 
-    getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
+    getConfiguracion(usuario.bar_id).then(cfg => {
+      setConfig(cfg);
+      if (cfg?.hora_corte_dia != null) guardarHoraCorte(cfg.hora_corte_dia);
+    }).catch(() => {});
 
     setColaPendiente(getCola());
 

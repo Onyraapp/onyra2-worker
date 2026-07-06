@@ -389,14 +389,21 @@ export function realDateStr() {
   return formatInTimeZone(new Date(), TZ_ART, 'yyyy-MM-dd');
 }
 
-export function todayStr() {
+export function todayStr(horaCorte) {
+  const corte = horaCorte ?? (() => {
+    try { return parseInt(localStorage.getItem('troco_hora_corte') || '3', 10); } catch { return 3; }
+  })();
   const now = new Date();
   const horaArt = parseInt(formatInTimeZone(now, TZ_ART, 'HH'), 10);
-  if (horaArt < 6) {
+  if (horaArt < corte) {
     const ayer = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     return formatInTimeZone(ayer, TZ_ART, 'yyyy-MM-dd');
   }
   return formatInTimeZone(now, TZ_ART, 'yyyy-MM-dd');
+}
+
+export function guardarHoraCorte(hora) {
+  try { localStorage.setItem('troco_hora_corte', String(hora ?? 3)); } catch {}
 }
 
 export async function getTurnosCerradosHoy(barId) {
