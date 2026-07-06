@@ -260,6 +260,7 @@ async function buscarTurnoAbierto() {
 
     if (!online) {
       const rows = activas.filter(i => !i.supabase_id).map(item => ({
+        id: item._id?.toString().includes('-') ? item._id : crypto.randomUUID(),
         bar_id: usuario.bar_id, turno_id: null, usuario_id: usuario.id,
         medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
         retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,

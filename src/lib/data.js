@@ -207,7 +207,12 @@ export async function crearIngreso({ barId, turnoId, usuarioId, medioPago, monto
 
 export async function crearIngresosBulk(ingresos) {
   const sb = getClient();
-  const { data, error } = await sb.from('ingresos').insert(ingresos).select();
+  // upsert con ignoreDuplicates para que sea idempotente — si la sincronización
+  // falla y se reintenta, no se insertan filas duplicadas
+  const { data, error } = await sb.from('ingresos').upsert(ingresos, {
+    onConflict: 'id',
+    ignoreDuplicates: true,
+  }).select();
   if (error) throw error;
   return data;
 }
