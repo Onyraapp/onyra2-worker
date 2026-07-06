@@ -154,20 +154,6 @@ export default function DashboardPage() {
         cajaInicial: cajaInicial || 0,
       });
 
-      if (cfg?.wa_cierre_turno && cfg?.whatsapp_numero) {
-        const turnoLabel = numero === '1' ? 'Turno 1' : numero === '2' ? 'Turno 2' : (isPT ? 'Turno único' : 'Turno único');
-        const msg = [
-          `*${t.wa_cierre_turno} ${turnoLabel}*`, ``,
-          `${t.wa_ventas_brutas}:  ${fmtL(totalBrutoTurno)}`,
-          `${t.wa_retenciones}:    -${fmtL(totalRetencionTurno)}`,
-          `${t.wa_ventas_netas}:   ${fmtL(totalNetoTurno)}`, ``,
-          `_${activasTurno.length} ${t.wa_ventas}_`,
-        ].join('\n');
-        const waUrl = `https://wa.me/${cfg.whatsapp_numero}?text=${encodeURIComponent(msg)}`;
-        const waWindow = window.open(waUrl, '_blank');
-        if (!waWindow) window.location.href = waUrl;
-      }
-
       cargarTurnosCerrados();
       cargarTurnoAbierto();
       cargar();
