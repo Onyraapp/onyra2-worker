@@ -68,7 +68,8 @@ export default function DashboardPage() {
         if (!cfg?.whatsapp_numero) return;
         const lineas = vencs.map(v => `⚠ ${v.detalle}: ${fmtL(v.importe)}`).join('\n');
         const msg = `*Troco - ${t.vencimientos}*\n\n${lineas}`;
-        window.open(`https://wa.me/${cfg.whatsapp_numero}?text=${encodeURIComponent(msg)}`, '_blank');
+        const waNumVenc = (cfg.whatsapp_numero?.trim() || '').replace(/^\+?/, '+');
+        window.open(`https://wa.me/${waNumVenc}?text=${encodeURIComponent(msg)}`, '_blank');
         localStorage.setItem(VENC_ALERTA_KEY, hoy);
       } catch {}
     }
@@ -249,7 +250,8 @@ export default function DashboardPage() {
         `${t.resultado}: *${r.resultado >= 0 ? '' : '-'}${fmtL(Math.abs(r.resultado))}*`, ``,
         `_${ingActivos.length} ${t.wa_ventas} - ${ing.filter(i => i.anulada).length} ${t.wa_anulaciones}_`,
       ].join('\n') + lineasVenc;
-      const numero = cfg?.whatsapp_numero?.trim();
+      const numeroRaw = cfg?.whatsapp_numero?.trim() || '';
+      const numero = numeroRaw.startsWith('+') ? numeroRaw : '+' + numeroRaw;
       const url = numero
         ? `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`
         : `https://wa.me/?text=${encodeURIComponent(msg)}`;
