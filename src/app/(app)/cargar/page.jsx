@@ -55,6 +55,8 @@ export default function CargarPage() {
   const [aperturaLista,    setAperturaLista]    = useState(false);
   const [sincronizando,    setSincronizando]    = useState(false);
   const [colaPendiente,    setColaPendiente]    = useState([]);
+  const [modalSinSync,     setModalSinSync]     = useState(false);
+  const [reintentando,     setReintentando]     = useState(false);
   const [anulando,         setAnulando]         = useState(null);
   const [motivoAnulacion,  setMotivoAnulacion]  = useState('');
   const [agregando,        setAgregando]        = useState(false);
@@ -253,9 +255,61 @@ async function buscarTurnoAbierto() {
     } catch { show('✗ ' + t.error); }
   }
 
+  async function reintentarSinSync() {
+    setReintentando(true);
+    const sinSync = activas.filter(i => !i.supabase_id);
+    let todasOk = true;
+    for (const item of sinSync) {
+      try {
+        const saved = await crearIngresoInstant({
+          barId: usuario.bar_id, usuarioId: usuario.id,
+          medioPago: item.medio_pago, montoBruto: item.monto_bruto,
+          retencionPct: item.retencion_pct, retencionMonto: item.retencion_monto,
+          montoNeto: item.monto_neto, nota: item.nota || '', fechaTurno,
+        });
+        setLista(l => l.map(i => i._id === item._id ? { ...i, supabase_id: saved.id } : i));
+      } catch { todasOk = false; }
+    }
+    setReintentando(false);
+    if (todasOk) {
+      setModalSinSync(false);
+      show('✓ ' + (isPT ? 'Vendas sincronizadas' : 'Ventas sincronizadas'));
+    } else {
+      show('⚠ ' + (isPT ? 'Algumas vendas ainda não sincronizaram' : 'Algunas ventas no se pudieron sincronizar'));
+    }
+  }
+
+  async function cerrarIgualSinSync() {
+    setModalSinSync(false);
+    const sinSync = activas.filter(i => !i.supabase_id);
+    // Guardar ventas no sincronizadas en la cola para no perderlas
+    const rows = sinSync.map(item => ({
+      id: item._id?.toString().includes('-') ? item._id : crypto.randomUUID(),
+      bar_id: usuario.bar_id, turno_id: null, usuario_id: usuario.id,
+      medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
+      retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,
+      monto_neto: item.monto_neto, nota: item.nota || '',
+      fecha: fromZonedTime(fechaTurno + 'T' + formatInTimeZone(new Date(), TZ_ART, 'HH:mm:ss'), TZ_ART).toISOString(),
+      anulada: false, motivo_anulacion: '',
+    }));
+    agregarACola({ bar_id: usuario.bar_id, usuario_id: usuario.id, fecha: fechaTurno, turno, caja_inicial: parseFloat(cajaInicial) || 0, rows });
+    setColaPendiente(getCola());
+    // Avisar al admin por WhatsApp
+    if (config?.whatsapp_numero) {
+      const totalSinSync = sinSync.reduce((s, i) => s + i.monto_bruto, 0);
+      const waNum = (config.whatsapp_numero?.trim() || '').replace(/^\+?/, '+');
+      const msg = `⚠ *Troco - Ventas no registradas*\n\nMujica cerró el turno con ${sinSync.length} venta(s) sin sincronizar.\nTotal estimado: ${fmtL(totalSinSync)}\n\nSe guardaron en la cola y se sincronizarán automáticamente.`;
+      window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+    cerrarTurnoHandler();
+  }
+
   async function cerrarTurnoHandler() {
     if (cerrando) return; // Protección contra doble-click / doble-tap
     if (activas.length === 0) return show('⚠ ' + (isPT ? 'Não há vendas para fechar' : 'No hay ventas para cerrar'));
+    // Si hay ventas sin sincronizar, mostrar modal antes de cerrar
+    const sinSync = activas.filter(i => !i.supabase_id);
+    if (sinSync.length > 0 && online) { setModalSinSync(true); return; }
     setCerrando(true);
 
     if (!online) {
@@ -333,6 +387,33 @@ async function buscarTurnoAbierto() {
             {t.reabrir_dia}
           </button>
         </div>
+        {modalSinSync && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
+            <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
+              <div className="text-center">
+                <div className="text-3xl mb-2">⚠️</div>
+                <div className="text-lg font-bold text-t1">
+                  {isPT ? 'Vendas não sincronizadas' : 'Ventas no sincronizadas'}
+                </div>
+                <div className="text-sm text-t3 mt-1">
+                  {activas.filter(i => !i.supabase_id).length} {isPT ? 'venda(s) não foram salvas no servidor.' : 'venta(s) no se guardaron en el servidor.'}
+                </div>
+              </div>
+              <button
+                onClick={reintentarSinSync}
+                disabled={reintentando}
+                className="w-full h-12 rounded-xl bg-primary text-white font-semibold text-[15px] disabled:opacity-40">
+                {reintentando ? '...' : (isPT ? '🔄 Tentar novamente' : '🔄 Reintentar sincronización')}
+              </button>
+              <button
+                onClick={cerrarIgualSinSync}
+                disabled={reintentando}
+                className="w-full h-11 rounded-xl bg-offset text-t2 text-sm font-medium disabled:opacity-40">
+                {isPT ? 'Fechar mesmo assim' : 'Cerrar igual (guardar en cola)'}
+              </button>
+            </div>
+          </div>
+        )}
         {modalReapertura && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center pb-24 px-4">
             <div className="bg-surface rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-xl">
