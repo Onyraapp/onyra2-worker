@@ -369,7 +369,6 @@ export default function DashboardPage() {
                 onClick={(e) => {
                   if (waEnviado) { e.preventDefault(); return; }
                   setWaEnviado(true);
-                  setTimeout(() => { setModalCierre(false); setCierreListo(false); setWaEnviado(false); router.push('/cargar'); }, 500);
                 }}
                 className={`w-full h-12 rounded-xl bg-[#25D366] text-white font-semibold text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-sm ${waEnviado ? 'opacity-50 pointer-events-none' : ''}`}
               >
