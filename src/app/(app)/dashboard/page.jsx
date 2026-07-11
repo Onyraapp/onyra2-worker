@@ -7,7 +7,7 @@ import { es } from 'date-fns/locale';
 import ptBR from 'date-fns/locale/pt-BR';
 import { useAuth } from '../../../hooks/useAuth';
 import {
-  getIngresosDia, getEgresosDia, calcularResumenDia,
+  getIngresosDia, getEgresosDia, calcularResumenDia, guardarHoraCorte,
   getConfiguracion, getCierreDiario, crearCierreDiario,
   getCajaInicialDia, getTurnosCerradosHoy, fmt, todayStr, getTurnoAbiertoGlobal,
   cerrarTurnoConPendientes, abrirTurno
@@ -80,12 +80,14 @@ export default function DashboardPage() {
     if (!usuario) return;
     setLoading(true);
     try {
-      const [ing, egr, cierre, caja] = await Promise.all([
+      const [ing, egr, cierre, caja, cfg] = await Promise.all([
         getIngresosDia(usuario.bar_id, fecha),
         getEgresosDia(usuario.bar_id, fecha),
         getCierreDiario(usuario.bar_id, fecha),
         getCajaInicialDia(usuario.bar_id, fecha),
+        getConfiguracion(usuario.bar_id),
       ]);
+      if (cfg?.hora_corte_dia != null) guardarHoraCorte(cfg.hora_corte_dia);
       setIngresos(ing); setEgresos(egr);
       setDiaCerrado(!!cierre);
       setReoaerturaCausa(cierre?.reapertura_causa || null);
