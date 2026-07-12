@@ -1,6 +1,6 @@
 // src/lib/data.js
 import { getClient } from './supabase';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns';
+import { startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 
 const TZ_ART = 'America/Argentina/Buenos_Aires';
@@ -277,12 +277,11 @@ export async function cerrarTurnoConPendientes({ barId, usuarioId, fecha, turno,
 
 export async function getIngresosDia(barId, fechaStr) {
   const sb = getClient();
-  const inicio = fromZonedTime(`${fechaStr} 00:00:00`, TZ_ART).toISOString();
-  const fin    = fromZonedTime(`${fechaStr} 23:59:59.999`, TZ_ART).toISOString();
+  const { inicio, fin } = ventanaDiaComercial(fechaStr);
   const { data, error } = await sb
     .from('ingresos').select('*')
     .eq('bar_id', barId)
-    .gte('fecha', inicio).lte('fecha', fin)
+    .gte('fecha', inicio).lt('fecha', fin)
     .order('fecha', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -321,13 +320,12 @@ export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, deta
 
 export async function getEgresosDia(barId, fechaStr) {
   const sb = getClient();
-  const inicio = fromZonedTime(`${fechaStr} 00:00:00`, TZ_ART).toISOString();
-  const fin    = fromZonedTime(`${fechaStr} 23:59:59.999`, TZ_ART).toISOString();
+  const { inicio, fin } = ventanaDiaComercial(fechaStr);
   const { data, error } = await sb
     .from('egresos')
     .select('*')
     .eq('bar_id', barId)
-    .gte('fecha', inicio).lte('fecha', fin)
+    .gte('fecha', inicio).lt('fecha', fin)
     .order('fecha', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -409,10 +407,13 @@ export function realDateStr() {
   return formatInTimeZone(new Date(), TZ_ART, 'yyyy-MM-dd');
 }
 
+function getHoraCorteLocal(horaCorte) {
+  if (horaCorte != null) return horaCorte;
+  try { return parseInt(localStorage.getItem('troco_hora_corte') || '3', 10); } catch { return 3; }
+}
+
 export function todayStr(horaCorte) {
-  const corte = horaCorte ?? (() => {
-    try { return parseInt(localStorage.getItem('troco_hora_corte') || '3', 10); } catch { return 3; }
-  })();
+  const corte = getHoraCorteLocal(horaCorte);
   const now = new Date();
   const horaArt = parseInt(formatInTimeZone(now, TZ_ART, 'HH'), 10);
   if (horaArt < corte) {
@@ -420,6 +421,15 @@ export function todayStr(horaCorte) {
     return formatInTimeZone(ayer, TZ_ART, 'yyyy-MM-dd');
   }
   return formatInTimeZone(now, TZ_ART, 'yyyy-MM-dd');
+}
+
+function ventanaDiaComercial(fechaStr, horaCorte) {
+  const corte = getHoraCorteLocal(horaCorte);
+  const corteStr = String(corte).padStart(2, '0');
+  const siguienteStr = addDays(new Date(`${fechaStr}T12:00:00`), 1).toISOString().slice(0, 10);
+  const inicio = fromZonedTime(`${fechaStr} ${corteStr}:00:00`, TZ_ART).toISOString();
+  const fin    = fromZonedTime(`${siguienteStr} ${corteStr}:00:00`, TZ_ART).toISOString();
+  return { inicio, fin };
 }
 
 export function guardarHoraCorte(hora) {
