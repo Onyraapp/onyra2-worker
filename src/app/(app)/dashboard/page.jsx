@@ -162,15 +162,9 @@ export default function DashboardPage() {
       cargar();
 
       if (numero === '1') {
-        // Turno 1 cerrado: abre Turno 2 automático, sin preguntar nada.
-        try {
-          await abrirTurno(usuario.bar_id, usuario.id, fechaTurnoReal, '2', 0);
-          show('✓ ' + (isPT ? 'Turno 1 fechado · Turno 2 aberto' : 'Turno 1 cerrado · Turno 2 abierto'));
-          cargarTurnoAbierto();
-          cargarTurnosCerrados();
-        } catch {
-          show('✗ ' + t.error);
-        }
+        // Turno 1 cerrado: preguntamos si se cierra el día o se abre Turno 2.
+        show('✓ ' + (isPT ? 'Turno 1 fechado' : 'Turno 1 cerrado'));
+        setModalPostCierre({ numero, fechaTurnoReal });
       } else {
         // Turno 2 (o único) cerrado: ahí sí hace falta decidir si se cierra el día.
         setModalPostCierre({ numero, fechaTurnoReal });
