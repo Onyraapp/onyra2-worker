@@ -198,6 +198,13 @@ export default function DashboardPage() {
   async function confirmarCierreDiarioDesdeTurno() {
     const fechaTurnoReal = modalPostCierre?.fechaTurnoReal || todayStr();
     setModalPostCierre(null);
+    try {
+      await crearCierreDiario(usuario.bar_id, usuario.id, fechaTurnoReal);
+    } catch (e) {
+      if (e?.code !== '23505') {
+        console.error('Fallo al cerrar el dia tempranamente:', e);
+      }
+    }
     await abrirCierreDiario(fechaTurnoReal);
   }
 
