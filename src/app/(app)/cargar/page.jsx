@@ -8,7 +8,7 @@ import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
   cerrarTurnoConPendientes, fmt, todayStr, realDateStr, reabrirDia, guardarHoraCorte,
-  getTurnosCerradosHoy, getCierreDiario, getTurnoAbierto, getTurnoAbiertoHoy, getTurnoAbiertoGlobal, getIngresosDia
+  getTurnosCerradosHoy, getCierreDiario, getTurnoAbiertoHoy, getTurnoAbiertoGlobal, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
@@ -91,14 +91,12 @@ export default function CargarPage() {
       .catch(() => {});
 
     // Buscar cualquier turno abierto hoy (por fecha real o fecha de caja)
-    const hoy = realDateStr();
+    async function inicializar() {
+      const turnoAbierto = await getTurnoAbiertoGlobal(usuario.bar_id).catch(() => null);
 
-async function buscarTurnoAbierto() {
-  return await getTurnoAbiertoGlobal(usuario.bar_id);
-}
-
-    buscarTurnoAbierto().then(turnoAbierto => {
       if (turnoAbierto && !turnoAbierto.cerrado) {
+        // Hay un turno abierto: se retoma sin importar si el día ya tiene cierre diario
+        // (el cierre diario puede haberse hecho temprano y después haberse reabierto un turno).
         setTurno(turnoAbierto.numero);
         setFechaTurno(turnoAbierto.fecha);
         setAperturaLista(true);
@@ -116,27 +114,26 @@ async function buscarTurnoAbierto() {
         }).catch(() => {});
         // Verificar turnos cerrados de esa fecha
         getTurnosCerradosHoy(usuario.bar_id).then(setTurnosCerrados).catch(() => {});
-      } else {
-        getTurnosCerradosHoy(usuario.bar_id).then(cerrados => {
-          setTurnosCerrados(cerrados);
-          const siguiente = !cerrados.includes('1') ? '1'
-                           : !cerrados.includes('2') ? '2'
-                           : 'sin_turno';
-          setTurno(siguiente);
-        }).catch(() => setTurno('1'));
-        setMostrarApertura(true);
+        return;
       }
-    }).catch(() => { setTurno('1'); setMostrarApertura(true); });
 
-    getCierreDiario(usuario.bar_id, todayStr()).then(cierre => {
-      if (cierre) {
-        getTurnoAbierto(usuario.bar_id, hoy, '1').then(t1 => {
-          getTurnoAbierto(usuario.bar_id, hoy, 'sin_turno').then(tU => {
-            if (!t1 && !tU) setDiaCerrado(true);
-          }).catch(() => { if (!t1) setDiaCerrado(true); });
-        }).catch(() => { setDiaCerrado(true); });
-      }
-    }).catch(() => {});
+      // No hay ningún turno abierto: se sigue ofreciendo abrir caja normalmente,
+      // como siempre — cerrar turno 2 o el cierre diario no debe impedir cargar
+      // una venta/gasto suelto después, ni que el admin abra sesión de un día
+      // anterior. `diaCerrado` se guarda solo como dato informativo, sin bloquear.
+      const cierre = await getCierreDiario(usuario.bar_id, todayStr()).catch(() => null);
+      setDiaCerrado(!!cierre);
+
+      const cerrados = await getTurnosCerradosHoy(usuario.bar_id).catch(() => []);
+      setTurnosCerrados(cerrados);
+      const siguiente = !cerrados.includes('1') ? '1'
+                       : !cerrados.includes('2') ? '2'
+                       : 'sin_turno';
+      setTurno(siguiente);
+      setMostrarApertura(true);
+    }
+
+    inicializar().catch(() => { setTurno('1'); setMostrarApertura(true); });
   }, [usuario]);
 
 
@@ -191,7 +188,7 @@ async function buscarTurnoAbierto() {
   const totalRetencion = activas.reduce((s, i) => s + i.retencion_monto, 0);
   const totalNeto      = activas.reduce((s, i) => s + i.monto_neto, 0);
 
-  const bloqueado = false; // diaCerrado ya no bloquea — abre nuevo día directo
+  const bloqueado = false; // el bloqueo total quedó descartado: rompía la apertura normal de caja
 
   async function agregarAVentas() {
     if (!montoBruto || montoBruto <= 0) return show('⚠ ' + (isPT ? 'Informe um valor válido' : 'Ingresá un monto válido'));
