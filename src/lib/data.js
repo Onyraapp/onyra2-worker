@@ -264,12 +264,20 @@ export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBr
 export async function cerrarTurnoConPendientes({ barId, usuarioId, fecha, turno, cajaInicial }) {
   const sb = getClient();
   const t = await abrirTurno(barId, usuarioId, fecha, turno, cajaInicial);
+  // Solo se asignan al turno las ventas pendientes que caen dentro de la ventana
+  // del día comercial de ESTE turno — no todas las ventas pendientes del bar sin
+  // importar la fecha. Así, una venta huérfana de un día anterior (por ejemplo,
+  // por una falla de red) no viaja en este UPDATE y no puede bloquear el cierre
+  // de un turno de otro día.
+  const { inicio, fin } = ventanaDiaComercial(fecha);
   const { error } = await sb
     .from('ingresos')
     .update({ turno_id: t.id, pendiente: false })
     .eq('bar_id', barId)
     .eq('pendiente', true)
-    .is('turno_id', null);
+    .is('turno_id', null)
+    .gte('fecha', inicio)
+    .lt('fecha', fin);
   if (error) throw error;
   await cerrarTurno(t.id);
   return t;

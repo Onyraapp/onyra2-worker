@@ -154,8 +154,8 @@ export default function CargarPage() {
       limpiarCola();
       setColaPendiente([]);
       show('✓ ' + (isPT ? 'Dados sincronizados' : 'Datos sincronizados'));
-    } catch {
-      show('✗ ' + t.error);
+    } catch (e) {
+      show('✗ ' + (e?.message || t.error));
     } finally {
       setSincronizando(false);
     }
@@ -172,8 +172,8 @@ export default function CargarPage() {
       setAperturaLista(false);
       setMostrarApertura(true);
       show('✓ ' + t.reabrir_dia);
-    } catch {
-      show('✗ ' + t.error);
+    } catch (e) {
+      show('✗ ' + (e?.message || t.error));
     } finally {
       setReabriendo(false);
     }
@@ -249,7 +249,7 @@ export default function CargarPage() {
       setLista(l => l.map(i => i._id === anulando._id ? { ...i, anulada: true, motivo_anulacion: motivoAnulacion } : i));
       setAnulando(null);
       show('✓ ' + (isPT ? 'Venda cancelada' : 'Venta anulada'));
-    } catch { show('✗ ' + t.error); }
+    } catch (e) { show('✗ ' + (e?.message || t.error)); }
   }
 
   async function reintentarSinSync() {
@@ -365,7 +365,7 @@ export default function CargarPage() {
 
       show(`✓ ${t.cerrar_turno} · ${activas.length} ${t.wa_ventas} · ${fmtL(totalBruto)}`);
       setTimeout(() => router.push('/resumen'), 1500);
-    } catch { show('✗ ' + t.error); }
+    } catch (e) { show('✗ ' + (e?.message || t.error)); }
     finally { setCerrando(false); }
   }
 

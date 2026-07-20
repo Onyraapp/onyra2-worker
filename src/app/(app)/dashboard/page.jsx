@@ -169,8 +169,8 @@ export default function DashboardPage() {
         // Turno 2 (o único) cerrado: ahí sí hace falta decidir si se cierra el día.
         setModalPostCierre({ numero, fechaTurnoReal });
       }
-    } catch {
-      show('✗ ' + t.error);
+    } catch (e) {
+      show('✗ ' + (e?.message || t.error));
     } finally {
       setCerrandoTurno(null);
     }
@@ -183,8 +183,8 @@ export default function DashboardPage() {
       show('✓ ' + (isPT ? 'Turno 2 aberto' : 'Turno 2 abierto'));
       cargarTurnoAbierto();
       cargarTurnosCerrados();
-    } catch {
-      show('✗ ' + t.error);
+    } catch (e) {
+      show('✗ ' + (e?.message || t.error));
     }
     setModalPostCierre(null);
   }
@@ -260,7 +260,7 @@ export default function DashboardPage() {
         : `https://wa.me/?text=${encodeURIComponent(msg)}`;
       setResumenCierre({ r, caja, ing, fechaLabel, url, fechaCierre });
       setModalCierre(true);
-    } catch { show('✗ ' + t.error); }
+    } catch (e) { show('✗ ' + (e?.message || t.error)); }
     finally { setCerrandoDia(false); }
   }
 
@@ -277,7 +277,7 @@ export default function DashboardPage() {
         setCierreListo(true);
         setFecha(d => addDays(new Date(d+'T12:00:00'),1).toISOString().slice(0,10));
       } else {
-        show('✗ ' + t.error);
+        show('✗ ' + (e?.message || t.error));
       }
     }
   }
