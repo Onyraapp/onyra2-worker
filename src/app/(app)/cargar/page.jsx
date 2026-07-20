@@ -7,7 +7,7 @@ import { useOnline, agregarACola, getCola, limpiarCola } from '../../../hooks/us
 import {
   getConfiguracion, calcularRetencion, getRetencionPct,
   abrirTurno, cerrarTurno, crearIngresosBulk, crearIngresoInstant,
-  cerrarTurnoConPendientes, fmt, todayStr, realDateStr, reabrirDia, guardarHoraCorte,
+  cerrarTurnoConPendientes, fmt, todayStr, reabrirDia, guardarHoraCorte,
   getTurnosCerradosHoy, getCierreDiario, getTurnoAbiertoHoy, getTurnoAbiertoGlobal, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
@@ -60,7 +60,7 @@ export default function CargarPage() {
   const [anulando,         setAnulando]         = useState(null);
   const [motivoAnulacion,  setMotivoAnulacion]  = useState('');
   const [agregando,        setAgregando]        = useState(false);
-  const [fechaTurno,       setFechaTurno]       = useState(realDateStr());
+  const [fechaTurno,       setFechaTurno]       = useState(todayStr());
   const [modalReapertura,  setModalReapertura]  = useState(false);
   const [causaReapertura,  setCausaReapertura]  = useState('');
   const [reabriendo,       setReabriendo]       = useState(false);
@@ -73,7 +73,7 @@ export default function CargarPage() {
 
     try {
       const fechaGuardada = localStorage.getItem(CAJA_KEY);
-      if (fechaGuardada && !fechaGuardada.startsWith(realDateStr())) {
+      if (fechaGuardada && !fechaGuardada.startsWith(todayStr())) {
         localStorage.removeItem(CAJA_KEY);
       }
     } catch {}
@@ -497,7 +497,7 @@ export default function CargarPage() {
                 show('⚠ ' + (isPT ? 'Este turno já foi fechado hoje' : 'Este turno ya fue cerrado hoy'));
                 return;
               }
-              const fechaApertura = realDateStr();
+              const fechaApertura = todayStr();
               setFechaTurno(fechaApertura);
               setMostrarApertura(false);
               setAperturaLista(true);
