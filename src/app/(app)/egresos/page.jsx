@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-import { crearEgreso, getConfiguracion, getEgresosDia, fmt, todayStr } from '../../../lib/data';
+import { crearEgreso, getConfiguracion, getEgresosDia, fmt, todayStr, getTurnoAbiertoGlobal } from '../../../lib/data';
 import { TIPOS_EGRESO, MEDIOS_PAGO_EGRESO, getLabel } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, MontoInput, ChipGroup,
@@ -18,6 +18,7 @@ export default function EgresosPage() {
   const symbol = isPT ? 'R$' : '$';
 
   const [config,    setConfig]    = useState(null);
+  const [turnoAbierto, setTurnoAbierto] = useState(undefined); // undefined = todavía no chequeado
   const [tipo,      setTipo]      = useState('proveedores');
   const [medioPago, setMedioPago] = useState('efectivo');
   const [monto,     setMonto]     = useState('');
@@ -34,6 +35,14 @@ export default function EgresosPage() {
     if (!usuario) return;
     getConfiguracion(usuario.bar_id).then(setConfig).catch(() => {});
     cargarEgresos();
+    const chequearTurno = () => {
+      getTurnoAbiertoGlobal(usuario.bar_id)
+        .then(t => setTurnoAbierto(t && !t.cerrado ? t : null))
+        .catch(() => setTurnoAbierto(null));
+    };
+    chequearTurno();
+    window.addEventListener('focus', chequearTurno);
+    return () => window.removeEventListener('focus', chequearTurno);
   }, [usuario]);
 
   async function cargarEgresos() {
@@ -50,7 +59,7 @@ export default function EgresosPage() {
     setLoading(true);
     try {
       await crearEgreso({
-        barId: usuario.bar_id, turnoId: null, usuarioId: usuario.id,
+        barId: usuario.bar_id, turnoId: turnoAbierto ? turnoAbierto.id : null, usuarioId: usuario.id,
         tipo, monto: m, detalle, medio_pago: medioPago,
       });
       setMonto(''); setDetalle('');

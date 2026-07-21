@@ -192,6 +192,17 @@ export default function CargarPage() {
 
   async function agregarAVentas() {
     if (!montoBruto || montoBruto <= 0) return show('⚠ ' + (isPT ? 'Informe um valor válido' : 'Ingresá un monto válido'));
+    // Chequeo en fresco: nunca confiar en que el estado de la pantalla siga
+    // reflejando un turno abierto — si se cerró la caja en otra pestaña, o si
+    // pasó mucho tiempo desde que se cargó la pantalla, esto evita guardar una
+    // venta que quede huérfana sin ningún turno al cual pertenecer.
+    const turnoReal = await getTurnoAbiertoGlobal(usuario.bar_id).catch(() => null);
+    if (!turnoReal || turnoReal.cerrado) {
+      show('⚠ ' + (isPT ? 'A caixa está fechada. Abra a caixa para vender.' : 'La caja está cerrada. Abrí la caja para vender.'));
+      setMostrarApertura(true);
+      setAperturaLista(false);
+      return;
+    }
     try {
       const sb = getClient();
       await sb.auth.getSession();
