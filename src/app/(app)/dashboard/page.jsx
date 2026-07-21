@@ -13,6 +13,7 @@ import {
   cerrarTurnoConPendientes, abrirTurno
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
+import { getCola } from '../../../hooks/useOnline';
 import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, KpiCard,
@@ -44,6 +45,7 @@ export default function DashboardPage() {
   const [waEnviado,       setWaEnviado]       = useState(false);
   const [turnoPendiente,  setTurnoPendiente]  = useState(null);
   const [cerrandoPendiente, setCerrandoPendiente] = useState(false);
+  const [colaPendienteCount, setColaPendienteCount] = useState(0);
   const [turnosCerrados,  setTurnosCerrados]  = useState([]);
   const [cerrandoTurno,   setCerrandoTurno]   = useState(null);
 
@@ -125,6 +127,18 @@ export default function DashboardPage() {
   }, [usuario]);
 
   useEffect(() => { cargarTurnoAbierto(); }, [cargarTurnoAbierto, fecha]);
+
+  useEffect(() => {
+    if (!usuario) return;
+    const chequearCola = () => {
+      try { setColaPendienteCount(getCola().length); } catch { setColaPendienteCount(0); }
+    };
+    chequearCola();
+    // Vuelve a chequear cuando la pestaña recupera el foco, por si se cargó
+    // algo offline en otra pestaña/momento y no se refrescó esta pantalla.
+    window.addEventListener('focus', chequearCola);
+    return () => window.removeEventListener('focus', chequearCola);
+  }, [usuario]);
 
   async function cerrarTurnoPendienteAhora() {
     if (!turnoPendiente || cerrandoPendiente) return;
@@ -334,6 +348,23 @@ export default function DashboardPage() {
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {colaPendienteCount > 0 && (
+        <div className="bg-ambersoft border border-amber/20 rounded-2xl p-3 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold text-ambertext">
+              {isPT ? 'Dados pendentes' : 'Datos pendientes'}
+            </div>
+            <div className="text-xs text-t3">
+              {colaPendienteCount} {isPT ? 'turno(s) sem sincronizar' : 'turno(s) sin sincronizar'} — {isPT ? 've para Vendas para sincronizar' : 'andá a Ventas para sincronizar'}
+            </div>
+          </div>
+          <button onClick={() => router.push('/cargar')}
+            className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold flex-shrink-0">
+            {isPT ? 'Ir' : 'Ir'}
+          </button>
         </div>
       )}
 
