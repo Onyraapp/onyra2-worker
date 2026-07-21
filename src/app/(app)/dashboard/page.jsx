@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const [cierreListo,     setCierreListo]     = useState(false);
   const [waEnviado,       setWaEnviado]       = useState(false);
   const [turnoPendiente,  setTurnoPendiente]  = useState(null);
+  const [cerrandoPendiente, setCerrandoPendiente] = useState(false);
   const [turnosCerrados,  setTurnosCerrados]  = useState([]);
   const [cerrandoTurno,   setCerrandoTurno]   = useState(null);
 
@@ -124,6 +125,27 @@ export default function DashboardPage() {
   }, [usuario]);
 
   useEffect(() => { cargarTurnoAbierto(); }, [cargarTurnoAbierto, fecha]);
+
+  async function cerrarTurnoPendienteAhora() {
+    if (!turnoPendiente || cerrandoPendiente) return;
+    setCerrandoPendiente(true);
+    try {
+      await cerrarTurnoConPendientes({
+        barId: usuario.bar_id,
+        usuarioId: usuario.id,
+        fecha: turnoPendiente.fecha,
+        turno: turnoPendiente.numero,
+        cajaInicial: turnoPendiente.caja_inicial,
+      });
+      show('✓ ' + (isPT ? 'Turno anterior fechado' : 'Turno anterior cerrado'));
+      cargarTurnoAbierto();
+      cargarTurnosCerrados();
+    } catch (e) {
+      show('✗ ' + (e?.message || t.error));
+    } finally {
+      setCerrandoPendiente(false);
+    }
+  }
 
   const cargarTurnosCerrados = useCallback(() => {
     if (!usuario) return;
@@ -326,10 +348,16 @@ export default function DashboardPage() {
               {isPT ? 'Ainda não foi fechada. Vá para Cargar para fechá-la.' : 'Todavía no se cerró. Ve a Cargar para cerrarla.'}
             </div>
           </div>
-          <button onClick={() => router.push('/cargar')}
-            className="px-3 py-2 rounded-xl bg-primary text-white text-xs font-semibold flex-shrink-0">
-            {isPT ? 'Ir' : 'Ir'}
-          </button>
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <button onClick={cerrarTurnoPendienteAhora} disabled={cerrandoPendiente}
+              className="px-3 py-2 rounded-xl bg-primary text-white text-xs font-semibold disabled:opacity-60">
+              {cerrandoPendiente ? '...' : (isPT ? 'Fechar agora' : 'Cerrar ahora')}
+            </button>
+            <button onClick={() => router.push('/cargar')}
+              className="px-3 py-2 rounded-xl bg-offset text-t2 text-xs font-semibold">
+              {isPT ? 'Ir' : 'Ir'}
+            </button>
+          </div>
         </div>
       )}
 
