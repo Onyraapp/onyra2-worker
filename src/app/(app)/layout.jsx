@@ -1,20 +1,47 @@
 // src/app/(app)/layout.jsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { AuthProvider, useAuth } from '../../hooks/useAuth';
 import { FullScreenSpinner } from '../../components/ui';
 import { getClient } from '../../lib/supabase';
 import { useLocale } from '../../hooks/useLocale';
+import { useOnline, getCola, limpiarCola } from '../../hooks/useOnline';
+import { abrirTurno, crearIngresosBulk, cerrarTurno } from '../../lib/data';
 
 function AppShell({ children }) {
   const { usuario, cargando } = useAuth();
   const router   = useRouter();
   const pathname = usePathname();
   const { t, fmt } = useLocale();
+  const online = useOnline();
+  const sincronizandoRef = useRef(false);
   const [alertasVenc, setAlertasVenc] = useState([]);
   const [modalAlerta, setModalAlerta] = useState(false);
+
+  useEffect(() => {
+    if (!usuario || !online || sincronizandoRef.current) return;
+    const cola = getCola();
+    if (cola.length === 0) return;
+    sincronizandoRef.current = true;
+    (async () => {
+      try {
+        for (const item of cola) {
+          const turnoAbierto = await abrirTurno(item.bar_id, item.usuario_id, item.fecha, item.turno, item.caja_inicial || 0);
+          await crearIngresosBulk(item.rows.map(r => ({ ...r, turno_id: turnoAbierto.id })));
+          await cerrarTurno(turnoAbierto.id);
+        }
+        limpiarCola();
+      } catch (e) {
+        // Si falla, no se limpia la cola — se reintenta en el próximo
+        // cambio de pantalla o reconexión, sin perder los datos guardados.
+        console.error('[sync automático] fallo al sincronizar cola pendiente:', e);
+      } finally {
+        sincronizandoRef.current = false;
+      }
+    })();
+  }, [usuario, online, pathname]);
 
   const NAV = [
     { href: '/dashboard',    label: t.nav_hoy,     icon: '◫' },
