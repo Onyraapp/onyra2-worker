@@ -1,6 +1,9 @@
 // src/lib/data.js
 import { getClient } from './supabase';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfDay as sod } from 'date-fns';
+import { startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from 'date-fns';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
+
+const TZ_ART = 'America/Argentina/Buenos_Aires';
 import { CONFIG_KEYS } from './constants';
 
 // ── AUTH ─────────────────────────────────────────────────
@@ -35,19 +38,16 @@ export async function getUsuarioActual() {
 
 export async function registrarBar({ nombreBar, nombre, email, password }) {
   const sb = getClient();
-
-  // 1. Crear usuario en Supabase Auth
   const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
   if (authError) throw authError;
 
-  // 2. Crear bar
+  const trialHasta = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   const { data: bar, error: barError } = await sb
     .from('bares')
-    .insert([{ nombre: nombreBar, email }])
+    .insert([{ nombre: nombreBar, email, plan: 'trial', trial_hasta: trialHasta, plan_activo: true }])
     .select().single();
   if (barError) throw barError;
 
-  // 3. Crear usuario admin
   const { error: userError } = await sb
     .from('usuarios')
     .insert([{ id: authData.user.id, bar_id: bar.id, nombre, email, rol: 'admin' }]);
@@ -98,7 +98,7 @@ export function calcularRetencion(montoBruto, pct) {
     monto_bruto:     montoBruto,
     retencion_pct:   pct,
     retencion_monto: Math.round(retencionMonto * 100) / 100,
-    monto_neto:      Math.round((montoBruto - retencionMonto) * 100) / 100,
+    monto_neto:      montoBruto,
   };
 }
 
@@ -122,15 +122,36 @@ export async function getTurnoAbierto(barId, fecha, numero) {
   return data;
 }
 
-export async function abrirTurno(barId, usuarioId, fecha, numero) {
+export async function getTurnoAbiertoHoy(barId, numero) {
+  const t1 = await getTurnoAbierto(barId, realDateStr(), numero);
+  if (t1) return t1;
+  return getTurnoAbierto(barId, todayStr(), numero);
+}
+
+export async function abrirTurno(barId, usuarioId, fecha, numero, cajaInicial = 0) {
   const sb = getClient();
-  // Si ya existe uno abierto, lo devolvemos
+
+  // 1. Si ya existe un turno abierto para esta fecha y número, devolverlo directamente
   const existente = await getTurnoAbierto(barId, fecha, numero);
   if (existente) return existente;
 
+  // 2. Si existe un turno abierto con este número en CUALQUIER fecha (fantasma),
+  //    cerrarlo automáticamente antes de crear el nuevo
+  const { data: fantasmas } = await sb
+    .from('turnos')
+    .select('id')
+    .eq('bar_id', barId)
+    .eq('numero', numero)
+    .eq('cerrado', false);
+  if (fantasmas && fantasmas.length > 0) {
+    const ids = fantasmas.map(t => t.id);
+    await sb.from('turnos').update({ cerrado: true, cerrado_at: new Date().toISOString() }).in('id', ids);
+  }
+
+  // 3. Insertar el turno nuevo
   const { data, error } = await sb
     .from('turnos')
-    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha, numero }])
+    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha, numero, caja_inicial: cajaInicial }])
     .select().single();
   if (error) throw error;
   return data;
@@ -145,6 +166,17 @@ export async function cerrarTurno(turnoId) {
     .select().single();
   if (error) throw error;
   return data;
+}
+
+export async function getTurnosDia(barId, fechaStr) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('turnos')
+    .select('*, usuarios(nombre)')
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr)
+    .order('created_at', { ascending: true });
+  return data || [];
 }
 
 // ── INGRESOS ──────────────────────────────────────────────
@@ -175,19 +207,105 @@ export async function crearIngreso({ barId, turnoId, usuarioId, medioPago, monto
 
 export async function crearIngresosBulk(ingresos) {
   const sb = getClient();
-  const { data, error } = await sb.from('ingresos').insert(ingresos).select();
+  // upsert con ignoreDuplicates para que sea idempotente — si la sincronización
+  // falla y se reintenta, no se insertan filas duplicadas
+  const { data, error } = await sb.from('ingresos').upsert(ingresos, {
+    onConflict: 'id',
+    ignoreDuplicates: true,
+  }).select();
   if (error) throw error;
   return data;
 }
 
+export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBruto, retencionPct, retencionMonto, montoNeto, nota, fechaTurno }) {
+  const sb = getClient();
+  // La venta se registra con la hora real del momento, pero en el día calendario
+  // del turno abierto (fechaTurno) — no se recalcula la fecha por hora del reloj.
+  const ahora = new Date();
+  const horaActual = ahora.toISOString().slice(11);
+  const fecha = fechaTurno
+    ? fechaTurno + 'T' + horaActual
+    : ahora.toISOString();
+
+  // Anti-duplicado: verificar si existe una venta idéntica en los últimos 30 segundos
+  const hace30s = new Date(ahora.getTime() - 30000).toISOString();
+  const { data: existente } = await sb.from('ingresos')
+    .select('id')
+    .eq('bar_id', barId)
+    .eq('medio_pago', medioPago)
+    .eq('monto_bruto', montoBruto)
+    .eq('anulada', false)
+    .gte('fecha', hace30s)
+    .limit(1);
+  if (existente && existente.length > 0) {
+    console.warn('[crearIngresoInstant] venta duplicada bloqueada', { medioPago, montoBruto });
+    return existente[0];
+  }
+
+  const { data, error } = await sb.from('ingresos').insert([{
+    bar_id: barId,
+    turno_id: null,
+    usuario_id: usuarioId,
+    medio_pago: medioPago,
+    monto_bruto: montoBruto,
+    retencion_pct: retencionPct,
+    retencion_monto: retencionMonto,
+    monto_neto: montoNeto,
+    nota: nota || '',
+    fecha,
+    pendiente: true,
+    anulada: false,
+    motivo_anulacion: '',
+  }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function cerrarTurnoConPendientes({ barId, usuarioId, fecha, turno, cajaInicial }) {
+  const sb = getClient();
+  const t = await abrirTurno(barId, usuarioId, fecha, turno, cajaInicial);
+  // Solo se asignan al turno las ventas pendientes que caen dentro de la ventana
+  // del día comercial de ESTE turno — no todas las ventas pendientes del bar sin
+  // importar la fecha. Así, una venta huérfana de un día anterior (por ejemplo,
+  // por una falla de red) no viaja en este UPDATE y no puede bloquear el cierre
+  // de un turno de otro día.
+  const { inicio, fin } = ventanaDiaComercial(fecha);
+  const { error } = await sb
+    .from('ingresos')
+    .update({ turno_id: t.id, pendiente: false })
+    .eq('bar_id', barId)
+    .eq('pendiente', true)
+    .is('turno_id', null)
+    .gte('fecha', inicio)
+    .lt('fecha', fin);
+  if (error) throw error;
+  // Los gastos se pueden cargar libremente sin caja abierta (no bloquean nunca
+  // la carga). Acá, al cerrar el turno del día, se "asientan" solos: cualquier
+  // gasto suelto sin turno_id dentro de esta misma ventana de día comercial
+  // queda asignado a este turno. Es best-effort — si falla, no debe frenar el
+  // cierre del turno (que ya es lo importante y ya se aplicó arriba).
+  try {
+    await sb
+      .from('egresos')
+      .update({ turno_id: t.id })
+      .eq('bar_id', barId)
+      .is('turno_id', null)
+      .gte('fecha', inicio)
+      .lt('fecha', fin);
+  } catch (e) {
+    console.error('[cerrarTurnoConPendientes] no se pudieron asentar gastos sueltos:', e);
+  }
+  await cerrarTurno(t.id);
+  return t;
+}
+
 export async function getIngresosDia(barId, fechaStr) {
   const sb = getClient();
-  const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
+  const { inicio, fin } = ventanaDiaComercial(fechaStr);
   const { data, error } = await sb
-    .from('ingresos').select('*, turnos(numero)')
+    .from('ingresos').select('*')
     .eq('bar_id', barId)
-    .gte('fecha', inicio).lte('fecha', fin)
+    .gte('fecha', inicio).lt('fecha', fin)
     .order('fecha', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -205,7 +323,7 @@ export async function getIngresosTurno(turnoId) {
 
 // ── EGRESOS ───────────────────────────────────────────────
 
-export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, detalle, fecha }) {
+export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, detalle, fecha, medio_pago }) {
   const sb = getClient();
   const { data, error } = await sb
     .from('egresos')
@@ -217,6 +335,7 @@ export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, deta
       monto,
       detalle:    detalle || '',
       fecha:      fecha || new Date().toISOString(),
+      medio_pago: medio_pago || 'efectivo',
     }])
     .select().single();
   if (error) throw error;
@@ -225,12 +344,12 @@ export async function crearEgreso({ barId, turnoId, usuarioId, tipo, monto, deta
 
 export async function getEgresosDia(barId, fechaStr) {
   const sb = getClient();
-  const inicio = startOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
-  const fin    = endOfDay(new Date(fechaStr + 'T12:00:00')).toISOString();
+  const { inicio, fin } = ventanaDiaComercial(fechaStr);
   const { data, error } = await sb
-    .from('egresos').select('*, turnos(numero)')
+    .from('egresos')
+    .select('*')
     .eq('bar_id', barId)
-    .gte('fecha', inicio).lte('fecha', fin)
+    .gte('fecha', inicio).lt('fecha', fin)
     .order('fecha', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -257,7 +376,14 @@ export function calcularResumenDia(ingresos, egresos) {
   const totalEgresos   = egresos.reduce((s, e) => s + e.monto, 0);
   const resultado      = totalNeto - totalEgresos;
 
-  return { porMedio, totalBruto, totalRetencion, totalNeto, totalEgresos, resultado };
+  const egresosPorTipo = {};
+  for (const e of egresos) {
+    if (!egresosPorTipo[e.tipo]) egresosPorTipo[e.tipo] = { monto: 0, items: [] };
+    egresosPorTipo[e.tipo].monto += e.monto;
+    egresosPorTipo[e.tipo].items.push(e);
+  }
+
+  return { porMedio, totalBruto, totalRetencion, totalNeto, totalEgresos, resultado, egresosPorTipo };
 }
 
 // ── RESUMEN MES ───────────────────────────────────────────
@@ -301,6 +427,144 @@ export function fmtPct(n) {
   return (n || 0).toFixed(1) + '%';
 }
 
-export function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+export function realDateStr() {
+  return formatInTimeZone(new Date(), TZ_ART, 'yyyy-MM-dd');
+}
+
+function getHoraCorteLocal(horaCorte) {
+  if (horaCorte != null) return horaCorte;
+  try { return parseInt(localStorage.getItem('troco_hora_corte') || '3', 10); } catch { return 3; }
+}
+
+export function todayStr(horaCorte) {
+  const corte = getHoraCorteLocal(horaCorte);
+  const now = new Date();
+  const horaArt = parseInt(formatInTimeZone(now, TZ_ART, 'HH'), 10);
+  if (horaArt < corte) {
+    const ayer = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return formatInTimeZone(ayer, TZ_ART, 'yyyy-MM-dd');
+  }
+  return formatInTimeZone(now, TZ_ART, 'yyyy-MM-dd');
+}
+
+function ventanaDiaComercial(fechaStr, horaCorte) {
+  const corte = getHoraCorteLocal(horaCorte);
+  const corteStr = String(corte).padStart(2, '0');
+  const siguienteStr = addDays(new Date(`${fechaStr}T12:00:00`), 1).toISOString().slice(0, 10);
+  const inicio = fromZonedTime(`${fechaStr} ${corteStr}:00:00`, TZ_ART).toISOString();
+  const fin    = fromZonedTime(`${siguienteStr} ${corteStr}:00:00`, TZ_ART).toISOString();
+  return { inicio, fin };
+}
+
+export function guardarHoraCorte(hora) {
+  try { localStorage.setItem('troco_hora_corte', String(hora ?? 3)); } catch {}
+}
+
+export async function getTurnosCerradosHoy(barId) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('turnos')
+    .select('numero')
+    .eq('bar_id', barId)
+    .eq('cerrado', true)
+    .eq('fecha', todayStr());
+  return (data || []).map(t => t.numero);
+}
+
+export async function getCierreDiario(barId, fechaStr) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('cierres_diarios')
+    .select('*')
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr)
+    .maybeSingle();
+  return data;
+}
+
+export async function crearCierreDiario(barId, usuarioId, fechaStr) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('cierres_diarios')
+    .insert([{ bar_id: barId, usuario_id: usuarioId, fecha: fechaStr }])
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function reabrirDia(barId, fechaStr, causa) {
+  const sb = getClient();
+  const { error } = await sb
+    .from('cierres_diarios')
+    .update({ reapertura_causa: causa })
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr);
+  if (error) throw error;
+  const { error: e2 } = await sb
+    .from('cierres_diarios')
+    .delete()
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr);
+  if (e2) throw e2;
+}
+
+export async function registrarCajero({ barId, nombre, email, password }) {
+  const res = await fetch('/api/crear-cajero', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ barId, nombre, email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al crear cajero');
+  return data;
+}
+
+export async function getCajeros(barId) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('usuarios')
+    .select('*')
+    .eq('bar_id', barId)
+    .order('nombre');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateBar(barId, updates) {
+  const sb = getClient();
+  const { data, error } = await sb
+    .from('bares')
+    .update(updates)
+    .eq('id', barId)
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getCajaInicialDia(barId, fechaStr) {
+  const sb = getClient();
+  const { data } = await sb
+    .from('turnos')
+    .select('caja_inicial')
+    .eq('bar_id', barId)
+    .eq('fecha', fechaStr);
+  if (!data || data.length === 0) return 0;
+  return data.reduce((s, t) => s + (t.caja_inicial || 0), 0);
+}
+// NUEVA FUNCIÓN PARA ELIMINAR EL ERROR DE LÍMITE DE HORARIO
+export async function getTurnoAbiertoGlobal(barId) {
+  const sb = getClient();
+  const hoy = new Date();
+  const ayer = new Date(hoy.getTime() - 24 * 60 * 60 * 1000);
+  const ayerStr = formatInTimeZone(ayer, TZ_ART, 'yyyy-MM-dd');
+  const { data, error } = await sb
+    .from('turnos')
+    .select('*')
+    .eq('bar_id', barId)
+    .eq('cerrado', false)
+    .gte('fecha', ayerStr)
+    .order('fecha', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return data && data.length > 0 ? data[0] : null;
 }
