@@ -611,7 +611,7 @@ export default function DashboardPage() {
               {isPT ? 'Começar novo dia' : 'Empezar nuevo día'}
             </button>
           ) : (
-            <button onClick={abrirCierreDiario} disabled={cerrandoDia}
+            <button onClick={() => abrirCierreDiario()} disabled={cerrandoDia}
               className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm disabled:opacity-40">
               {cerrandoDia ? '...' : t.cierre_diario}
             </button>
