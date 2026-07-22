@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, subDays } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import ptBR from 'date-fns/locale/pt-BR';
 import { useAuth } from '../../../hooks/useAuth';
@@ -535,7 +536,7 @@ export default function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-t1">{m?.label}</div>
                           <div className="text-xs text-t3 mt-0.5">
-                            {i.fecha?.slice(11,16)}
+                            {i.fecha ? formatInTimeZone(new Date(i.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''}
                             {i.retencion_pct > 0 && ` · ${i.retencion_pct}% ret.`}
                           </div>
                           {i.nota && <div className="text-xs text-t2 mt-0.5 italic truncate">{i.nota}</div>}
@@ -554,7 +555,7 @@ export default function DashboardPage() {
                         <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0 bg-amber" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-t1">{tp?.label || e.tipo}</div>
-                          <div className="text-xs text-t3 mt-0.5">{e.fecha?.slice(11,16)}</div>
+                          <div className="text-xs text-t3 mt-0.5">{e.fecha ? formatInTimeZone(new Date(e.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''}</div>
                           {e.detalle && <div className="text-xs text-t2 mt-0.5 italic truncate">{e.detalle}</div>}
                         </div>
                         <div className="text-sm font-bold tabular-nums text-ambertext flex-shrink-0">−{fmtL(e.monto)}</div>
@@ -576,7 +577,7 @@ export default function DashboardPage() {
                   <div key={i.id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft border border-red/10">
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-t2 line-through">{m?.label} · {fmtL(i.monto_bruto)}</div>
-                      <div className="text-xs text-t3 mt-0.5">{i.fecha?.slice(11,16)} · {i.motivo_anulacion}</div>
+                      <div className="text-xs text-t3 mt-0.5">{i.fecha ? formatInTimeZone(new Date(i.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''} · {i.motivo_anulacion}</div>
                     </div>
                   </div>
                 );

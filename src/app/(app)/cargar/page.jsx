@@ -588,7 +588,7 @@ export default function CargarPage() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-t1">{item.medio_label}</div>
                   {item.nota && <div className="text-xs text-t3 truncate">{item.nota}</div>}
-                  <div className="text-xs text-t3 mt-0.5">{item.fecha?.slice(11,16)}</div>
+                  <div className="text-xs text-t3 mt-0.5">{item.fecha ? formatInTimeZone(new Date(item.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-sm font-bold tabular-nums text-greentext">{fmtL(item.monto_bruto)}</div>
@@ -616,7 +616,7 @@ export default function CargarPage() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-t2 line-through">{item.medio_label} · {fmtL(item.monto_bruto)}</div>
                   <div className="text-xs text-redtext mt-0.5">{item.motivo_anulacion}</div>
-                  <div className="text-xs text-t3 mt-0.5">{item.fecha?.slice(11,16)}</div>
+                  <div className="text-xs text-t3 mt-0.5">{item.fecha ? formatInTimeZone(new Date(item.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''}</div>
                 </div>
               </div>
             ))}

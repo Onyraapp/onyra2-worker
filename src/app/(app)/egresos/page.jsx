@@ -9,6 +9,7 @@ import {
   FieldLabel, BtnPrimary, Toast, useToast, Textarea
 } from '../../../components/ui';
 import { getClient } from '../../../lib/supabase';
+import { formatInTimeZone } from 'date-fns-tz';
 import { useLocale } from '../../../hooks/useLocale';
 
 export default function EgresosPage() {
@@ -203,7 +204,7 @@ export default function EgresosPage() {
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-t1">{tp ? getLabel(tp, isPT) : e.tipo}</div>
                     {e.detalle && <div className="text-xs text-t3 mt-0.5 truncate">{e.detalle}</div>}
-                    <div className="text-xs text-t3 mt-0.5">{e.fecha?.slice(11,16)}</div>
+                    <div className="text-xs text-t3 mt-0.5">{e.fecha ? formatInTimeZone(new Date(e.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''}</div>
                   </div>
                   <div className="text-sm font-bold tabular-nums text-ambertext flex-shrink-0">
                     {fmtL(e.monto)}

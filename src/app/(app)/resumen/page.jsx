@@ -2,6 +2,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { format, addDays, subDays } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import ptBR from 'date-fns/locale/pt-BR';
 import { useAuth } from '../../../hooks/useAuth';
@@ -227,7 +228,7 @@ export default function ResumenPage() {
                           <div key={i.id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft border border-red/10">
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium text-t2 line-through">{m?.label} · {fmtL(i.monto_bruto)}</div>
-                              <div className="text-xs text-redtext mt-0.5">{i.fecha?.slice(11,16)} · {i.motivo_anulacion}</div>
+                              <div className="text-xs text-redtext mt-0.5">{i.fecha ? formatInTimeZone(new Date(i.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''} · {i.motivo_anulacion}</div>
                             </div>
                           </div>
                         );
