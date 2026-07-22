@@ -8,7 +8,7 @@ import { FullScreenSpinner } from '../../components/ui';
 import { getClient } from '../../lib/supabase';
 import { useLocale } from '../../hooks/useLocale';
 import { useOnline, getCola, limpiarCola } from '../../hooks/useOnline';
-import { abrirTurno, crearIngresosBulk, cerrarTurno } from '../../lib/data';
+import { abrirTurno, crearIngresosBulk } from '../../lib/data';
 
 function AppShell({ children }) {
   const { usuario, cargando } = useAuth();
@@ -28,9 +28,13 @@ function AppShell({ children }) {
     (async () => {
       try {
         for (const item of cola) {
+          // Solo se abre la caja (si no existe todavía) para poder asociar las
+          // ventas guardadas offline, y se suben esas ventas. El turno NO se
+          // cierra acá — cerrar caja es una decisión que tiene que tomar el
+          // cajero explícitamente desde la app, nunca algo que pase solo en
+          // segundo plano sin que nadie lo note.
           const turnoAbierto = await abrirTurno(item.bar_id, item.usuario_id, item.fecha, item.turno, item.caja_inicial || 0);
           await crearIngresosBulk(item.rows.map(r => ({ ...r, turno_id: turnoAbierto.id })));
-          await cerrarTurno(turnoAbierto.id);
         }
         limpiarCola();
       } catch (e) {
