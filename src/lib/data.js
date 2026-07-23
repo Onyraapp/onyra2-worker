@@ -222,9 +222,12 @@ export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBr
   // La venta se registra con la hora real del momento, pero en el día calendario
   // del turno abierto (fechaTurno) — no se recalcula la fecha por hora del reloj.
   const ahora = new Date();
-  const horaActual = ahora.toISOString().slice(11);
+  const horaActualART = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).format(ahora);
   const fecha = fechaTurno
-    ? fechaTurno + 'T' + horaActual
+    ? `${fechaTurno}T${horaActualART}-03:00`
     : ahora.toISOString();
 
   // Anti-duplicado: verificar si existe una venta idéntica en los últimos 30 segundos
