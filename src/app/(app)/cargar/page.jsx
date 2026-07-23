@@ -227,9 +227,17 @@ export default function CargarPage() {
         });
         setLista(l => [...l, { ...item, supabase_id: saved.id, _id: saved.id }]);
         show('✓ ' + (isPT ? 'Venda salva' : 'Venta guardada'));
-      } catch {
+      } catch (e) {
+        // Si estamos acá es porque `online` ya era true (chequeado arriba) y
+        // aun así falló: no es un problema de conectividad, es un rechazo real
+        // del servidor (validación, permisos, etc.). Antes esto se trataba
+        // igual que "sin conexión" y mostraba "Guardado localmente" — pero
+        // reintentarSinSync() vuelve a pegarle al mismo error para siempre,
+        // sin que el cajero se entere de que la venta nunca quedó guardada.
+        // Mostramos el error real y dejamos la venta en la lista sin
+        // supabase_id para que quede visible como pendiente/no confirmada.
         setLista(l => [...l, item]);
-        show('⚠ ' + (isPT ? 'Salvo localmente' : 'Guardado localmente'));
+        show('✗ ' + (e?.message || (isPT ? 'Erro ao salvar' : 'Error al guardar')) + ' — ' + (isPT ? 'não confirmado, avise ao suporte' : 'no se confirmó, avisá a soporte'));
       } finally {
         setAgregando(false);
       }
