@@ -11,7 +11,7 @@ import {
   getTurnosCerradosHoy, getCierreDiario, getTurnoAbiertoHoy, getTurnoAbiertoGlobal, getIngresosDia
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
-import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
 import { es as esLocale } from 'date-fns/locale/es';
 import { ptBR as ptBRLocale } from 'date-fns/locale/pt-BR';
 import { MEDIOS_PAGO, TURNOS, getLabel } from '../../../lib/constants';
@@ -253,7 +253,7 @@ export default function CargarPage() {
           medio_pago: anulando.medio_pago, monto_bruto: anulando.monto_bruto,
           retencion_pct: anulando.retencion_pct, retencion_monto: anulando.retencion_monto,
           monto_neto: anulando.monto_neto, nota: anulando.nota || '',
-          fecha: fromZonedTime(fechaTurno + 'T' + formatInTimeZone(new Date(), TZ_ART, 'HH:mm:ss'), TZ_ART).toISOString(),
+          fecha: new Date().toISOString(),
           anulada: true, motivo_anulacion: motivoAnulacion,
         }]);
       }
@@ -297,7 +297,7 @@ export default function CargarPage() {
       medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
       retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,
       monto_neto: item.monto_neto, nota: item.nota || '',
-      fecha: fromZonedTime(fechaTurno + 'T' + formatInTimeZone(new Date(), TZ_ART, 'HH:mm:ss'), TZ_ART).toISOString(),
+      fecha: new Date().toISOString(),
       anulada: false, motivo_anulacion: '',
     }));
     agregarACola({ bar_id: usuario.bar_id, usuario_id: usuario.id, fecha: fechaTurno, turno, caja_inicial: parseFloat(cajaInicial) || 0, rows });
@@ -327,7 +327,7 @@ export default function CargarPage() {
         medio_pago: item.medio_pago, monto_bruto: item.monto_bruto,
         retencion_pct: item.retencion_pct, retencion_monto: item.retencion_monto,
         monto_neto: item.monto_neto, nota: item.nota || '',
-        fecha: fromZonedTime(fechaTurno + 'T' + formatInTimeZone(new Date(), TZ_ART, 'HH:mm:ss'), TZ_ART).toISOString(),
+        fecha: new Date().toISOString(),
         anulada: false, motivo_anulacion: '',
       }));
       agregarACola({

@@ -219,16 +219,15 @@ export async function crearIngresosBulk(ingresos) {
 
 export async function crearIngresoInstant({ barId, usuarioId, medioPago, montoBruto, retencionPct, retencionMonto, montoNeto, nota, fechaTurno }) {
   const sb = getClient();
-  // La venta se registra con la hora real del momento, pero en el día calendario
-  // del turno abierto (fechaTurno) — no se recalcula la fecha por hora del reloj.
+  // La venta se registra siempre con el instante real (timestamp absoluto).
+  // No se arma una fecha sintética a partir de fechaTurno: el trigger
+  // validar_dia_comercial_ingreso ya recalcula el día comercial correcto a
+  // partir de un timestamp real, con la misma lógica de hora de corte que usa
+  // todayStr() en el frontend. Pegar fechaTurno como fecha calendario del
+  // evento rompía ese cálculo para ventas cargadas entre las 00:00 y la hora
+  // de corte (por ejemplo, turnos que cruzan la medianoche, como 11am-3am).
   const ahora = new Date();
-  const horaActualART = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'America/Argentina/Buenos_Aires',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  }).format(ahora);
-  const fecha = fechaTurno
-    ? `${fechaTurno}T${horaActualART}-03:00`
-    : ahora.toISOString();
+  const fecha = ahora.toISOString();
 
   // Anti-duplicado: verificar si existe una venta idéntica en los últimos 30 segundos
   const hace30s = new Date(ahora.getTime() - 30000).toISOString();
