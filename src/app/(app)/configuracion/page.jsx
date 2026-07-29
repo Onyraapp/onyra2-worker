@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
-import { getConfiguracion, updateConfiguracion, getCajeros, registrarCajero, editarCajero, updateBar, signOut } from '../../../lib/data';
+import { getConfiguracion, updateConfiguracion, getCajeros, registrarCajero, editarCajero, eliminarCajero, updateBar, signOut } from '../../../lib/data';
 import { MEDIOS_PAGO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, BtnPrimary, BtnDanger,
@@ -38,6 +38,8 @@ export default function ConfiguracionPage() {
   const [editNombre, setEditNombre] = useState('');
   const [editEmail,  setEditEmail]  = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmandoElimId, setConfirmandoElimId] = useState(null);
+  const [eliminandoId, setEliminandoId] = useState(null);
 
   const esAdmin = usuario?.rol === 'admin';
 
@@ -144,6 +146,19 @@ export default function ConfiguracionPage() {
     } catch (e) {
       show('✗ ' + (e.message || 'Error al guardar'));
     } finally { setSavingEdit(false); }
+  }
+
+  async function handleEliminarCajero(userId) {
+    setEliminandoId(userId);
+    try {
+      await eliminarCajero({ userId, requesterId: usuario.id, requesterRol: usuario.rol });
+      const cajs = await getCajeros(usuario.bar_id);
+      setCajeros(cajs);
+      setConfirmandoElimId(null);
+      show('✓ Usuario eliminado');
+    } catch (e) {
+      show('✗ ' + (e.message || 'Error al eliminar'));
+    } finally { setEliminandoId(null); }
   }
 
   async function handleSignOut() {
@@ -312,6 +327,23 @@ export default function ConfiguracionPage() {
                   <button onClick={() => abrirEdicion(c)} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface border border-divider text-t2">
                     Editar
                   </button>
+                  {c.id !== usuario.id && (
+                    confirmandoElimId === c.id ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[11px] text-t3">¿Seguro?</span>
+                        <button onClick={() => setConfirmandoElimId(null)} className="px-2 py-1 rounded-full text-[11px] bg-surface border border-divider text-t2">No</button>
+                        <button onClick={() => handleEliminarCajero(c.id)} disabled={eliminandoId === c.id}
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-red-500/10 text-red-600 disabled:opacity-40 text-sm">
+                          {eliminandoId === c.id ? '...' : '🗑️'}
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirmandoElimId(c.id)} title="Eliminar"
+                        className="w-7 h-7 flex items-center justify-center rounded-full bg-red-500/10 text-red-600 text-sm">
+                        🗑️
+                      </button>
+                    )
+                  )}
                 </div>
               </div>
             )

@@ -31,6 +31,13 @@ export async function getUsuarioActual() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
   const { data } = await sb.from('usuarios').select('*, bares(*)').eq('id', user.id).single();
+  if (data && data.activo === false) {
+    // Usuario dado de baja por un admin: cerrar la sesión y tratarlo como
+    // no logueado, aunque su fila y su historial de ventas/gastos se
+    // conservan intactos.
+    await sb.auth.signOut();
+    return null;
+  }
   return data;
 }
 
@@ -532,12 +539,24 @@ export async function editarCajero({ userId, nombre, email, requesterId, request
   return data;
 }
 
+export async function eliminarCajero({ userId, requesterId, requesterRol }) {
+  const res = await fetch('/api/eliminar-cajero', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, requesterId, requesterRol }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al eliminar usuario');
+  return data;
+}
+
 export async function getCajeros(barId) {
   const sb = getClient();
   const { data, error } = await sb
     .from('usuarios')
     .select('*')
     .eq('bar_id', barId)
+    .neq('activo', false)
     .order('nombre');
   if (error) throw error;
   return data || [];
