@@ -313,36 +313,40 @@ export default function ConfiguracionPage() {
                   </button>
                 </div>
               </div>
-            ) : (
-              <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-offset border border-divider">
-                <div>
-                  <div className="text-sm font-semibold text-t1">{c.nombre}</div>
-                  <div className="text-xs text-t3">{c.email}</div>
+            ) : confirmandoElimId === c.id ? (
+              <div key={c.id} className="bg-offset rounded-xl p-4 flex flex-col gap-3 border border-red-500/30">
+                <div className="text-sm text-t1">
+                  ¿Eliminar a <span className="font-semibold">{c.nombre}</span>? No va a poder volver a entrar, pero su historial de ventas y gastos se conserva.
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold
+                <div className="flex gap-2">
+                  <button onClick={() => setConfirmandoElimId(null)} className="flex-1 h-10 rounded-xl bg-surface border border-divider text-t2 text-sm">Cancelar</button>
+                  <button onClick={() => handleEliminarCajero(c.id)} disabled={eliminandoId === c.id}
+                    className="flex-1 h-10 rounded-xl bg-red-500 text-white text-sm font-semibold disabled:opacity-40">
+                    {eliminandoId === c.id ? '...' : 'Sí, eliminar'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div key={c.id} className="p-3 rounded-xl bg-offset border border-divider flex flex-col gap-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-t1 truncate">{c.nombre}</div>
+                    <div className="text-xs text-t3 truncate">{c.email}</div>
+                  </div>
+                  <span className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold
                     ${c.rol === 'admin' ? 'bg-primary/10 text-primary' : 'bg-ambersoft text-ambertext'}`}>
                     {c.rol === 'admin' ? 'Admin' : 'Cajero'}
                   </span>
-                  <button onClick={() => abrirEdicion(c)} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface border border-divider text-t2">
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => abrirEdicion(c)} className="flex-1 h-9 rounded-xl bg-surface border border-divider text-t2 text-xs font-semibold">
                     Editar
                   </button>
                   {c.id !== usuario.id && (
-                    confirmandoElimId === c.id ? (
-                      <div className="flex items-center gap-1">
-                        <span className="text-[11px] text-t3">¿Seguro?</span>
-                        <button onClick={() => setConfirmandoElimId(null)} className="px-2 py-1 rounded-full text-[11px] bg-surface border border-divider text-t2">No</button>
-                        <button onClick={() => handleEliminarCajero(c.id)} disabled={eliminandoId === c.id}
-                          className="w-7 h-7 flex items-center justify-center rounded-full bg-red-500/10 text-red-600 disabled:opacity-40 text-sm">
-                          {eliminandoId === c.id ? '...' : '🗑️'}
-                        </button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setConfirmandoElimId(c.id)} title="Eliminar"
-                        className="w-7 h-7 flex items-center justify-center rounded-full bg-red-500/10 text-red-600 text-sm">
-                        🗑️
-                      </button>
-                    )
+                    <button onClick={() => setConfirmandoElimId(c.id)} title="Eliminar"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 text-red-600 text-sm">
+                      🗑️
+                    </button>
                   )}
                 </div>
               </div>
