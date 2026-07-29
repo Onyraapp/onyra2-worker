@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
-import { getConfiguracion, updateConfiguracion, getCajeros, registrarCajero, updateBar, signOut } from '../../../lib/data';
+import { getConfiguracion, updateConfiguracion, getCajeros, registrarCajero, editarCajero, updateBar, signOut } from '../../../lib/data';
 import { MEDIOS_PAGO } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, BtnPrimary, BtnDanger,
@@ -34,9 +34,23 @@ export default function ConfiguracionPage() {
   const [cajPassword, setCajPassword] = useState('');
   const [savingCaj,   setSavingCaj]   = useState(false);
 
+  const [editandoId, setEditandoId] = useState(null);
+  const [editNombre, setEditNombre] = useState('');
+  const [editEmail,  setEditEmail]  = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const esAdmin = usuario?.rol === 'admin';
+
   useEffect(() => {
     if (!usuario) return;
-    if (usuario.rol !== 'admin') { router.push('/dashboard'); return; }
+    if (!esAdmin) {
+      // Un cajero no ve el resto de la configuración, pero puede editar su propio perfil.
+      setEditandoId(usuario.id);
+      setEditNombre(usuario.nombre || '');
+      setEditEmail(usuario.email || '');
+      setLoading(false);
+      return;
+    }
     Promise.all([
       getConfiguracion(usuario.bar_id),
       getCajeros(usuario.bar_id),
@@ -105,6 +119,33 @@ export default function ConfiguracionPage() {
     } finally { setSavingCaj(false); }
   }
 
+  function abrirEdicion(c) {
+    setEditandoId(c.id);
+    setEditNombre(c.nombre);
+    setEditEmail(c.email);
+  }
+
+  async function guardarEdicion(userId) {
+    if (!editNombre || !editEmail) return show('⚠ Completá todos los campos');
+    setSavingEdit(true);
+    try {
+      await editarCajero({
+        userId, nombre: editNombre, email: editEmail,
+        requesterId: usuario.id, requesterRol: usuario.rol,
+      });
+      if (esAdmin) {
+        const cajs = await getCajeros(usuario.bar_id);
+        setCajeros(cajs);
+        setEditandoId(null);
+        show('✓ Guardado');
+      } else {
+        show('✓ Perfil actualizado');
+      }
+    } catch (e) {
+      show('✗ ' + (e.message || 'Error al guardar'));
+    } finally { setSavingEdit(false); }
+  }
+
   async function handleSignOut() {
     await signOut();
     router.push('/login');
@@ -126,6 +167,31 @@ export default function ConfiguracionPage() {
   }
 
   if (loading) return <Spinner />;
+
+  if (!esAdmin) {
+    return (
+      <Screen>
+        <Toast msg={toast} visible={visible} />
+        <Card>
+          <CardHeader title="Tu perfil" />
+          <div className="p-4 flex flex-col gap-3">
+            <div className="text-xs text-t3">{usuario?.rol === 'admin' ? 'Admin' : 'Cajero'}</div>
+            <div>
+              <FieldLabel>Nombre</FieldLabel>
+              <Input value={editNombre} onChange={setEditNombre} placeholder="Nombre" />
+            </div>
+            <div>
+              <FieldLabel>Email</FieldLabel>
+              <Input value={editEmail} onChange={setEditEmail} placeholder="Email" type="email" />
+            </div>
+            <BtnPrimary label={savingEdit ? 'Guardando...' : 'Guardar cambios'}
+              onClick={() => guardarEdicion(usuario.id)} loading={savingEdit} />
+          </div>
+        </Card>
+        <BtnDanger label="Cerrar sesión" onClick={handleSignOut} />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -220,16 +286,35 @@ export default function ConfiguracionPage() {
             </div>
           )}
           {cajeros.map(c => (
-            <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-offset border border-divider">
-              <div>
-                <div className="text-sm font-semibold text-t1">{c.nombre}</div>
-                <div className="text-xs text-t3">{c.email}</div>
+            editandoId === c.id ? (
+              <div key={c.id} className="bg-offset rounded-xl p-4 flex flex-col gap-3 border border-primary/30">
+                <Input value={editNombre} onChange={setEditNombre} placeholder="Nombre" />
+                <Input value={editEmail} onChange={setEditEmail} placeholder="Email" type="email" />
+                <div className="flex gap-2">
+                  <button onClick={() => setEditandoId(null)} className="flex-1 h-10 rounded-xl bg-surface border border-divider text-t2 text-sm">Cancelar</button>
+                  <button onClick={() => guardarEdicion(c.id)} disabled={savingEdit}
+                    className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-40">
+                    {savingEdit ? '...' : 'Guardar'}
+                  </button>
+                </div>
               </div>
-              <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold
-                ${c.rol === 'admin' ? 'bg-primary/10 text-primary' : 'bg-ambersoft text-ambertext'}`}>
-                {c.rol === 'admin' ? 'Admin' : 'Cajero'}
-              </span>
-            </div>
+            ) : (
+              <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-offset border border-divider">
+                <div>
+                  <div className="text-sm font-semibold text-t1">{c.nombre}</div>
+                  <div className="text-xs text-t3">{c.email}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold
+                    ${c.rol === 'admin' ? 'bg-primary/10 text-primary' : 'bg-ambersoft text-ambertext'}`}>
+                    {c.rol === 'admin' ? 'Admin' : 'Cajero'}
+                  </span>
+                  <button onClick={() => abrirEdicion(c)} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface border border-divider text-t2">
+                    Editar
+                  </button>
+                </div>
+              </div>
+            )
           ))}
         </div>
       </Card>

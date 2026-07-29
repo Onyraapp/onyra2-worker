@@ -521,6 +521,17 @@ export async function registrarCajero({ barId, nombre, email, password }) {
   return data;
 }
 
+export async function editarCajero({ userId, nombre, email, requesterId, requesterRol }) {
+  const res = await fetch('/api/editar-cajero', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, nombre, email, requesterId, requesterRol }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al editar usuario');
+  return data;
+}
+
 export async function getCajeros(barId) {
   const sb = getClient();
   const { data, error } = await sb
