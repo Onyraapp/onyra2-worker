@@ -314,14 +314,14 @@ export default function ConfiguracionPage() {
                 </div>
               </div>
             ) : confirmandoElimId === c.id ? (
-              <div key={c.id} className="bg-offset rounded-xl p-4 flex flex-col gap-3 border border-red-500/30">
+              <div key={c.id} className="bg-offset rounded-xl p-4 flex flex-col gap-3 border border-red/20">
                 <div className="text-sm text-t1">
                   ¿Eliminar a <span className="font-semibold">{c.nombre}</span>? No va a poder volver a entrar, pero su historial de ventas y gastos se conserva.
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setConfirmandoElimId(null)} className="flex-1 h-10 rounded-xl bg-surface border border-divider text-t2 text-sm">Cancelar</button>
                   <button onClick={() => handleEliminarCajero(c.id)} disabled={eliminandoId === c.id}
-                    className="flex-1 h-10 rounded-xl bg-red-500 text-white text-sm font-semibold disabled:opacity-40">
+                    className="flex-1 h-10 rounded-xl bg-red text-white text-sm font-semibold disabled:opacity-40">
                     {eliminandoId === c.id ? '...' : 'Sí, eliminar'}
                   </button>
                 </div>
@@ -344,7 +344,7 @@ export default function ConfiguracionPage() {
                   </button>
                   {c.id !== usuario.id && (
                     <button onClick={() => setConfirmandoElimId(c.id)} title="Eliminar"
-                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 text-red-600 text-sm">
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-redsoft text-redtext text-sm">
                       🗑️
                     </button>
                   )}
