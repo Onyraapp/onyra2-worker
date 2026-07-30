@@ -81,8 +81,8 @@ export default function EgresosPage() {
           window.open('https://wa.me/' + config.whatsapp_numero + '?text=' + encodeURIComponent(msg), '_blank');
         }
       }
-    } catch {
-      show('✗ ' + t.error);
+    } catch (e) {
+      show('✗ ' + (e?.message || t.error));
     } finally {
       setLoading(false);
     }
