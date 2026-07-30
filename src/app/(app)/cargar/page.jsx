@@ -149,7 +149,13 @@ export default function CargarPage() {
       for (const item of cola) {
         const turnoAbierto = await abrirTurno(item.bar_id, item.usuario_id, item.fecha, item.turno, item.caja_inicial || 0);
         await crearIngresosBulk(item.rows.map(r => ({ ...r, turno_id: turnoAbierto.id })));
-        await cerrarTurno(turnoAbierto.id);
+        // OJO: nunca cerrar el turno acá. Esta funcion corre sola en cuanto
+        // vuelve la conexion (ver useEffect de arriba), sin ninguna accion
+        // del cajero. Si cierra el turno automaticamente, cualquier venta
+        // que el cajero siga cargando despues queda bloqueada en silencio
+        // (el chequeo "en fresco" de turno abierto la rechaza localmente,
+        // sin tocar el servidor, sin ningun error visible). Cerrar caja
+        // tiene que seguir siendo siempre una accion explicita del cajero.
       }
       limpiarCola();
       setColaPendiente([]);
