@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "lat.troco.app",
-        "sha256_cert_fingerprints": ["20:EF:2E:40:41:C4:65:AD:6F:EC:3E:E2:87:8C:8C:63:55:44:F0:64:D2:94:88:9F:6D:3E:A3:3B:84:B0:1D:8A"]
+        "package_name": "kurke.app",
+        "sha256_cert_fingerprints": ["34:53:FA:3E:D4:4A:48:D0:BF:91:0F:84:35:B1:88:67:96:DD:F0:EE:F7:FD:5B:F3:67:B3:7B:18:DF:02:BD:AA"]
       }
     }]
