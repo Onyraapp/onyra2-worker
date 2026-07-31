@@ -32,11 +32,19 @@ export function KpiCard({ label, value, sub, color = 'default', className = '', 
     default: { wrap: 'bg-surface',    val: 'text-t1'        },
   };
   const s = styles[color] || styles.default;
+  const displayValue = typeof value === 'number' ? (fmtFn ? fmtFn(value) : fmt(value)) : value;
+  const len = String(displayValue ?? '').length;
+  // Achicar la fuente a medida que el número es más largo, para que siempre entre en un renglón.
+  const sizeClass =
+    len > 13 ? 'text-base' :
+    len > 11 ? 'text-lg'   :
+    len > 9  ? 'text-xl'   :
+               'text-2xl';
   return (
     <div className={`flex-1 min-w-0 rounded-2xl p-4 shadow-card ${s.wrap} ${className}`}>
       <div className="text-[11px] font-medium text-t3 mb-1.5 uppercase tracking-wide">{label}</div>
-      <div className={`text-2xl font-bold tabular-nums tracking-tight break-all ${s.val}`}>
-        {typeof value === 'number' ? (fmtFn ? fmtFn(value) : fmt(value)) : value}
+      <div className={`${sizeClass} font-bold tabular-nums tracking-tight whitespace-nowrap ${s.val}`}>
+        {displayValue}
       </div>
       {sub && <div className="text-xs text-t3 mt-1">{sub}</div>}
     </div>
@@ -45,16 +53,23 @@ export function KpiCard({ label, value, sub, color = 'default', className = '', 
 
 export function ResultadoCard({ valor, label = 'Resultado' }) {
   const pos = valor >= 0;
+  const displayValue = `${valor < 0 ? '−' : ''}${fmt(Math.abs(valor))}`;
+  const len = displayValue.length;
+  const sizeClass =
+    len > 13 ? 'text-lg' :
+    len > 11 ? 'text-xl' :
+    len > 9  ? 'text-2xl' :
+               'text-3xl';
   return (
-    <div className={`rounded-2xl p-4 shadow-card flex justify-between items-center ${pos ? 'bg-greensoft' : 'bg-redsoft'}`}>
-      <div>
+    <div className={`rounded-2xl p-4 shadow-card flex justify-between items-center gap-3 ${pos ? 'bg-greensoft' : 'bg-redsoft'}`}>
+      <div className="min-w-0">
         <div className="text-[11px] font-medium uppercase tracking-wide text-t3">{label}</div>
         <div className={`text-xs mt-0.5 font-medium ${pos ? 'text-greentext' : 'text-redtext'}`}>
           {pos ? 'Resultado positivo' : 'Resultado negativo'}
         </div>
       </div>
-      <span className={`text-3xl font-bold tracking-tight tabular-nums ${pos ? 'text-greentext' : 'text-redtext'}`}>
-        {valor < 0 && '−'}{fmt(Math.abs(valor))}
+      <span className={`${sizeClass} font-bold tracking-tight tabular-nums whitespace-nowrap ${pos ? 'text-greentext' : 'text-redtext'}`}>
+        {displayValue}
       </span>
     </div>
   );
