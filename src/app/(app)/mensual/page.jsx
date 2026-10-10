@@ -5,12 +5,38 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../../../hooks/useAuth';
 import { getResumenMes, fmt } from '../../../lib/data';
-import { MEDIOS_PAGO } from '../../../lib/constants';
+import { MEDIOS_PAGO, TIPOS_EGRESO, getLabel } from '../../../lib/constants';
+import { getClient } from '../../../lib/supabase';
 import { exportarMesExcel, exportarMesPDF } from '../../../lib/exportar';
 import {
   Screen, Card, CardHeader, KpiCard, ResultadoCard,
   TablaRetencion, Spinner, BtnSecondary, Select
 } from '../../../components/ui';
+
+// Gastos del mes agrupados por categoría (rango en hora Argentina)
+async function getGastosPorTipoMes(barId, año, mes) {
+  const sb = getClient();
+  const mm = String(mes).padStart(2, '0');
+  const sig = mes === 12 ? `${año + 1}-01` : `${año}-${String(mes + 1).padStart(2, '0')}`;
+  const { data, error } = await sb
+    .from('egresos').select('tipo, monto')
+    .eq('bar_id', barId)
+    .gte('fecha', `${año}-${mm}-01T00:00:00-03:00`)
+    .lt('fecha', `${sig}-01T00:00:00-03:00`)
+    .limit(5000);
+  if (error) throw error;
+  const porTipo = {};
+  let total = 0;
+  for (const e of data || []) {
+    const m = Number(e.monto) || 0;
+    porTipo[e.tipo] = (porTipo[e.tipo] || 0) + m;
+    total += m;
+  }
+  const filas = Object.entries(porTipo)
+    .map(([tipo, monto]) => ({ tipo, monto }))
+    .sort((a, b) => b.monto - a.monto);
+  return { filas, total };
+}
 
 export default function MensualPage() {
   const { usuario } = useAuth();
@@ -31,6 +57,7 @@ export default function MensualPage() {
   const [seleccion, setSeleccion] = useState(meses[1].value); // mes anterior por defecto
   const [resumen,   setResumen]   = useState(null);
   const [loading,   setLoading]   = useState(false);
+  const [gastosMes, setGastosMes] = useState(null);
 
   const mesObj = meses.find(m => m.value === seleccion);
 
@@ -38,8 +65,12 @@ export default function MensualPage() {
     if (!usuario || !mesObj) return;
     setLoading(true);
     setResumen(null);
-    getResumenMes(usuario.bar_id, mesObj.año, mesObj.mes)
-      .then(setResumen)
+    setGastosMes(null);
+    Promise.all([
+      getResumenMes(usuario.bar_id, mesObj.año, mesObj.mes),
+      getGastosPorTipoMes(usuario.bar_id, mesObj.año, mesObj.mes).catch(() => null),
+    ])
+      .then(([res, gm]) => { setResumen(res); setGastosMes(gm); })
       .finally(() => setLoading(false));
   }, [usuario, seleccion]);
 
@@ -102,6 +133,27 @@ export default function MensualPage() {
             <CardHeader title="Por medio de pago" />
             <div className="p-4">
               <TablaRetencion rows={retRows} />
+            </div>
+          </Card>
+        )}
+
+        {gastosMes && gastosMes.filas.length > 0 && (
+          <Card>
+            <CardHeader title={'Gastos por categoría'} subtitle={fmt(gastosMes.total)} />
+            <div className="p-4">
+              {gastosMes.filas.map(({ tipo, monto }) => {
+                const tp = TIPOS_EGRESO.find(te => te.key === tipo);
+                const pct = gastosMes.total > 0 ? ((monto / gastosMes.total) * 100).toFixed(0) : 0;
+                return (
+                <div key={tipo} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
+                  <span className="text-sm text-t2">{tp ? getLabel(tp, false) : tipo}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-t3">{pct}%</span>
+                    <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmt(monto)}</span>
+                  </div>
+                </div>
+                );
+              })}
             </div>
           </Card>
         )}

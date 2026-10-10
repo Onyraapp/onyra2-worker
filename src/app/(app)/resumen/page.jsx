@@ -10,12 +10,38 @@ import {
   getIngresosDia, getEgresosDia, getResumenMes,
   calcularResumenDia, fmt, todayStr
 } from '../../../lib/data';
-import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
+import { MEDIOS_PAGO, TIPOS_EGRESO, getLabel } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, KpiCard, ResultadoCard,
   TablaRetencion, EmptyState, Spinner, Badge, DivRow, Select
 } from '../../../components/ui';
 import { useLocale } from '../../../hooks/useLocale';
+import { getClient } from '../../../lib/supabase';
+
+// Gastos del mes agrupados por categoría (rango en hora Argentina)
+async function getGastosPorTipoMes(barId, año, mes) {
+  const sb = getClient();
+  const mm = String(mes).padStart(2, '0');
+  const sig = mes === 12 ? `${año + 1}-01` : `${año}-${String(mes + 1).padStart(2, '0')}`;
+  const { data, error } = await sb
+    .from('egresos').select('tipo, monto')
+    .eq('bar_id', barId)
+    .gte('fecha', `${año}-${mm}-01T00:00:00-03:00`)
+    .lt('fecha', `${sig}-01T00:00:00-03:00`)
+    .limit(5000);
+  if (error) throw error;
+  const porTipo = {};
+  let total = 0;
+  for (const e of data || []) {
+    const m = Number(e.monto) || 0;
+    porTipo[e.tipo] = (porTipo[e.tipo] || 0) + m;
+    total += m;
+  }
+  const filas = Object.entries(porTipo)
+    .map(([tipo, monto]) => ({ tipo, monto }))
+    .sort((a, b) => b.monto - a.monto);
+  return { filas, total };
+}
 
 export default function ResumenPage() {
   const { usuario } = useAuth();
@@ -43,6 +69,7 @@ export default function ResumenPage() {
   const meses = MESES_OPCIONES();
   const [mesSel, setMesSel] = useState(meses[0].value);
   const [resMes, setResMes] = useState(null);
+  const [gastosMes, setGastosMes] = useState(null);
   const [loadingMes, setLoadingMes] = useState(false);
   const esHoy = fecha === todayStr();
 
@@ -70,8 +97,12 @@ export default function ResumenPage() {
     if (!m) return;
     setLoadingMes(true);
     try {
-      const res = await getResumenMes(usuario.bar_id, m.año, m.mes);
+      const [res, gm] = await Promise.all([
+        getResumenMes(usuario.bar_id, m.año, m.mes),
+        getGastosPorTipoMes(usuario.bar_id, m.año, m.mes).catch(() => null),
+      ]);
       setResMes(res);
+      setGastosMes(gm);
     } finally { setLoadingMes(false); }
   }, [usuario, mesSel]);
 
@@ -291,19 +322,19 @@ export default function ResumenPage() {
               </div>
             </Card>
           )}
-          {resMes.egresosPorTipo && Object.keys(resMes.egresosPorTipo).length > 0 && (
+          {gastosMes && gastosMes.filas.length > 0 && (
             <Card>
-              <CardHeader title={t.gastos} />
+              <CardHeader title={t.gastos} subtitle={fmtL(gastosMes.total)} />
               <div className="p-4">
-                {Object.entries(resMes.egresosPorTipo).map(([tipo, info]) => {
+                {gastosMes.filas.map(({ tipo, monto }) => {
                   const tp = TIPOS_EGRESO.find(te => te.key === tipo);
-                  const pct = resMes.totalEgresos > 0 ? ((info.monto / resMes.totalEgresos) * 100).toFixed(0) : 0;
+                  const pct = gastosMes.total > 0 ? ((monto / gastosMes.total) * 100).toFixed(0) : 0;
                   return (
                     <div key={tipo} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
-                      <span className="text-sm text-t2">{tp?.label || tipo}</span>
+                      <span className="text-sm text-t2">{tp ? getLabel(tp, isPT) : tipo}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-t3">{pct}%</span>
-                        <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmtL(info.monto)}</span>
+                        <span className="text-sm font-semibold text-ambertext tabular-nums">−{fmtL(monto)}</span>
                       </div>
                     </div>
                   );
