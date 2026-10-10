@@ -17,6 +17,10 @@ export default function EgresosPage() {
   const { toast, visible, show } = useToast();
   const { t, isPT, fmt: fmtL } = useLocale();
   const symbol = isPT ? 'R$' : '$';
+  const isAdmin = usuario?.rol === 'admin';
+  // SUELDOS: solo el admin puede cargarlos y verlos (se pagan por fuera de la caja)
+  const tiposVisibles = isAdmin ? TIPOS_EGRESO : TIPOS_EGRESO.filter(tp => tp.key !== 'sueldos');
+  const opcionesTipo = tiposVisibles.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }));
 
   const [config,    setConfig]    = useState(null);
   const [turnoAbierto, setTurnoAbierto] = useState(undefined); // undefined = todavía no chequeado
@@ -50,17 +54,21 @@ export default function EgresosPage() {
     if (!usuario) return;
     try {
       const data = await getEgresosDia(usuario.bar_id, todayStr());
-      setEgresos(data);
+      const esAdmin = usuario.rol === 'admin';
+      setEgresos(esAdmin ? data : (data || []).filter(e => e.tipo !== 'sueldos'));
     } catch {}
   }
 
   async function guardar() {
     const m = parseFloat(monto);
     if (!m || m <= 0) return show('⚠ ' + (isPT ? 'Informe um valor válido' : 'Ingresá un monto válido'));
+    if (tipo === 'sueldos' && !isAdmin) return show('✗ ' + t.error);
     setLoading(true);
     try {
       await crearEgreso({
-        barId: usuario.bar_id, turnoId: turnoAbierto ? turnoAbierto.id : null, usuarioId: usuario.id,
+        barId: usuario.bar_id,
+        // Los sueldos van sin turno: no salen de la caja del cajero
+        turnoId: (tipo !== 'sueldos' && turnoAbierto) ? turnoAbierto.id : null, usuarioId: usuario.id,
         tipo, monto: m, detalle, medio_pago: medioPago,
       });
       setMonto(''); setDetalle('');
@@ -101,9 +109,12 @@ export default function EgresosPage() {
     if (!m || m <= 0) return show('⚠ ' + (isPT ? 'Informe um valor válido' : 'Ingresá un monto válido'));
     try {
       const sb = getClient();
-      await sb.from('egresos').update({
-        monto: m, detalle: editDetalle, tipo: editTipo, medio_pago: editMedio,
-      }).eq('id', editando.id);
+      if (editTipo === 'sueldos' && !isAdmin) return show('✗ ' + t.error);
+      const cambios = { monto: m, detalle: editDetalle, tipo: editTipo, medio_pago: editMedio };
+      // Si un gasto pasa a ser sueldo, se saca del turno (queda por fuera de la caja)
+      if (editTipo === 'sueldos' && editando.tipo !== 'sueldos') cambios.turno_id = null;
+      const { error } = await sb.from('egresos').update(cambios).eq('id', editando.id);
+      if (error) throw error;
       setEditando(null);
       show('✓ ' + t.gasto_actualizado);
       cargarEgresos();
@@ -135,7 +146,7 @@ export default function EgresosPage() {
             <div>
               <FieldLabel>{t.tipo_gasto}</FieldLabel>
               <ChipGroup
-                options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }))}
+                options={opcionesTipo}
                 value={editTipo}
                 onChange={setEditTipo}
                 className="grid grid-cols-3"
@@ -167,7 +178,7 @@ export default function EgresosPage() {
           <div>
             <FieldLabel>{t.tipo_gasto}</FieldLabel>
             <ChipGroup
-              options={TIPOS_EGRESO.map(tp => ({ value: tp.key, label: getLabel(tp, isPT) }))}
+              options={opcionesTipo}
               value={tipo}
               onChange={setTipo}
               className="grid grid-cols-3"
