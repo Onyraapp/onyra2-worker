@@ -15,7 +15,7 @@ import {
 } from '../../../lib/data';
 import { getClient } from '../../../lib/supabase';
 import { getCola } from '../../../hooks/useOnline';
-import { MEDIOS_PAGO, TIPOS_EGRESO } from '../../../lib/constants';
+import { MEDIOS_PAGO, TIPOS_EGRESO, getLabel } from '../../../lib/constants';
 import {
   Screen, Card, CardHeader, KpiCard,
   BreakdownBar, EmptyState, Spinner,
@@ -512,7 +512,7 @@ export default function DashboardPage() {
                 <div key={i} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
-                    <span className="text-sm text-t1">{r.label}</span>
+                    <span className="text-sm text-t1">{getLabel(MEDIOS_PAGO.find(x => x.label === r.label) || r, isPT)}</span>
                   </div>
                   <span className="text-sm font-semibold text-t1 tabular-nums">{fmtL(r.bruto)}</span>
                 </div>
@@ -526,7 +526,7 @@ export default function DashboardPage() {
             <CardHeader title={t.gastos_del_dia} subtitle={`${egresos.length} · ${fmtL(res.totalEgresos)}`} />
             <div className="p-4 flex flex-col gap-3">
               {TIPOS_EGRESO.filter(tipo => egresosPorTipo[tipo.key]).map(tipo => (
-  <BreakdownBar key={tipo.key} label={tipo.label} value={egresosPorTipo[tipo.key]} total={res.totalEgresos} color="#FF9500" />
+  <BreakdownBar key={tipo.key} label={getLabel(tipo, isPT)} value={egresosPorTipo[tipo.key]} total={res.totalEgresos} color="#FF9500" />
 ))}
             </div>
           </Card>
@@ -544,7 +544,7 @@ export default function DashboardPage() {
                       <div key={i.id} className="flex items-start gap-3 p-3 rounded-xl bg-offset border border-divider">
                         <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0" style={{ backgroundColor: m?.color || '#2D6B8C' }} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-t1">{m?.label}</div>
+                          <div className="text-sm font-semibold text-t1">{m ? getLabel(m, isPT) : ''}</div>
                           <div className="text-xs text-t3 mt-0.5">
                             {i.fecha ? formatInTimeZone(new Date(i.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''}
                             {i.retencion_pct > 0 && ` · ${i.retencion_pct}% ret.`}
@@ -564,7 +564,7 @@ export default function DashboardPage() {
                       <div key={e.id} className="flex items-start gap-3 p-3 rounded-xl bg-offset border border-divider">
                         <div className="w-1 h-10 rounded-full mt-0.5 flex-shrink-0 bg-amber" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-t1">{tp?.label || e.tipo}</div>
+                          <div className="text-sm font-semibold text-t1">{(tp ? getLabel(tp, isPT) : '') || e.tipo}</div>
                           <div className="text-xs text-t3 mt-0.5">{e.fecha ? formatInTimeZone(new Date(e.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''}</div>
                           {e.detalle && <div className="text-xs text-t2 mt-0.5 italic truncate">{e.detalle}</div>}
                         </div>
@@ -586,7 +586,7 @@ export default function DashboardPage() {
                 return (
                   <div key={i.id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft border border-red/10">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-t2 line-through">{m?.label} · {fmtL(i.monto_bruto)}</div>
+                      <div className="text-sm font-medium text-t2 line-through">{m ? getLabel(m, isPT) : ''} · {fmtL(i.monto_bruto)}</div>
                       <div className="text-xs text-t3 mt-0.5">{i.fecha ? formatInTimeZone(new Date(i.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''} · {i.motivo_anulacion}</div>
                     </div>
                   </div>

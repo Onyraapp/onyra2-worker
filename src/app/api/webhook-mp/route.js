@@ -23,6 +23,22 @@ async function buscarBarPorEmail(supabase, email) {
   return null;
 }
 
+// Busca el bar primero por external_reference (el bar_id que nosotros le
+// pasamos a MP al crear la suscripcion desde /api/crear-suscripcion-mp).
+// Esto es confiable pase lo que pase con el email de la cuenta de MP que
+// use la persona para pagar. Si no hay external_reference (por ejemplo,
+// suscripciones viejas creadas con el link estatico de antes del fix),
+// caemos al metodo viejo de buscar por email, como respaldo.
+async function buscarBar(supabase, externalReference, email) {
+  if (externalReference) {
+    const { data: barPorRef } = await supabase
+      .from('bares').select('id, plan').eq('id', externalReference).maybeSingle();
+    if (barPorRef) return barPorRef;
+    console.log('[webhook-mp] external_reference presente pero no coincide con ningun bar:', externalReference);
+  }
+  return buscarBarPorEmail(supabase, email);
+}
+
 async function activarPlan(supabase, barId, planKey) {
   const vence = new Date();
   vence.setMonth(vence.getMonth() + 1);
@@ -89,18 +105,19 @@ export async function POST(request) {
 
     const planKey = PLAN_POR_PREAPPROVAL_ID[preapproval.preapproval_plan_id];
     const email = preapproval.payer_email;
-    console.log('[webhook-mp] planKey resuelto:', planKey, '| email:', email);
+    const externalRef = preapproval.external_reference;
+    console.log('[webhook-mp] planKey resuelto:', planKey, '| email:', email, '| external_reference:', externalRef);
 
-    if (!planKey || !email) {
-      console.log('[webhook-mp] no se pudo resolver plan o email, se omite');
+    if (!planKey) {
+      console.log('[webhook-mp] no se pudo resolver el plan, se omite');
       return new Response('ok', { status: 200 });
     }
 
-    const bar = await buscarBarPorEmail(supabase, email);
+    const bar = await buscarBar(supabase, externalRef, email);
     if (bar) {
       await activarPlan(supabase, bar.id, planKey);
     } else {
-      console.log('[webhook-mp] no se encontro bar para email:', email);
+      console.log('[webhook-mp] no se encontro bar (ni por external_reference ni por email):', { externalRef, email });
     }
     return new Response('ok', { status: 200 });
   }
@@ -122,9 +139,10 @@ export async function POST(request) {
     if (payment.status !== 'approved') return new Response('ok', { status: 200 });
 
     const email = payment.payer?.email;
-    const bar = await buscarBarPorEmail(supabase, email);
+    const externalRef = payment.external_reference;
+    const bar = await buscarBar(supabase, externalRef, email);
     if (!bar) {
-      console.log('[webhook-mp] no se encontro bar para email:', email);
+      console.log('[webhook-mp] no se encontro bar (ni por external_reference ni por email):', { externalRef, email });
       return new Response('ok', { status: 200 });
     }
 

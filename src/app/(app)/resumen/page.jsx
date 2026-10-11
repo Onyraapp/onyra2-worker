@@ -216,7 +216,7 @@ export default function ResumenPage() {
                                 return (
                                   <div key={tipo} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
                                     <div className="flex flex-col gap-0.5">
-                                      <span className="text-sm text-t2">{tp?.label || tipo}</span>
+                                      <span className="text-sm text-t2">{(tp ? getLabel(tp, isPT) : '') || tipo}</span>
                                       <div className="flex gap-1 flex-wrap">
                                         {egrT.filter(e => e.tipo === tipo).map(e => (
                                           <span key={e.id} className="text-[10px] text-t3 bg-offset px-1.5 py-0.5 rounded-full">
@@ -258,7 +258,7 @@ export default function ResumenPage() {
                         return (
                           <div key={i.id} className="flex items-center gap-3 p-3 rounded-xl bg-redsoft border border-red/10">
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-t2 line-through">{m?.label} · {fmtL(i.monto_bruto)}</div>
+                              <div className="text-sm font-medium text-t2 line-through">{m ? getLabel(m, isPT) : ''} · {fmtL(i.monto_bruto)}</div>
                               <div className="text-xs text-redtext mt-0.5">{i.fecha ? formatInTimeZone(new Date(i.fecha), 'America/Argentina/Buenos_Aires', 'HH:mm') : ''} · {i.motivo_anulacion}</div>
                             </div>
                           </div>

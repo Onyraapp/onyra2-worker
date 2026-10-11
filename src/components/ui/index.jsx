@@ -2,6 +2,8 @@
 'use client';
 import React, { useState } from 'react';
 import { fmt } from '../../lib/data';
+import { useLocale } from '../../hooks/useLocale';
+import { MEDIOS_PAGO, getLabel } from '../../lib/constants';
 export { useState };
 
 export function Screen({ children, className = '' }) {
@@ -52,8 +54,9 @@ export function KpiCard({ label, value, sub, color = 'default', className = '', 
 }
 
 export function ResultadoCard({ valor, label = 'Resultado' }) {
+  const { isPT: _isPT, fmt: fmtL } = useLocale();
   const pos = valor >= 0;
-  const displayValue = `${valor < 0 ? '−' : ''}${fmt(Math.abs(valor))}`;
+  const displayValue = `${valor < 0 ? '−' : ''}${fmtL(Math.abs(valor))}`;
   const len = displayValue.length;
   const sizeClass =
     len > 13 ? 'text-lg' :
@@ -91,26 +94,27 @@ export function BreakdownBar({ label, value, total, color = '#34C759', right }) 
 }
 
 export function TablaRetencion({ rows }) {
+  const { isPT: _isPT, fmt: fmtL } = useLocale();
   return (
     <div className="flex flex-col divide-y divide-divider">
       {rows.map((r, i) => (
         <div key={i} className="py-3 flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: r.color }} />
-            <span className="text-sm font-medium text-t1">{r.label}</span>
+            <span className="text-sm font-medium text-t1">{(() => { const mp = MEDIOS_PAGO.find(x => x.label === r.label); return mp ? getLabel(mp, _isPT) : r.label; })()}</span>
           </div>
           <div className="grid grid-cols-3 gap-2 pl-4">
             <div>
               <div className="text-[10px] text-t3 uppercase tracking-wide">Bruto</div>
-              <div className="text-sm font-semibold text-t1 tabular-nums">{fmt(r.bruto)}</div>
+              <div className="text-sm font-semibold text-t1 tabular-nums">{fmtL(r.bruto)}</div>
             </div>
             <div>
-              <div className="text-[10px] text-t3 uppercase tracking-wide">Retención</div>
-              <div className="text-sm font-semibold text-redtext tabular-nums">−{fmt(r.retencion)}</div>
+              <div className="text-[10px] text-t3 uppercase tracking-wide">{_isPT ? 'Retenção' : 'Retención'}</div>
+              <div className="text-sm font-semibold text-redtext tabular-nums">−{fmtL(r.retencion)}</div>
             </div>
             <div>
-              <div className="text-[10px] text-t3 uppercase tracking-wide">Neto</div>
-              <div className="text-sm font-semibold text-greentext tabular-nums">{fmt(r.neto)}</div>
+              <div className="text-[10px] text-t3 uppercase tracking-wide">{_isPT ? 'Líquido' : 'Neto'}</div>
+              <div className="text-sm font-semibold text-greentext tabular-nums">{fmtL(r.neto)}</div>
             </div>
           </div>
         </div>
