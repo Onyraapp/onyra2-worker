@@ -82,7 +82,13 @@ function AppShell({ children }) {
 
   const ahora = new Date();
   const trialHasta = usuario.bares?.trial_hasta ? new Date(usuario.bares.trial_hasta) : null;
-  const planVencido = !usuario.bares?.plan_activo || (usuario.bares?.plan === 'trial' && trialHasta && ahora > trialHasta);
+  // trial_hasta es el vencimiento tanto del trial como del plan pago (los webhooks
+  // lo extienden 1 mes en cada cobro). A los planes pagos les damos 3 dias de
+  // gracia por si la renovacion llega con demora.
+  const GRACIA_PAGO_MS = 3 * 24 * 60 * 60 * 1000;
+  const esPago = usuario.bares?.plan && usuario.bares.plan !== 'trial';
+  const limite = trialHasta ? new Date(trialHasta.getTime() + (esPago ? GRACIA_PAGO_MS : 0)) : null;
+  const planVencido = !usuario.bares?.plan_activo || (limite && ahora > limite);
 
   if (planVencido && pathname !== '/plan-vencido') {
     router.push('/plan-vencido');

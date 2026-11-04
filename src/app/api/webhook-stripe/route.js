@@ -27,20 +27,27 @@ export async function POST(request) {
     const event = JSON.parse(body);
     console.log('[webhook-stripe] event.type:', event.type);
 
-    if (event.type !== 'checkout.session.completed') {
+    // checkout.session.completed = primer pago; invoice.paid = renovaciones
+    // mensuales de la suscripcion (y tambien el primer cobro, que es inofensivo).
+    let email = null;
+    let amount = null;
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data?.object;
+      if (!session) return new Response('ok', { status: 200 });
+      if (session.payment_status !== 'paid') {
+        console.log('[webhook-stripe] payment_status no es paid:', session.payment_status);
+        return new Response('ok', { status: 200 });
+      }
+      email = session.customer_details?.email || session.customer_email;
+      amount = session.amount_total; // en centavos de USD
+    } else if (event.type === 'invoice.paid') {
+      const invoice = event.data?.object;
+      if (!invoice) return new Response('ok', { status: 200 });
+      email = invoice.customer_email;
+      amount = invoice.amount_paid; // en centavos de USD
+    } else {
       return new Response('ok', { status: 200 });
     }
-
-    const session = event.data?.object;
-    if (!session) return new Response('ok', { status: 200 });
-
-    if (session.payment_status !== 'paid') {
-      console.log('[webhook-stripe] payment_status no es paid:', session.payment_status);
-      return new Response('ok', { status: 200 });
-    }
-
-    const email = session.customer_details?.email || session.customer_email;
-    const amount = session.amount_total; // en centavos de USD
 
     // Mapeo por monto (USD 6.99 -> pro, USD 14.99 -> multi). Ver PLANES en plan-vencido/page.jsx.
     let planKey = null;
