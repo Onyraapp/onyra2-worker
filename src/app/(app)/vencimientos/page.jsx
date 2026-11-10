@@ -12,6 +12,23 @@ function diasHasta(fecha) {
   return Math.round((f - hoy) / (1000 * 60 * 60 * 24));
 }
 
+// Acepta "1500", "1500,50", "1.500,50", "1,500.50", "150.000"
+function parseImporte(txt) {
+  let s = String(txt || '').replace(/[^\d.,]/g, '');
+  if (!s) return null;
+  if (s.includes(',') && s.includes('.')) {
+    // el último separador es el decimal
+    if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '');
+  } else if (s.includes(',')) {
+    s = /^\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, '') : s.replace(',', '.');
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+    s = s.replace(/\./g, '');
+  }
+  const n = parseFloat(s);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 function semaforo(fecha) {
   const dias = diasHasta(fecha);
   if (dias < 0)   return { bg: '#fecaca', border: '#f87171', dot: '#b91c1c', label: '#991b1b' };
@@ -73,6 +90,7 @@ export default function VencimientosPage() {
   const [agregando, setAgregando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [sugerencias, setSugerencias] = useState([]);
+  const [error, setError] = useState('');
 
   function labelDias(fecha) {
     const dias = diasHasta(fecha);
@@ -127,18 +145,28 @@ export default function VencimientosPage() {
   }
 
   async function guardar() {
-    if (!form.detalle || !form.importe || !form.fecha) return;
+    setError('');
+    const detalle = form.detalle.trim();
+    const importe = parseImporte(form.importe);
+    if (!detalle) { setError(isPT ? 'Preencha o detalhe.' : 'Completá el detalle.'); return; }
+    if (importe === null) { setError(isPT ? 'Valor inválido.' : 'Importe inválido.'); return; }
+    if (!form.fecha) { setError(isPT ? 'Escolha a data.' : 'Elegí la fecha.'); return; }
     setGuardando(true);
     const sb = getClient();
-    await sb.from('vencimientos').insert([{
+    const { error: err } = await sb.from('vencimientos').insert([{
       bar_id: usuario.bar_id,
-      detalle: form.detalle,
-      importe: parseFloat(form.importe),
+      detalle,
+      importe,
       fecha: form.fecha,
     }]);
+    if (err) {
+      setError((isPT ? 'Não foi possível salvar: ' : 'No se pudo guardar: ') + err.message);
+      setGuardando(false);
+      return;
+    }
     await sb.from('vencimientos_historial').insert([{
       bar_id: usuario.bar_id,
-      detalle: form.detalle,
+      detalle,
     }]);
     setForm({ detalle: '', importe: '', fecha: '' });
     setAgregando(false);
@@ -181,14 +209,15 @@ export default function VencimientosPage() {
             placeholder={isPT ? 'Detalhe (ex: Aluguel, Luz, etc)' : 'Detalle (ej: Alquiler, Luz, etc)'}
             value={form.detalle} onChange={e => setForm({ ...form, detalle: e.target.value })}
             className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm focus:outline-none" />
-          <input type="number" placeholder={t.importe}
+          <input type="text" inputMode="decimal" placeholder={t.importe}
             value={form.importe} onChange={e => setForm({ ...form, importe: e.target.value })}
             className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm focus:outline-none" />
           <input type="date" value={form.fecha}
             onChange={e => setForm({ ...form, fecha: e.target.value })}
             className="w-full bg-offset rounded-xl px-4 py-3 text-t1 text-sm focus:outline-none" />
+          {error && <div className="text-xs font-medium text-red-600">{error}</div>}
           <div className="flex gap-2">
-            <button onClick={() => setAgregando(false)}
+            <button onClick={() => { setAgregando(false); setError(''); }}
               className="flex-1 h-11 rounded-xl border border-divider text-t3 text-sm">{t.cancelar}</button>
             <button onClick={guardar} disabled={guardando}
               className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50">
